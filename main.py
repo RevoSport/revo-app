@@ -1,14 +1,12 @@
 # =====================================================
 # FILE: main.py
-# Revo Sport API v2.0 — Lokale imports voor directe start
+# Revo Sport API v2.0 — Productieversie met CORS-beveiliging
 # =====================================================
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from colorama import Fore, Style, init as colorama_init
 from routers import onedrive_routes
-
-
 
 # =====================================================
 #   Router-imports (lokaal)
@@ -35,15 +33,20 @@ colorama_init(autoreset=True)
 app = FastAPI(
     title="Revo Sport Database API",
     version="2.0",
-    description="Modulaire FastAPI-structuur met kleur-logging (lokale versie)."
+    description="Modulaire FastAPI-structuur met kleur-logging (productieversie)."
 )
 
 # =====================================================
-#   CORS MIDDLEWARE
+#   CORS MIDDLEWARE (Frontend-toegang)
 # =====================================================
+origins = [
+    "https://revo-app-bice.vercel.app",  # jouw frontend op Vercel
+    "http://localhost:3000"              # voor lokale tests
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # In productie: beperk tot je frontend-domein
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -79,7 +82,8 @@ def home():
             "/maand3",
             "/maand45",
             "/maand6",
-            "/timeline"
+            "/timeline",
+            "/upload_dynamic"
         ],
     }
 
@@ -89,6 +93,6 @@ def home():
 @app.on_event("startup")
 def startup_event():
     print(Fore.GREEN + "✅ FastAPI app gestart - Revo Sport API v2 actief" + Style.RESET_ALL)
-    print(Fore.YELLOW + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline" + Style.RESET_ALL)
-    print(Fore.CYAN + "🌐 Swagger Docs: http://127.0.0.1:8000/docs" + Style.RESET_ALL)
+    print(Fore.YELLOW + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes" + Style.RESET_ALL)
+    print(Fore.CYAN + "🌐 Swagger Docs: https://revo-backend-5dji.onrender.com/docs" + Style.RESET_ALL)
     print(Fore.MAGENTA + "💡 Tip: kleur-logs verschijnen bij elke CRUD-actie in de terminal." + Style.RESET_ALL)
