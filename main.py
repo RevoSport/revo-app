@@ -40,8 +40,9 @@ app = FastAPI(
 #   CORS MIDDLEWARE (Frontend-toegang)
 # =====================================================
 origins = [
-    "https://revo-app-bice.vercel.app",  # jouw frontend op Vercel
-    "http://localhost:3000"              # voor lokale tests
+    "http://localhost:3000",                # lokaal
+    "https://*.vercel.app",                 # alle preview builds op Vercel
+    "https://app.revosport.be"              # je eigen domein
 ]
 
 app.add_middleware(
@@ -51,6 +52,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # =====================================================
 #   ROUTERS REGISTREREN
