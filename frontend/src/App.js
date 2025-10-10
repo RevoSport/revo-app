@@ -1,23 +1,19 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
 
 function App() {
+  const [status, setStatus] = useState("⏳ Laden...");
+
+  useEffect(() => {
+    fetch(`${process.env.REACT_APP_API_URL}/`)
+      .then((res) => res.json())
+      .then((data) => setStatus(JSON.stringify(data, null, 2)))
+      .catch((err) => setStatus("❌ Fout: " + err.message));
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div style={{ padding: "2rem", background: "#0d1117", color: "white" }}>
+      <h2>🔗 Revo Sport API Test</h2>
+      <pre>{status}</pre>
     </div>
   );
 }
