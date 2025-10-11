@@ -59,8 +59,8 @@ function App() {
             }}
           />
 
-          {/* Spinner */}
-          <RingLoader color="#FF7900" size={60} speedMultiplier={1.1} />
+          {/* PuffLoader */}
+          <PuffLoader color="#FF7900" size={90} speedMultiplier={0.8} />
         </div>
       )}
 
