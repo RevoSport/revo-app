@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { RingLoader } from "react-spinners";
-import logo from "./assets/Middel 4.svg"; // ⬅️ jouw SVG-logo
+import logo from "./assets/Middel 4.png";
 
 function App() {
   const [status, setStatus] = useState("");
@@ -53,25 +53,14 @@ function App() {
             src={logo}
             alt="Revo Sport Logo"
             style={{
-              width: 220,
+              width: 400,
               height: "auto",
               marginBottom: 60,
             }}
           />
 
           {/* Spinner */}
-          <RingLoader color="#FF7900" size={90} speedMultiplier={1.1} />
-
-          <p
-            style={{
-              marginTop: 25,
-              color: "#FF7900",
-              letterSpacing: "2px",
-              fontWeight: 600,
-            }}
-          >
-            Loading...
-          </p>
+          <RingLoader color="#FF7900" size={60} speedMultiplier={1.1} />
         </div>
       )}
 
