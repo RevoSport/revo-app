@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import logo from "./assets/Middel 4.svg"; // ⬅️ pad aanpassen indien map anders heet
+import { RingLoader } from "react-spinners";
+import logo from "./assets/Middel 4.svg"; // ⬅️ jouw SVG-logo
 
 function App() {
   const [status, setStatus] = useState("");
@@ -47,39 +48,23 @@ function App() {
             zIndex: 1000,
           }}
         >
-          {/* SVG-logo */}
+          {/* Groot logo */}
           <img
             src={logo}
             alt="Revo Sport Logo"
             style={{
-              width: 120,
-              height: 120,
-              marginBottom: 40,
-              animation: "pulseLogo 2s infinite ease-in-out",
+              width: 220,
+              height: "auto",
+              marginBottom: 60,
             }}
           />
 
-          {/* Hartslaglijn */}
-          <div className="heartbeat-container">
-            <svg
-              width="240"
-              height="70"
-              viewBox="0 0 240 70"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <polyline
-                fill="none"
-                stroke="#FF7900"
-                strokeWidth="3"
-                points="0,35 50,35 60,10 70,60 80,35 140,35 150,15 160,55 170,35 240,35"
-                className="heartbeat-line"
-              />
-            </svg>
-          </div>
+          {/* Spinner */}
+          <RingLoader color="#FF7900" size={90} speedMultiplier={1.1} />
 
           <p
             style={{
-              marginTop: 15,
+              marginTop: 25,
               color: "#FF7900",
               letterSpacing: "2px",
               fontWeight: 600,
@@ -107,40 +92,12 @@ function App() {
         </div>
       )}
 
-      {/* 🔸 Animaties */}
+      {/* 🔸 Fade-in animatie */}
       <style>
         {`
           @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-          }
-
-          @keyframes pulseLogo {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.05); opacity: 1; }
-          }
-
-          /* Hartslaglijn + glow */
-          .heartbeat-line {
-            stroke-dasharray: 450;
-            stroke-dashoffset: 450;
-            filter: drop-shadow(0 0 6px rgba(255,121,0,0.6));
-            animation: heartbeat 2s ease-in-out infinite, glow 2s ease-in-out infinite;
-          }
-
-          @keyframes heartbeat {
-            0% { stroke-dashoffset: 450; }
-            50% { stroke-dashoffset: 0; }
-            100% { stroke-dashoffset: -450; }
-          }
-
-          @keyframes glow {
-            0%, 100% { filter: drop-shadow(0 0 6px rgba(255,121,0,0.4)); }
-            50% { filter: drop-shadow(0 0 16px rgba(255,121,0,1)); }
-          }
-
-          .heartbeat-container {
-            margin-top: 10px;
           }
         `}
       </style>
