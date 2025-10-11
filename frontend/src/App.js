@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { RingLoader } from "react-spinners";
+import { PuffLoader } from "react-spinners";
 import logo from "./assets/Middel 4.png";
 
 function App() {
@@ -13,19 +13,20 @@ function App() {
       .then((res) => res.json())
       .then((data) => {
         setStatus(JSON.stringify(data, null, 2));
-        setTimeout(() => setFadeOut(true), 400);
+        // start snelle fade-out
+        setFadeOut(true);
         setTimeout(() => {
           setLoading(false);
           setShowMain(true);
-        }, 1000);
+        }, 300); // 0.3s fade-out
       })
       .catch((err) => {
         setStatus("❌ Fout: " + err.message);
-        setTimeout(() => setFadeOut(true), 400);
+        setFadeOut(true);
         setTimeout(() => {
           setLoading(false);
           setShowMain(true);
-        }, 1000);
+        }, 300);
       });
   }, []);
 
@@ -44,11 +45,10 @@ function App() {
             justifyContent: "center",
             alignItems: "center",
             opacity: fadeOut ? 0 : 1,
-            transition: "opacity 0.8s ease-out",
+            transition: "opacity 0.3s ease-out",
             zIndex: 1000,
           }}
         >
-          {/* Groot logo */}
           <img
             src={logo}
             alt="Revo Sport Logo"
@@ -56,10 +56,10 @@ function App() {
               width: 400,
               height: "auto",
               marginBottom: 60,
+              filter: "drop-shadow(0 0 10px rgba(255,121,0,0.3))",
             }}
           />
 
-          {/* PuffLoader */}
           <PuffLoader color="#FF7900" size={90} speedMultiplier={0.8} />
         </div>
       )}
@@ -72,8 +72,7 @@ function App() {
             background: "#0E1117",
             color: "white",
             minHeight: "100vh",
-            opacity: showMain ? 1 : 0,
-            animation: "fadeIn 1s ease-in forwards",
+            animation: "fadeIn 0.8s ease-in forwards",
           }}
         >
           <h2>🔗 Revo Sport API Test</h2>
@@ -81,7 +80,6 @@ function App() {
         </div>
       )}
 
-      {/* 🔸 Fade-in animatie */}
       <style>
         {`
           @keyframes fadeIn {
