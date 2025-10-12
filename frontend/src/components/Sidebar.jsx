@@ -18,9 +18,12 @@ export default function Sidebar({
     { title: "Oefenschema’s", items: ["Oefenschema’s"] },
   ];
 
+  // compacte max-breedte voor mobiel overlay
+  const WIDTH = 280;
+
   return (
     <>
-      {/* Overlay voor mobiel */}
+      {/* Overlay (alleen mobiel) */}
       <div
         onClick={onClose}
         style={{
@@ -39,122 +42,135 @@ export default function Sidebar({
         style={{
           position: "fixed",
           top: 0,
-          left: collapsed ? "-280px" : "0",
+          left: collapsed ? -WIDTH : 0,
           height: "100vh",
-          width: 280,
+          width: WIDTH,
           background: "#0e1117",
-          borderRight: "1px solid #FF7900",
-          padding: "18px 12px",
-          transition: "left 0.3s ease",
+          borderRight: "1px solid #FF7900", // 1px oranje lijn
+          padding: "18px 16px",
+          transition: "left .3s ease",
           zIndex: 50,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
+          fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
         }}
       >
-        {/* Header met logo + knoppen */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <img src={logo} alt="Revo" style={{ width: 100, height: "auto", margin: "8px 0" }} />
-          <div style={{ display: "flex", gap: "6px" }}>
+        {/* Header: logo + knoppen rechts */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 12,
+          }}
+        >
+          <img src={logo} alt="Revo" style={{ height: 28, objectFit: "contain" }} />
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            {/* <<  /  >> */}
             <button
               onClick={onToggleCollapse}
-              style={{
-                color: "white",
-                background: "none",
-                border: "none",
-                fontSize: "16px",
-                cursor: "pointer",
-              }}
               title={collapsed ? "Sidebar openen" : "Sidebar verbergen"}
+              style={iconBtn}
             >
               {collapsed ? ">>" : "<<"}
             </button>
-            <button
-              onClick={onClose}
-              style={{
-                color: "white",
-                background: "none",
-                border: "none",
-                fontSize: "16px",
-                cursor: "pointer",
-              }}
-              title="Sluiten (mobiel)"
-            >
+            {/* ✕ alleen nuttig op mobiel overlay */}
+            <button onClick={onClose} title="Sluiten (mobiel)" style={iconBtn}>
               ✕
             </button>
           </div>
         </div>
 
-        {/* Menu-items */}
-        <div style={{ flex: 1, overflow: "hidden" }}>
+        {/* Navigatie */}
+        <nav style={{ overflow: "hidden", paddingTop: 4 }}>
           {sections.map((section) => (
-            <div key={section.title} style={{ marginBottom: 10 }}>
-              <div className="subheader">{section.title}</div>
-              {section.items.map((item) => {
-                const isActive = currentPage === item;
-                return (
-                  <button
-                    key={item}
-                    className="btn sidebar-btn"
-                    onClick={() => {
-                      onNavigate(item);
-                      onClose();
-                    }}
-                    style={{
-                      padding: "8px 10px",
-                      fontSize: "15px",
-                      margin: "2px 0",
-                      fontWeight: isActive ? 700 : 500,
-                      color: isActive ? "#727170" : "white",
-                      background: isActive
-                        ? "rgba(255,255,255,0.04)"
-                        : "transparent",
-                      borderLeft: isActive
-                        ? "3px solid var(--accent)"
-                        : "3px solid transparent",
-                      textAlign: "left",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    {item}
-                  </button>
-                );
-              })}
+            <div key={section.title} style={{ marginBottom: 18 }}>
+              <div style={subHeader}>{section.title}</div>
+
+              <div style={{ display: "grid", gap: 8 }}>
+                {section.items.map((item) => {
+                  const active = currentPage === item;
+                  return (
+                    <button
+                      key={item}
+                      className="sidebar-btn"
+                      onClick={() => {
+                        onNavigate(item);
+                        onClose(); // sluit overlay op mobiel
+                      }}
+                      style={{
+                        ...baseItem,
+                        ...(active ? activeItem : {}),
+                      }}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Footer */}
-        <div
-          style={{
-            fontSize: 12,
-            color: "var(--muted)",
-            textAlign: "center",
-            paddingTop: 10,
-          }}
-        >
-          <div style={{ opacity: 0.8, marginTop: 12 }}>
-            Powered by{" "}
-            <span style={{ color: "var(--accent)", fontWeight: 700 }}>
-              REVO SPORT
-            </span>
+        <div style={{ marginTop: "auto", fontSize: 12, color: "var(--muted)" }}>
+          <div style={{ opacity: 0.8, marginTop: 10 }}>
+            Powered by <span style={{ color: "var(--accent)", fontWeight: 700 }}>REVO SPORT</span>
           </div>
         </div>
       </aside>
 
-      {/* Hover-kleur wit → oranje */}
+      {/* Hover kleur en desktop sticky */}
       <style>{`
         .sidebar-btn:hover {
           color: #FF7900 !important;
           background: rgba(255,121,0,0.08);
         }
         @media (min-width: 900px) {
-          aside {
-            position: sticky !important;
-            top: 0;
-          }
+          aside { position: sticky !important; left: 0 !important; top: 0; }
         }
       `}</style>
     </>
   );
 }
+
+/* ====== Styles ====== */
+const iconBtn = {
+  color: "white",
+  background: "none",
+  border: "none",
+  fontSize: 16,
+  cursor: "pointer",
+  lineHeight: 1,
+};
+
+const subHeader = {
+  fontSize: 12,
+  fontWeight: 800,
+  letterSpacing: ".08em",
+  color: "#FF7900",
+  textTransform: "uppercase",
+  margin: "14px 2px 8px",
+};
+
+const baseItem = {
+  appearance: "none",
+  border: 0,
+  background: "transparent",
+  color: "white",
+  textAlign: "left",
+  padding: "12px 14px",
+  borderRadius: 12,
+  fontSize: 16,
+  fontWeight: 500,
+  cursor: "pointer",
+  transition: "color .2s ease, background .2s ease",
+};
+
+const activeItem = {
+  color: "#727170",
+  fontWeight: 700,
+  background: "rgba(255,255,255,0.06)",      // donkere pill
+  boxShadow: "inset 3px 0 0 var(--accent)",   // oranje “linker-lijntje”
+};
