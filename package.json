@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "lucide-react": "^0.545.0",
     "react-spinners": "^0.17.0"
   }
 }

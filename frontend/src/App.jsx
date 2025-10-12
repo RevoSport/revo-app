@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { PuffLoader } from "react-spinners";
+import { Menu } from "lucide-react"; // ✅ toegevoegd
 import logo from "./assets/logo.png";
 import "./index.css";
 import Sidebar from "./components/Sidebar";
@@ -25,8 +26,7 @@ function App() {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-
-  // 🔸 API-check (jouw bestaande useEffect)
+  // 🔸 API-check
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_URL}/`)
       .then((res) => res.json())
@@ -51,14 +51,22 @@ function App() {
   // 🔹 Bepaalt welke pagina wordt weergegeven
   const PageEl = useMemo(() => {
     switch (page) {
-      case "Voorste Kruisband": return <VoorsteKruisband />;
-      case "Performance": return <Performance />;
-      case "KFV Hedes": return <KFVHedes />;
-      case "KC Floriant": return <KCFloriant />;
-      case "Screening": return <Screening />;
-      case "Loopanalyse": return <Loopanalyse />;
-      case "Oefenschema’s": return <Oefenschemas />;
-      default: return <Home />;
+      case "Voorste Kruisband":
+        return <VoorsteKruisband />;
+      case "Performance":
+        return <Performance />;
+      case "KFV Hedes":
+        return <KFVHedes />;
+      case "KC Floriant":
+        return <KCFloriant />;
+      case "Screening":
+        return <Screening />;
+      case "Loopanalyse":
+        return <Loopanalyse />;
+      case "Oefenschema’s":
+        return <Oefenschemas />;
+      default:
+        return <Home />;
     }
   }, [page]);
 
@@ -88,7 +96,7 @@ function App() {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              transform: "translateY(-10%)", // optisch midden van pagina
+              transform: "translateY(-10%)",
             }}
           >
             <img
@@ -107,20 +115,49 @@ function App() {
         </div>
       )}
 
-      {/* 🔹 Streamlit-style Main Layout */}
+      {/* 🔹 Main Layout */}
       {showMain && (
-      <div
-        className="layout fade-in"
-        style={{
-          marginLeft: collapsed ? 0 : 280,
-          transition: "margin-left 0.3s ease",
-        }}
-      >
-
-          {/* 🔹 Topbar (mobiel) */}
-          <div className="topbar">
-            <button className="btn hamburger" onClick={() => setOpen(true)}>☰</button>
-            <h1>Revo DataLab</h1>
+        <div className="layout fade-in">
+          {/* 🔹 Minimalistische menu-knop */}
+          <div
+            style={{
+              position: "fixed",
+              top: 14,
+              left: 16,
+              zIndex: 999,
+            }}
+          >
+            <button
+              onClick={() => setCollapsed(false)} // opent sidebar
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                lineHeight: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Open menu"
+            >
+              <Menu
+                size={26}
+                color="white"
+                strokeWidth={2}
+                style={{
+                  transition: "color 0.2s ease, transform 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#FF7900";
+                  e.currentTarget.style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "white";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              />
+            </button>
           </div>
 
           {/* 🔸 Sidebar component */}
@@ -133,18 +170,15 @@ function App() {
             collapsed={collapsed}
           />
 
-
           {/* 🔸 Main content */}
-          <main className="main">
-            {PageEl}
-          </main>
+          <main className="main">{PageEl}</main>
 
-          {/* 🔹 Sticky sidebar styling desktop */}
+          {/* 🔹 Desktop layout fix */}
           <style>{`
             @media (min-width: 900px){
-              .topbar{ display: none; }
               .layout{ grid-template-columns: 280px 1fr; }
               aside{ transform: translateX(0) !important; position: sticky !important; }
+              [title="Open menu"]{ display: none; }
             }
           `}</style>
         </div>
