@@ -23,6 +23,8 @@ function App() {
   // 🔹 Sidebar navigatie
   const [page, setPage] = useState("Home");
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
 
   // 🔸 API-check (jouw bestaande useEffect)
   useEffect(() => {
@@ -107,7 +109,14 @@ function App() {
 
       {/* 🔹 Streamlit-style Main Layout */}
       {showMain && (
-        <div className="layout fade-in">
+      <div
+        className="layout fade-in"
+        style={{
+          marginLeft: collapsed ? 0 : 280,
+          transition: "margin-left 0.3s ease",
+        }}
+      >
+
           {/* 🔹 Topbar (mobiel) */}
           <div className="topbar">
             <button className="btn hamburger" onClick={() => setOpen(true)}>☰</button>
@@ -120,7 +129,10 @@ function App() {
             onNavigate={setPage}
             isOpen={open}
             onClose={() => setOpen(false)}
+            onToggleCollapse={() => setCollapsed(!collapsed)}
+            collapsed={collapsed}
           />
+
 
           {/* 🔸 Main content */}
           <main className="main">
