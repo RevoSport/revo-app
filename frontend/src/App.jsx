@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { PuffLoader } from "react-spinners";
-import { Menu } from "lucide-react"; // ✅ toegevoegd
+import { Menu } from "lucide-react"; // icoon
 import logo from "./assets/logo.png";
 import "./index.css";
 import Sidebar from "./components/Sidebar";
@@ -25,6 +25,17 @@ function App() {
   const [page, setPage] = useState("Home");
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  // 🔹 Huidige schermbreedte volgen (voor dynamisch menu-icoon)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 900);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // 🔸 API-check
   useEffect(() => {
@@ -118,47 +129,49 @@ function App() {
       {/* 🔹 Main Layout */}
       {showMain && (
         <div className="layout fade-in">
-          {/* 🔹 Minimalistische menu-knop */}
-          <div
-            style={{
-              position: "fixed",
-              top: 14,
-              left: 16,
-              zIndex: 999,
-            }}
-          >
-            <button
-              onClick={() => setCollapsed(false)} // opent sidebar
+          {/* 🔹 Minimalistische menu-knop (alleen mobiel) */}
+          {isMobile && (
+            <div
               style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                lineHeight: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                position: "fixed",
+                top: 14,
+                left: 16,
+                zIndex: 999,
               }}
-              title="Open menu"
             >
-              <Menu
-                size={26}
-                color="white"
-                strokeWidth={2}
+              <button
+                onClick={() => setCollapsed(false)} // opent sidebar
                 style={{
-                  transition: "color 0.2s ease, transform 0.2s ease",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#FF7900";
-                  e.currentTarget.style.transform = "scale(1.1)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "white";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-              />
-            </button>
-          </div>
+                title="Open menu"
+              >
+                <Menu
+                  size={26}
+                  color="white"
+                  strokeWidth={2}
+                  style={{
+                    transition: "color 0.2s ease, transform 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#FF7900";
+                    e.currentTarget.style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "white";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                />
+              </button>
+            </div>
+          )}
 
           {/* 🔸 Sidebar component */}
           <Sidebar
@@ -178,7 +191,6 @@ function App() {
             @media (min-width: 900px){
               .layout{ grid-template-columns: 280px 1fr; }
               aside{ transform: translateX(0) !important; position: sticky !important; }
-              [title="Open menu"]{ display: none; }
             }
           `}</style>
         </div>
