@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { PuffLoader } from "react-spinners";
-import { Menu } from "lucide-react"; // icoon
+import { Menu, X } from "lucide-react"; // ✅ icoontjes
 import logo from "./assets/logo.png";
 import "./index.css";
 import Sidebar from "./components/Sidebar";
 
-// 🧩 Pagina’s importeren
 import Home from "./pages/Home";
 import VoorsteKruisband from "./pages/VoorsteKruisband";
 import Performance from "./pages/Performance";
@@ -21,36 +20,29 @@ function App() {
   const [fadeOut, setFadeOut] = useState(false);
   const [showMain, setShowMain] = useState(false);
 
-  // 🔹 Sidebar navigatie
   const [page, setPage] = useState("Home");
-  const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-
-  // 🔹 Huidige schermbreedte volgen (voor dynamisch menu-icoon)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
 
+  // Dynamisch aanpassen bij venstergrootte
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 900);
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 🔸 API-check
+  // API-check (loading)
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_URL}/`)
       .then((res) => res.json())
-      .then((data) => {
-        setStatus(JSON.stringify(data, null, 2));
+      .then(() => {
         setFadeOut(true);
         setTimeout(() => {
           setLoading(false);
           setShowMain(true);
         }, 300);
       })
-      .catch((err) => {
-        setStatus("❌ Fout: " + err.message);
+      .catch(() => {
         setFadeOut(true);
         setTimeout(() => {
           setLoading(false);
@@ -59,25 +51,17 @@ function App() {
       });
   }, []);
 
-  // 🔹 Bepaalt welke pagina wordt weergegeven
+  // Pagina’s
   const PageEl = useMemo(() => {
     switch (page) {
-      case "Voorste Kruisband":
-        return <VoorsteKruisband />;
-      case "Performance":
-        return <Performance />;
-      case "KFV Hedes":
-        return <KFVHedes />;
-      case "KC Floriant":
-        return <KCFloriant />;
-      case "Screening":
-        return <Screening />;
-      case "Loopanalyse":
-        return <Loopanalyse />;
-      case "Oefenschema’s":
-        return <Oefenschemas />;
-      default:
-        return <Home />;
+      case "Voorste Kruisband": return <VoorsteKruisband />;
+      case "Performance": return <Performance />;
+      case "KFV Hedes": return <KFVHedes />;
+      case "KC Floriant": return <KCFloriant />;
+      case "Screening": return <Screening />;
+      case "Loopanalyse": return <Loopanalyse />;
+      case "Oefenschema’s": return <Oefenschemas />;
+      default: return <Home />;
     }
   }, [page]);
 
@@ -101,34 +85,37 @@ function App() {
             zIndex: 1000,
           }}
         >
-          <div
+          <img
+            src={logo}
+            alt="Revo Sport Logo"
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              transform: "translateY(-10%)",
+              width: "40%",
+              maxWidth: 400,
+              marginBottom: 40,
+              filter: "drop-shadow(0 0 10px rgba(255,121,0,0.3))",
             }}
-          >
-            <img
-              src={logo}
-              alt="Revo Sport Logo"
-              style={{
-                width: "40%",
-                maxWidth: 400,
-                height: "auto",
-                marginBottom: 40,
-                filter: "drop-shadow(0 0 10px rgba(255,121,0,0.3))",
-              }}
-            />
-            <PuffLoader color="#FF7900" size={90} speedMultiplier={0.8} />
-          </div>
+          />
+          <PuffLoader color="#FF7900" size={90} speedMultiplier={0.8} />
         </div>
       )}
 
       {/* 🔹 Main Layout */}
       {showMain && (
         <div className="layout fade-in">
+          {/* 🔹 Overlay bij openstaand menu (mobiel) */}
+          {isMobile && !collapsed && (
+            <div
+              onClick={() => setCollapsed(true)}
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0,0,0,0.5)",
+                zIndex: 80,
+                transition: "opacity 0.3s ease",
+              }}
+            />
+          )}
+
           {/* 🔹 Minimalistische menu-knop (alleen mobiel) */}
           {isMobile && (
             <div
@@ -140,7 +127,7 @@ function App() {
               }}
             >
               <button
-                onClick={() => setCollapsed(false)} // opent sidebar
+                onClick={() => setCollapsed(!collapsed)} // open/sluit
                 style={{
                   background: "transparent",
                   border: "none",
@@ -151,24 +138,43 @@ function App() {
                   alignItems: "center",
                   justifyContent: "center",
                 }}
-                title="Open menu"
+                title={collapsed ? "Open menu" : "Sluit menu"}
               >
-                <Menu
-                  size={26}
-                  color="white"
-                  strokeWidth={2}
-                  style={{
-                    transition: "color 0.2s ease, transform 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#FF7900";
-                    e.currentTarget.style.transform = "scale(1.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "white";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                />
+                {collapsed ? (
+                  <Menu
+                    size={26}
+                    color="white"
+                    strokeWidth={2}
+                    style={{
+                      transition: "color 0.2s ease, transform 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#FF7900";
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "white";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                  />
+                ) : (
+                  <X
+                    size={26}
+                    color="white"
+                    strokeWidth={2}
+                    style={{
+                      transition: "color 0.2s ease, transform 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#FF7900";
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "white";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                  />
+                )}
               </button>
             </div>
           )}
@@ -177,8 +183,6 @@ function App() {
           <Sidebar
             currentPage={page}
             onNavigate={setPage}
-            isOpen={open}
-            onClose={() => setOpen(false)}
             onToggleCollapse={() => setCollapsed(!collapsed)}
             collapsed={collapsed}
           />
@@ -195,15 +199,6 @@ function App() {
           `}</style>
         </div>
       )}
-
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-        `}
-      </style>
     </>
   );
 }

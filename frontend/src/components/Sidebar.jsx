@@ -1,6 +1,6 @@
 import React from "react";
-import logo from "../assets/logo.png";
-import { ChevronLeft, ChevronRight } from "lucide-react"; // icoontjes
+import logo from "../assets/logo2.png";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Sidebar({
   currentPage,
@@ -29,9 +29,9 @@ export default function Sidebar({
           position: "fixed",
           inset: 0,
           background: "rgba(0,0,0,0.5)",
-          opacity: isOpen ? 1 : 0,
-          pointerEvents: isOpen ? "auto" : "none",
-          transition: "opacity .2s ease",
+          opacity: isOpen && !collapsed ? 1 : 0,
+          pointerEvents: isOpen && !collapsed ? "auto" : "none",
+          transition: "opacity 0.25s ease",
           zIndex: 40,
         }}
       />
@@ -47,8 +47,8 @@ export default function Sidebar({
           background: "#0e1117",
           borderRight: "1px solid #FF7900",
           padding: "18px 16px",
-          transform: collapsed ? "translateX(-100%)" : "translateX(0)",
-          transition: "transform 0.4s ease",
+          transform: collapsed ? "translateX(-102%)" : "translateX(0)",
+          transition: "transform 0.35s cubic-bezier(0.55, 0.055, 0.675, 0.19)",
           zIndex: 50,
           display: "flex",
           flexDirection: "column",
@@ -56,7 +56,7 @@ export default function Sidebar({
             "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
         }}
       >
-        {/* 🔹 Knop rechtsboven */}
+        {/* 🔹 Toggle-knop */}
         <div
           style={{
             display: "flex",
@@ -85,7 +85,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* 🧡 Klikbaar logo */}
+        {/* 🧡 Logo */}
         <div
           onClick={() => {
             onNavigate("Home");
@@ -143,7 +143,6 @@ export default function Sidebar({
                   return (
                     <button
                       key={item}
-                      className="sidebar-btn"
                       onClick={() => {
                         onNavigate(item);
                         onClose();
@@ -164,7 +163,7 @@ export default function Sidebar({
                           ? "rgba(255,255,255,0.06)"
                           : "transparent",
                         boxShadow: isActive
-                          ? "inset 3px 0 0 var(--accent)"
+                          ? "inset 3px 0 0 #FF7900"
                           : "inset 3px 0 0 transparent",
                       }}
                     >
