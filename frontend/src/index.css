@@ -1,13 +1,169 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
+  --bg: #0e1117;
+  --panel: #151a23;
+  --text: #ffffff;
+  --muted: #c9c9c9;
+  --accent: #FF7900;
+  --accent-hover: #FFA64D;
+  --border: rgba(255,121,0,0.35);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* === LAYOUT GRID: sidebar + main === */
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+/* MOBILE: sidebar overlay */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === MAIN CONTENT CONTAINER === */
+.main {
+  padding: clamp(16px, 2vw, 28px);
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+}
+
+/* === RESPONSIVE GRID voor kaarten (zoals Streamlit) === */
+.responsive-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* === KAART-STYLING === */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+/* === TITELS === */
+.h1 {
+  font-size: clamp(22px, 2.8vw, 32px);
+  margin: 0 0 12px;
+}
+.h2 {
+  font-size: clamp(16px, 2vw, 18px);
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+/* === BUTTON-STIJL (voor sidebar-items) === */
+.btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease, transform .05s ease;
+}
+.btn:hover {
+  color: var(--accent);
+  background: rgba(255,121,0,0.08);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* === SUBHEADERS IN SIDEBAR === */
+.subheader {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 18px 8px 6px;
+}
+
+/* === FADE-IN ANIMATIE === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.fade-in {
+  animation: fadeIn 0.8s ease;
+}
+
+/* === TOPBAR voor kleine schermen (hamburger-menu) === */
+.topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  align-items: center;
+  gap: 10px;
+}
+.topbar h1 {
+  font-size: 16px;
+  margin: 0;
+  letter-spacing: .02em;
+}
+.topbar .hamburger {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    display: flex;
+  }
+}
+
+/* === SIMPLE TABLE-STYLING (voor demo of data) === */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.table th, .table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  text-align: left;
+  font-size: 14px;
+}
+.table thead th {
+  background: rgba(255,255,255,0.04);
+  font-weight: 700;
 }
