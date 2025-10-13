@@ -5,22 +5,22 @@ export default function VoorsteKruisband() {
   const cards = [
     {
       title: "POPULATIE",
-      icon: <User size={30} color="var(--accent)" />,
+      icon: <User size={24} color="var(--accent)" />,
       onClick: () => console.log("Populatie Beschrijving"),
     },
     {
       title: "METRICS",
-      icon: <Ruler size={30} color="var(--accent)" />,
+      icon: <Ruler size={24} color="var(--accent)" />,
       onClick: () => console.log("Antropometrie & Mobiliteit"),
     },
     {
       title: "KRACHT",
-      icon: <Dumbbell size={30} color="var(--accent)" />,
+      icon: <Dumbbell size={24} color="var(--accent)" />,
       onClick: () => console.log("Kracht"),
     },
     {
       title: "FUNCTIONELE TESTING",
-      icon: <ClipboardList size={30} color="var(--accent)" />,
+      icon: <ClipboardList size={24} color="var(--accent)" />,
       onClick: () => console.log("Functionele Testing"),
     },
   ];
@@ -62,15 +62,15 @@ export default function VoorsteKruisband() {
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === 4 CARDS === */}
+      {/* === 4 COMPACTE CARDS === */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "28px",
+          gap: "24px",
           width: "100%",
-          maxWidth: "1100px",
-          marginBottom: "35px",
+          maxWidth: "950px",
+          marginBottom: "30px",
         }}
       >
         {cards.map((card) => (
@@ -79,12 +79,12 @@ export default function VoorsteKruisband() {
             onClick={card.onClick}
             style={{
               backgroundColor: "#1a1a1a",
-              borderRadius: "12px",
-              padding: "22px 10px",
-              border: "1.8px solid transparent",
+              borderRadius: "10px",
+              padding: "16px 8px", // 🔹 kleiner
+              border: "1.5px solid transparent",
               cursor: "pointer",
               transition: "all 0.25s ease",
-              boxShadow: "0 0 10px rgba(0,0,0,0.35)",
+              boxShadow: "0 0 8px rgba(0,0,0,0.3)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -92,22 +92,22 @@ export default function VoorsteKruisband() {
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.borderColor = "var(--accent)";
-              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.transform = "translateY(-3px)";
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.borderColor = "transparent";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <div style={{ marginBottom: "8px" }}>{card.icon}</div>
+            <div style={{ marginBottom: "6px" }}>{card.icon}</div>
             <h3
               style={{
-                fontSize: "12px",
+                fontSize: "10px",
                 fontWeight: 600,
                 color: "white",
-                letterSpacing: "0.8px",
+                letterSpacing: "0.7px",
                 textTransform: "uppercase",
-                lineHeight: "1.3",
+                lineHeight: "1.2",
               }}
             >
               {card.title}
@@ -116,12 +116,12 @@ export default function VoorsteKruisband() {
         ))}
       </div>
 
-      {/* === ORANJE LIJN ONDER DE CARDS === */}
+      {/* === ORANJE LIJN === */}
       <div
         style={{
           width: "100%",
-          height: "1px", // even dik als menu-lijn
-          backgroundColor: "#1a1a1a",
+          height: "1px",
+          backgroundColor: "#FF7900",
           opacity: 1,
         }}
       ></div>
