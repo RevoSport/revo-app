@@ -6,7 +6,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-300italic.woff2") format("woff2");
@@ -14,7 +13,6 @@
   font-style: italic;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-400.woff2") format("woff2");
@@ -22,7 +20,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-400italic.woff2") format("woff2");
@@ -30,7 +27,6 @@
   font-style: italic;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500.woff2") format("woff2");
@@ -38,7 +34,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500italic.woff2") format("woff2");
@@ -46,7 +41,6 @@
   font-style: italic;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-600.woff2") format("woff2");
@@ -54,7 +48,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-600italic.woff2") format("woff2");
@@ -62,7 +55,6 @@
   font-style: italic;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700.woff2") format("woff2");
@@ -70,7 +62,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700italic.woff2") format("woff2");
@@ -78,7 +69,6 @@
   font-style: italic;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800.woff2") format("woff2");
@@ -86,7 +76,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800italic.woff2") format("woff2");
@@ -103,9 +92,10 @@
   --muted: #c9c9c9;
   --accent: #FF7900;
   --accent-hover: #FFA64D;
-  --border: rgba(255,121,0,0.35);
+  --border: rgba(255, 121, 0, 0.35);
 }
 
+/* === ALGEMENE BASISSTIJLEN === */
 * {
   box-sizing: border-box;
 }
@@ -134,7 +124,7 @@ body {
   }
 }
 
-/* === MAIN CONTENT CONTAINER === */
+/* === MAIN CONTENT === */
 .main {
   padding: clamp(16px, 2vw, 28px);
   width: 100%;
@@ -191,7 +181,7 @@ body {
 }
 .btn:hover {
   color: var(--accent);
-  background: rgba(255,121,0,0.08);
+  background: rgba(255, 121, 0, 0.08);
 }
 .btn:active {
   transform: translateY(1px);
@@ -207,7 +197,7 @@ body {
   margin: 18px 8px 6px;
 }
 
-/* === FADE-IN === */
+/* === FADE-IN EFFECT === */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -240,7 +230,6 @@ body {
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
 }
-
 @media (max-width: 900px) {
   .topbar {
     display: flex;
@@ -265,26 +254,14 @@ body {
   font-weight: 700;
 }
 
-.sidebar-btn {
-  letter-spacing: 0.02em;
-  font-weight: 500;
-}
-.subheader {
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-@media (min-width: 900px) {
-  [title="Open menu"] {
-    display: none;
-  }
-}
-
-/* === UNIFORME TEKSTGROOTTE IN SIDEBAR === */
+/* === SIDEBAR STIJLEN === */
 aside {
-  font-size: 14px;                  /* bepaal hier de grootte */
+  width: 200px !important;
+  padding: 24px 16px 24px 22px !important;
+  font-size: 14px;
   font-family: "Open Sans", sans-serif;
   line-height: 1.4em;
+  border-right: 1px solid rgba(255, 121, 0, 0.3) !important; /* subtiele afscheiding */
 }
 
 aside * {
@@ -292,37 +269,44 @@ aside * {
   line-height: inherit;
 }
 
-/* === ORANJE SECTIETITELS IN SIDEBAR (minder vet) === */
-aside div {
-  font-weight: 500; /* standaard voor alle divs, zachter lettergewicht */
-  text-transform: uppercase;
-}
-
-aside div[style*="color: var(--accent)"] {
-  font-weight: 600 !important;  /* iets vetter dan standaard, maar niet te zwaar */
-  letter-spacing: 0.08em;
-  color: var(--accent);
-  text-transform: uppercase;
-}
-
-/* === SIDEBAR SPACING EN STRUCTUUR === */
-
-/* Logo extra marge onderaan */
+/* Logo extra marge */
 aside img {
-  margin-bottom: 36px !important; /* vroeger 20px → meer ruimte */
+  margin-bottom: 36px !important;
 }
 
-/* Secties duidelijker gescheiden */
-aside nav > div {
-  margin-bottom: 26px !important; /* meer witruimte tussen secties */
-}
-
-/* Oranje sectietitels subtieler */
+/* Oranje sectietitels */
 aside div[style*="color: var(--accent)"] {
-  font-weight: 600 !important; /* minder vet */
-  margin-top: 10px !important;
-  margin-bottom: 10px !important;
+  padding-left: 6px !important;
+  font-weight: 600 !important;
   letter-spacing: 0.08em;
+  margin: 12px 0 !important;
   color: var(--accent);
   text-transform: uppercase;
+}
+
+/* Sectieafstand */
+aside nav > div {
+  margin-bottom: 28px !important;
+}
+
+/* Knoppen spacing */
+aside nav button {
+  padding-left: 20px !important;
+}
+
+/* Chevron-knoppen uitlijning */
+button[title="Sidebar verbergen"],
+button[title="Sidebar openen"] {
+  left: 8px !important;
+  color: var(--text);
+  transition: color 0.2s ease;
+}
+button[title="Sidebar openen"] {
+  left: 10px !important;
+}
+
+/* Hover voor Chevron */
+button[title="Sidebar verbergen"]:hover,
+button[title="Sidebar openen"]:hover {
+  color: var(--accent-hover);
 }
