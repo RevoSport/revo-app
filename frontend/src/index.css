@@ -279,3 +279,15 @@ body {
     display: none;
   }
 }
+
+/* === UNIFORME TEKSTGROOTTE IN SIDEBAR === */
+aside {
+  font-size: 16px;                  /* bepaal hier de grootte */
+  font-family: "Open Sans", sans-serif;
+  line-height: 1.4em;
+}
+
+aside * {
+  font-size: inherit !important;
+  line-height: inherit;
+}
