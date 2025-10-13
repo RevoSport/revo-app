@@ -108,37 +108,26 @@ export default function Sidebar({ currentPage, onNavigate }) {
                     <button
                       key={item}
                       onClick={() => onNavigate(item)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = "var(--accent)";
-                        e.currentTarget.style.background =
-                          "rgba(255,121,0,0.08)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = isActive
-                          ? "var(--muted)"
-                          : "var(--text)";
-                        e.currentTarget.style.background = isActive
-                          ? "rgba(255,255,255,0.06)"
-                          : "transparent";
-                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.color = "var(--accent)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.color = isActive
+                          ? "var(--accent)"
+                          : "var(--text)")
+                      }
                       style={{
                         appearance: "none",
                         border: 0,
-                        background: isActive
-                          ? "rgba(255,255,255,0.06)"
-                          : "transparent",
-                        color: isActive ? "var(--muted)" : "var(--text)",
+                        background: "transparent",
+                        color: isActive ? "var(--accent)" : "var(--text)",
                         textAlign: "left",
                         padding: "10px 14px",
                         borderRadius: 10,
                         fontSize: 12,
                         fontWeight: isActive ? 700 : 500,
                         cursor: "pointer",
-                        transition:
-                          "color .2s ease, background .2s ease, transform .2s ease",
-                        boxShadow: isActive
-                          ? "inset 3px 0 0 var(--accent)"
-                          : "inset 3px 0 0 transparent",
+                        transition: "color .2s ease",
                       }}
                     >
                       {item}

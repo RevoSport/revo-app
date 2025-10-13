@@ -95,8 +95,8 @@
   --text: #ffffff;
   --muted: #c9c9c9;
   --accent: #FF7900;
-  --accent-hover: #FFA64D;
-  --border: rgba(255,121,0,0.35);
+  --accent-hover: #FF7900;
+  --border: #FF7900;
 }
 
 /* =========================================================
