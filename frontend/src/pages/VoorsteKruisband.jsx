@@ -120,7 +120,7 @@ export default function VoorsteKruisband() {
       <div
         style={{
           width: "100%",
-          height: "1px", // even dik als menu-lijn
+          height: "0.5px", // even dik als menu-lijn
           backgroundColor: "var(--accent)",
           opacity: 0.7,
         }}
