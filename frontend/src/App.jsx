@@ -1,206 +1,185 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { PuffLoader } from "react-spinners";
-import { Menu, X } from "lucide-react"; // ✅ icoontjes
-import logo from "./assets/logo.png";
-import "./index.css";
-import Sidebar from "./components/Sidebar";
+import React from "react";
+import logo from "../assets/logo.png";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import Home from "./pages/Home";
-import VoorsteKruisband from "./pages/VoorsteKruisband";
-import Performance from "./pages/Performance";
-import KFVHedes from "./pages/KFVHedes";
-import KCFloriant from "./pages/KCFloriant";
-import Screening from "./pages/Screening";
-import Loopanalyse from "./pages/Loopanalyse";
-import Oefenschemas from "./pages/Oefenschemas";
+export default function Sidebar({ currentPage, onNavigate, onToggleCollapse, collapsed }) {
+  const WIDTH = 280;
 
-function App() {
-  const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [fadeOut, setFadeOut] = useState(false);
-  const [showMain, setShowMain] = useState(false);
-
-  const [page, setPage] = useState("Home");
-  const [collapsed, setCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
-
-  // Dynamisch aanpassen bij venstergrootte
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 900);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // API-check (loading)
-  useEffect(() => {
-    fetch(`${process.env.REACT_APP_API_URL}/`)
-      .then((res) => res.json())
-      .then(() => {
-        setFadeOut(true);
-        setTimeout(() => {
-          setLoading(false);
-          setShowMain(true);
-        }, 300);
-      })
-      .catch(() => {
-        setFadeOut(true);
-        setTimeout(() => {
-          setLoading(false);
-          setShowMain(true);
-        }, 300);
-      });
-  }, []);
-
-  // Pagina’s
-  const PageEl = useMemo(() => {
-    switch (page) {
-      case "Voorste Kruisband": return <VoorsteKruisband />;
-      case "Performance": return <Performance />;
-      case "KFV Hedes": return <KFVHedes />;
-      case "KC Floriant": return <KCFloriant />;
-      case "Screening": return <Screening />;
-      case "Loopanalyse": return <Loopanalyse />;
-      case "Oefenschema’s": return <Oefenschemas />;
-      default: return <Home />;
-    }
-  }, [page]);
+  const sections = [
+    { title: "Revalidatie", items: ["Voorste Kruisband"] },
+    { title: "Performance", items: ["Performance"] },
+    { title: "Monitoring", items: ["KFV Hedes", "KC Floriant"] },
+    { title: "Blessurepreventie", items: ["Screening", "Loopanalyse"] },
+    { title: "Oefenschema’s", items: ["Oefenschema’s"] },
+  ];
 
   return (
-    <>
-      {/* 🔸 Loading Screen */}
-      {loading && (
-        <div
+    <aside
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        height: "100vh",
+        width: WIDTH,
+        background: "#0E1117",
+        borderRight: "1px solid #FF7900",
+        padding: "18px 16px",
+        transform: collapsed ? "translateX(-110%)" : "translateX(0)",
+        transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        zIndex: 90,
+        display: "flex",
+        flexDirection: "column",
+        fontFamily: "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+      }}
+    >
+      {/* 🔹 Pijlknop rechtsboven */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          marginBottom: 10,
+        }}
+      >
+        <button
+          onClick={onToggleCollapse}
           style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "#0E1117",
             color: "white",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            opacity: fadeOut ? 0 : 1,
-            transition: "opacity 0.3s ease-out",
-            zIndex: 1000,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px",
+            transition: "color 0.2s ease",
           }}
+          title={collapsed ? "Sidebar openen" : "Sidebar verbergen"}
         >
-          <img
-            src={logo}
-            alt="Revo Sport Logo"
-            style={{
-              width: "40%",
-              maxWidth: 400,
-              marginBottom: 40,
-              filter: "drop-shadow(0 0 10px rgba(255,121,0,0.3))",
-            }}
-          />
-          <PuffLoader color="#FF7900" size={90} speedMultiplier={0.8} />
-        </div>
-      )}
-
-      {/* 🔹 Main Layout */}
-      {showMain && (
-        <div className="layout fade-in">
-          {/* 🔹 Overlay bij openstaand menu (mobiel) */}
-          {isMobile && !collapsed && (
-            <div
-              onClick={() => setCollapsed(true)}
-              style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.5)",
-                zIndex: 80,
-                transition: "opacity 0.3s ease",
-              }}
-            />
+          {collapsed ? (
+            <ChevronRight size={22} strokeWidth={2.2} />
+          ) : (
+            <ChevronLeft size={22} strokeWidth={2.2} />
           )}
+        </button>
+      </div>
 
-          {/* 🔹 Minimalistische menu-knop (alleen mobiel) */}
-          {isMobile && (
+      {/* 🔸 Logo */}
+      <div
+        onClick={() => onNavigate("Home")}
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          cursor: "pointer",
+          marginBottom: 20,
+        }}
+      >
+        <img
+          src={logo}
+          alt="Revo Sport Logo"
+          style={{
+            width: "80%",
+            height: "auto",
+            filter: "drop-shadow(0 0 10px rgba(255,121,0,0.3))",
+            transition: "transform 0.2s ease, filter 0.2s ease",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.filter =
+              "drop-shadow(0 0 15px rgba(255,121,0,0.5))")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.filter =
+              "drop-shadow(0 0 10px rgba(255,121,0,0.3))")
+          }
+        />
+      </div>
+
+      {/* 🔸 Menu-items */}
+      <nav style={{ overflowY: "auto", flex: 1 }}>
+        {sections.map((section) => (
+          <div key={section.title} style={{ marginBottom: 10 }}>
             <div
               style={{
-                position: "fixed",
-                top: 14,
-                left: 16,
-                zIndex: 999,
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: ".08em",
+                color: "#FF7900",
+                textTransform: "uppercase",
+                margin: "14px 2px 8px",
               }}
             >
-              <button
-                onClick={() => setCollapsed(!collapsed)} // open/sluit
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  lineHeight: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                title={collapsed ? "Open menu" : "Sluit menu"}
-              >
-                {collapsed ? (
-                  <Menu
-                    size={26}
-                    color="white"
-                    strokeWidth={2}
-                    style={{
-                      transition: "color 0.2s ease, transform 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#FF7900";
-                      e.currentTarget.style.transform = "scale(1.1)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "white";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                  />
-                ) : (
-                  <X
-                    size={26}
-                    color="white"
-                    strokeWidth={2}
-                    style={{
-                      transition: "color 0.2s ease, transform 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#FF7900";
-                      e.currentTarget.style.transform = "scale(1.1)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "white";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                  />
-                )}
-              </button>
+              {section.title}
             </div>
-          )}
 
-          {/* 🔸 Sidebar component */}
-          <Sidebar
-            currentPage={page}
-            onNavigate={setPage}
-            onToggleCollapse={() => setCollapsed(!collapsed)}
-            collapsed={collapsed}
-          />
+            <div style={{ display: "grid", gap: 8 }}>
+              {section.items.map((item) => {
+                const isActive = currentPage === item;
+                return (
+                  <button
+                    key={item}
+                    onClick={() => onNavigate(item)}
+                    style={{
+                      appearance: "none",
+                      border: 0,
+                      background: "transparent",
+                      color: isActive ? "#727170" : "white",
+                      textAlign: "left",
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      fontSize: 16,
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: "pointer",
+                      transition: "color .2s ease, background .2s ease",
+                      background: isActive
+                        ? "rgba(255,255,255,0.06)"
+                        : "transparent",
+                      boxShadow: isActive
+                        ? "inset 3px 0 0 var(--accent, #FF7900)"
+                        : "inset 3px 0 0 transparent",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "#FF7900")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = isActive ? "#727170" : "white")
+                    }
+                  >
+                    {item}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
 
-          {/* 🔸 Main content */}
-          <main className="main">{PageEl}</main>
-
-          {/* 🔹 Desktop layout fix */}
-          <style>{`
-            @media (min-width: 900px){
-              .layout{ grid-template-columns: 280px 1fr; }
-              aside{ transform: translateX(0) !important; position: sticky !important; }
-            }
-          `}</style>
+      {/* 🔹 Footer */}
+      <div
+        style={{
+          marginTop: "auto",
+          fontSize: 12,
+          color: "#888",
+          textAlign: "center",
+          paddingTop: 10,
+        }}
+      >
+        <div style={{ opacity: 0.8, marginTop: 12 }}>
+          Powered by{" "}
+          <span style={{ color: "#FF7900", fontWeight: 700 }}>REVO SPORT</span>
         </div>
-      )}
-    </>
+      </div>
+
+      <style>
+        {`
+          button:hover svg {
+            color: #FF7900;
+            stroke: #FF7900;
+          }
+          .sidebar-btn:hover {
+            color: #FF7900 !important;
+            background: rgba(255,121,0,0.08);
+          }
+        `}
+      </style>
+    </aside>
   );
 }
-
-export default App;
