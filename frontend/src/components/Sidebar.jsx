@@ -61,92 +61,81 @@ export default function Sidebar({ currentPage, onNavigate }) {
           <ChevronLeft size={22} strokeWidth={2.2} />
         </button>
 
-        {/* === HEADER + MENU als flex kolom === */}
+        {/* === HEADERZONE: logo gecentreerd tussen top en eerste sectie === */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center", // ✅ centreert logo tussen top en menu
-            flex: 1,
-            gap: 20,
+            alignItems: "center",
+            justifyContent: "flex-end",
+            height: "clamp(110px, 18vh, 160px)", // dynamische hoogte
+            marginBottom: 10,
           }}
         >
-          {/* 🔸 Logo */}
-          <div
-            onClick={() => onNavigate("Home")}
+          <img
+            src={logo}
+            alt="AI.Thlete Logo"
             style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              cursor: "pointer",
-              paddingTop: 10,
+              width: "80%",
+              height: "auto",
+              filter: "drop-shadow(0 0 10px rgba(255,121,0,0.35))",
+              transition: "transform 0.2s ease, filter 0.2s ease",
             }}
-          >
-            <img
-              src={logo}
-              alt="AI.Thlete Logo"
-              style={{
-                width: "80%",
-                height: "auto",
-                filter: "drop-shadow(0 0 10px rgba(255,121,0,0.35))",
-                transition: "transform 0.2s ease, filter 0.2s ease",
-              }}
-            />
-          </div>
-
-          {/* 🔸 Menu-items */}
-          <nav style={{ flexShrink: 0 }}>
-            {sections.map((section) => (
-              <div key={section.title} style={{ marginBottom: 10 }}>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: ".08em",
-                    color: "var(--accent)",
-                    textTransform: "uppercase",
-                    margin: "14px 2px 8px",
-                  }}
-                >
-                  {section.title}
-                </div>
-
-                <div style={{ display: "grid", gap: 8 }}>
-                  {section.items.map((item) => {
-                    const isActive = currentPage === item;
-                    return (
-                      <button
-                        key={item}
-                        onClick={() => onNavigate(item)}
-                        style={{
-                          appearance: "none",
-                          border: 0,
-                          background: "transparent",
-                          color: isActive ? "var(--muted)" : "var(--text)",
-                          textAlign: "left",
-                          padding: "10px 14px",
-                          borderRadius: 10,
-                          fontSize: 12,
-                          fontWeight: isActive ? 700 : 500,
-                          cursor: "pointer",
-                          transition: "color .2s ease, background .2s ease",
-                          background: isActive
-                            ? "rgba(255,255,255,0.06)"
-                            : "transparent",
-                          boxShadow: isActive
-                            ? "inset 3px 0 0 var(--accent)"
-                            : "inset 3px 0 0 transparent",
-                        }}
-                      >
-                        {item}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
+          />
         </div>
+
+        {/* === MENUZONE === */}
+        <nav style={{ flex: 1, overflowY: "auto" }}>
+          {sections.map((section) => (
+            <div key={section.title} style={{ marginBottom: 10 }}>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: ".08em",
+                  color: "var(--accent)",
+                  textTransform: "uppercase",
+                  margin: "14px 2px 8px",
+                }}
+              >
+                {section.title}
+              </div>
+
+              <div style={{ display: "grid", gap: 8 }}>
+                {section.items.map((item) => {
+                  const isActive = currentPage === item;
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => onNavigate(item)}
+                      style={{
+                        appearance: "none",
+                        border: 0,
+                        background: "transparent",
+                        color: isActive ? "var(--muted)" : "var(--text)",
+                        textAlign: "left",
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        fontSize: 12,
+                        fontWeight: isActive ? 700 : 500,
+                        cursor: "pointer",
+                        transition: "color .2s ease, background .2s ease",
+                        background: isActive
+                          ? "rgba(255,255,255,0.06)"
+                          : "transparent",
+                        boxShadow: isActive
+                          ? "inset 3px 0 0 var(--accent)"
+                          : "inset 3px 0 0 transparent",
+                      }}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
 
         {/* === FOOTER === */}
         <div
