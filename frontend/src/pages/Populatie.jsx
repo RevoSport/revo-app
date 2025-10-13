@@ -14,7 +14,6 @@ import {
 const COLORS = ["#FF7900", "#555555"];
 
 export default function Populatie() {
-  // 📊 Dummy data (later koppelen aan MySQL)
   const genderData = [
     { name: "Vrouw", value: 65 },
     { name: "Man", value: 35 },
@@ -31,7 +30,6 @@ export default function Populatie() {
     { name: "Contact", value: 28 },
   ];
 
-  // 📊 KPI-tiles
   const kpiData = [
     { label: "Aantal patiënten", value: "16" },
     { label: "Gem. tijd ongeval → operatie", value: "31.2 dagen" },
@@ -41,26 +39,14 @@ export default function Populatie() {
   return (
     <div
       style={{
-        width: "100%",
-        backgroundColor: "#0f0f0f",
-        borderRadius: "12px",
-        padding: "40px 50px",
-        marginTop: "10px",
-        boxShadow: "0 0 12px rgba(0,0,0,0.4)",
+        width: "85%",
+        margin: "0 auto",
+        padding: "20px 0 60px 0",
+        color: "var(--text)",
         animation: "fadeIn 0.6s ease",
       }}
     >
-      {/* 🔸 ORANJE LIJN BOVEN TITEL */}
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "#FF7900",
-          width: "100%",
-          marginBottom: "18px",
-        }}
-      ></div>
-
-      {/* === SECTIE TITEL === */}
+      {/* === TITEL === */}
       <h2
         style={{
           color: "#ffffff",
@@ -92,7 +78,7 @@ export default function Populatie() {
               padding: "18px 10px",
               borderRadius: "10px",
               textAlign: "center",
-              boxShadow: "0 0 10px rgba(0,0,0,0.25)",
+              boxShadow: "0 0 8px rgba(0,0,0,0.25)",
             }}
           >
             <div style={{ color: "#FF7900", fontSize: "22px", fontWeight: 700 }}>
@@ -102,7 +88,6 @@ export default function Populatie() {
               style={{
                 color: "#c9c9c9",
                 fontSize: "12px",
-                textTransform: "none",
               }}
             >
               {kpi.label}
@@ -117,7 +102,7 @@ export default function Populatie() {
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: "24px",
-          marginBottom: "20px",
+          justifyContent: "center",
         }}
       >
         {/* Geslacht */}
@@ -125,7 +110,7 @@ export default function Populatie() {
           style={{
             background: "#1a1a1a",
             borderRadius: "10px",
-            padding: "20px",
+            padding: "25px 20px",
             textAlign: "center",
             boxShadow: "0 0 8px rgba(0,0,0,0.25)",
           }}
@@ -133,7 +118,7 @@ export default function Populatie() {
           <h4
             style={{
               fontSize: "12px",
-              color: "#FF7900",
+              color: "#FFFFFF",
               marginBottom: 10,
               textTransform: "uppercase",
             }}
@@ -162,7 +147,7 @@ export default function Populatie() {
           style={{
             background: "#1a1a1a",
             borderRadius: "10px",
-            padding: "20px",
+            padding: "25px 20px",
             textAlign: "center",
             boxShadow: "0 0 8px rgba(0,0,0,0.25)",
           }}
@@ -170,7 +155,7 @@ export default function Populatie() {
           <h4
             style={{
               fontSize: "12px",
-              color: "#FF7900",
+              color: "#FFFFFF",
               marginBottom: 10,
               textTransform: "uppercase",
             }}
@@ -192,7 +177,7 @@ export default function Populatie() {
           style={{
             background: "#1a1a1a",
             borderRadius: "10px",
-            padding: "20px",
+            padding: "25px 20px",
             textAlign: "center",
             boxShadow: "0 0 8px rgba(0,0,0,0.25)",
           }}
@@ -200,7 +185,7 @@ export default function Populatie() {
           <h4
             style={{
               fontSize: "12px",
-              color: "#FF7900",
+              color: "#FFFFFF",
               marginBottom: 10,
               textTransform: "uppercase",
             }}
@@ -224,30 +209,6 @@ export default function Populatie() {
           </ResponsiveContainer>
         </div>
       </div>
-
-      {/* === TEKST SAMENVATTING === */}
-      <div
-        style={{
-          textAlign: "center",
-          color: "#c9c9c9",
-          fontSize: "12px",
-          marginTop: "15px",
-          opacity: 0.9,
-        }}
-      >
-        <p>Gemiddelde tijd tussen ongeval en operatie: <b>31.2 dagen</b></p>
-        <p>Gemiddelde tijd tussen operatie en intake: <b>4.3 dagen</b></p>
-      </div>
-
-      {/* 🔸 ONDERSTE LIJN */}
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "#FF7900",
-          width: "100%",
-          marginTop: "30px",
-        }}
-      ></div>
     </div>
   );
 }
