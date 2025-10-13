@@ -5,22 +5,22 @@ export default function VoorsteKruisband() {
   const cards = [
     {
       title: "POPULATIE BESCHRIJVING",
-      icon: <User size={36} color="var(--accent)" />,
+      icon: <User size={28} color="var(--accent)" />,
       onClick: () => console.log("Populatie Beschrijving"),
     },
     {
       title: "ANTROPOMETRIE & MOBILITEIT",
-      icon: <Ruler size={36} color="var(--accent)" />,
+      icon: <Ruler size={28} color="var(--accent)" />,
       onClick: () => console.log("Antropometrie & Mobiliteit"),
     },
     {
       title: "KRACHT",
-      icon: <Dumbbell size={36} color="var(--accent)" />,
+      icon: <Dumbbell size={28} color="var(--accent)" />,
       onClick: () => console.log("Kracht"),
     },
     {
       title: "FUNCTIONELE TESTING",
-      icon: <ClipboardList size={36} color="var(--accent)" />,
+      icon: <ClipboardList size={28} color="var(--accent)" />,
       onClick: () => console.log("Functionele Testing"),
     },
   ];
@@ -28,7 +28,7 @@ export default function VoorsteKruisband() {
   return (
     <div
       style={{
-        padding: "60px 80px",
+        padding: "40px 60px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -39,35 +39,37 @@ export default function VoorsteKruisband() {
       {/* === TITEL === */}
       <h1
         style={{
-          fontSize: "40px",
+          fontSize: "16px",
           textTransform: "uppercase",
           color: "#ffffff",
-          letterSpacing: "2px",
+          letterSpacing: "1.5px",
           fontWeight: 700,
-          marginBottom: "8px",
+          marginBottom: "6px",
         }}
       >
         VOORSTE KRUISBAND
       </h1>
+
+      {/* === SUBTITEL === */}
       <p
         style={{
           color: "var(--muted)",
-          fontSize: "18px",
-          marginBottom: "50px",
-          letterSpacing: "0.5px",
+          fontSize: "14px",
+          marginBottom: "40px",
+          letterSpacing: "0.4px",
         }}
       >
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === KAARTEN === */}
+      {/* === 4 RESPONSIVE CARDS === */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
           gap: "24px",
           width: "100%",
-          maxWidth: "950px",
+          maxWidth: "900px",
         }}
       >
         {cards.map((card) => (
@@ -75,31 +77,36 @@ export default function VoorsteKruisband() {
             key={card.title}
             onClick={card.onClick}
             style={{
-              backgroundColor: "#1a1a1a",
-              borderRadius: "12px",
-              padding: "40px 20px",
-              border: "2px solid transparent",
+              backgroundColor: "transparent",
+              borderRadius: "10px",
+              padding: "22px 10px",
+              border: "1.8px solid var(--accent)",
               cursor: "pointer",
               transition: "all 0.25s ease",
-              boxShadow: "0 0 10px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = "var(--accent)";
-              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.borderColor = "#ffffff";
+              e.currentTarget.style.color = "#ffffff";
+              e.currentTarget.querySelector("svg").style.color = "#ffffff";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = "transparent";
-              e.currentTarget.style.transform = "translateY(0px)";
+              e.currentTarget.style.borderColor = "var(--accent)";
+              e.currentTarget.style.color = "white";
+              e.currentTarget.querySelector("svg").style.color = "var(--accent)";
             }}
           >
-            <div style={{ marginBottom: "20px" }}>{card.icon}</div>
+            <div style={{ marginBottom: "10px" }}>{card.icon}</div>
             <h3
               style={{
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: 600,
                 color: "white",
-                letterSpacing: "1px",
+                letterSpacing: "0.8px",
                 textTransform: "uppercase",
+                lineHeight: "1.3",
               }}
             >
               {card.title}
