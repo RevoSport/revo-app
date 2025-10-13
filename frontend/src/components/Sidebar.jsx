@@ -29,7 +29,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           height: "100vh",
           width: WIDTH,
           background: "var(--panel)",
-          borderRight: "1px solid var(--accent)",
+          borderRight: "1px solid rgba(255,121,0,0.7)", // 🔸 subtieler oranje lijn (zoals huidige horizontale lijn)
           padding: "18px 16px",
           transform: collapsed ? "translateX(-110%)" : "translateX(0)",
           transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -128,7 +128,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
                         padding: "10px 14px",
                         borderRadius: 10,
                         fontSize: 12,
-                        fontWeight: 500, // ✅ zelfde dikte voor alles
+                        fontWeight: 500,
                         cursor: "pointer",
                         transition: "color .2s ease",
                       }}
