@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.png"; // pad aanpassen indien nodig
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Sidebar({ currentPage, onNavigate }) {
@@ -20,7 +20,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
 
   return (
     <>
-      {/* 🟠 Sidebar zelf */}
+      {/* 🟠 Sidebar */}
       <aside
         style={{
           position: "fixed",
@@ -28,7 +28,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           left: 0,
           height: "100vh",
           width: WIDTH,
-          background: "#0E1117",
+          background: "#111111",
           borderRight: "1px solid #FF7900",
           padding: "18px 16px",
           transform: collapsed ? "translateX(-110%)" : "translateX(0)",
@@ -40,7 +40,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
             "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
         }}
       >
-        {/* 🔹 Toggle-knop (sluiten) */}
+        {/* 🔹 Toggle-knop */}
         <div
           style={{
             display: "flex",
@@ -50,7 +50,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           }}
         >
           <button
-            onClick={() => setCollapsed(true)}
+            onClick={() => setCollapsed(true)} // altijd sluiten
             style={{
               color: "white",
               background: "none",
@@ -159,34 +159,32 @@ export default function Sidebar({ currentPage, onNavigate }) {
         </div>
       </aside>
 
-      {/* 🟢 Zelfde ChevronRight als open-knop */}
+      {/* 🟢 Zwevende open-knop (zichtbaar bij collapsed) */}
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
           style={{
             position: "fixed",
-            top: 18,
-            left: 12,
+            top: 20,
+            left: 20,
+            background: "#FF7900",
             color: "white",
-            background: "none",
             border: "none",
+            borderRadius: "50%",
+            width: 36,
+            height: 36,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             cursor: "pointer",
-            padding: "4px",
             zIndex: 150,
-            transition: "color 0.2s ease",
+            boxShadow: "0 0 10px rgba(0,0,0,0.3)",
           }}
           title="Sidebar openen"
         >
-          <ChevronRight size={22} strokeWidth={2.2} />
+          <ChevronRight size={20} strokeWidth={2.2} />
         </button>
       )}
-
-      <style>{`
-        button:hover svg {
-          color: #FF7900;
-          stroke: #FF7900;
-        }
-      `}</style>
     </>
   );
 }
