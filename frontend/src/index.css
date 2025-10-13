@@ -1,9 +1,17 @@
-/* === OPEN SANS lokaal geladen varianten === */
+/* === OPEN SANS lokaal geladen varianten (inclusief italic) === */
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-300.woff2") format("woff2");
   font-weight: 300;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-300italic.woff2") format("woff2");
+  font-weight: 300;
+  font-style: italic;
   font-display: swap;
 }
 
@@ -17,9 +25,25 @@
 
 @font-face {
   font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-400italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500italic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
   font-display: swap;
 }
 
@@ -33,6 +57,14 @@
 
 @font-face {
   font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-600italic.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
@@ -41,9 +73,25 @@
 
 @font-face {
   font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700italic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800.woff2") format("woff2");
   font-weight: 800;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800italic.woff2") format("woff2");
+  font-weight: 800;
+  font-style: italic;
   font-display: swap;
 }
 
