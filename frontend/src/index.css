@@ -80,7 +80,6 @@ body {
   min-height: 100vh;
 }
 
-/* MOBILE: sidebar overlay */
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;
@@ -95,7 +94,7 @@ body {
   margin-inline: auto;
 }
 
-/* === RESPONSIVE GRID voor kaarten (zoals Streamlit) === */
+/* === RESPONSIVE GRID voor kaarten === */
 .responsive-grid {
   display: grid;
   gap: 16px;
@@ -127,7 +126,7 @@ body {
   margin: 0 0 24px;
 }
 
-/* === BUTTON-STIJL (voor sidebar-items) === */
+/* === BUTTON-STIJL === */
 .btn {
   appearance: none;
   border: 0;
@@ -150,7 +149,7 @@ body {
   transform: translateY(1px);
 }
 
-/* === SUBHEADERS IN SIDEBAR === */
+/* === SUBHEADERS === */
 .subheader {
   font-size: 12px;
   font-weight: 800;
@@ -160,7 +159,7 @@ body {
   margin: 18px 8px 6px;
 }
 
-/* === FADE-IN ANIMATIE === */
+/* === FADE-IN === */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -169,7 +168,7 @@ body {
   animation: fadeIn 0.8s ease;
 }
 
-/* === TOPBAR voor kleine schermen (hamburger-menu) === */
+/* === TOPBAR === */
 .topbar {
   display: none;
   position: sticky;
@@ -200,7 +199,7 @@ body {
   }
 }
 
-/* === SIMPLE TABLE-STYLING (voor demo of data) === */
+/* === TABEL === */
 .table {
   width: 100%;
   border-collapse: collapse;
