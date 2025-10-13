@@ -28,7 +28,7 @@ export default function App() {
         style={{
           transition: "margin-left 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
           marginLeft: "var(--sidebar-offset, 280px)",
-          background: "#111",
+          background: "var(--bg)",
           color: "white",
           minHeight: "100vh",
           padding: "24px",
