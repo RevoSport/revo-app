@@ -1,4 +1,6 @@
-/* === OPEN SANS lokaal geladen varianten (inclusief italic) === */
+/* =========================================================
+   FONTS – Open Sans lokaal geladen (inclusief italic)
+========================================================= */
 @font-face {
   font-family: "Open Sans";
   src: url("./assets/fonts/OpenSans/open-sans-v44-latin-300.woff2") format("woff2");
@@ -84,7 +86,9 @@
   font-display: swap;
 }
 
-/* === THEMA VARIABELEN === */
+/* =========================================================
+   THEMA VARIABELEN
+========================================================= */
 :root {
   --bg: #111111;
   --panel: #111111;
@@ -95,7 +99,9 @@
   --border: rgba(255,121,0,0.35);
 }
 
-/* === BASIS === */
+/* =========================================================
+   BASIS
+========================================================= */
 * { box-sizing: border-box; }
 
 html, body, #root { height: 100%; }
@@ -107,7 +113,9 @@ body {
   background: var(--bg);
 }
 
-/* === GRID STRUCTUUR === */
+/* =========================================================
+   LAYOUT STRUCTUUR
+========================================================= */
 .layout {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -117,7 +125,9 @@ body {
   .layout { grid-template-columns: 1fr; }
 }
 
-/* === MAIN CONTENT === */
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
 .main {
   padding: clamp(16px, 2vw, 28px);
   width: 100%;
@@ -125,12 +135,15 @@ body {
   margin-inline: auto;
 }
 
-/* === KAARTEN EN TABEL === */
+/* =========================================================
+   KAARTEN EN TABELLEN
+========================================================= */
 .responsive-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
+
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -143,6 +156,7 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -160,11 +174,15 @@ body {
   font-weight: 700;
 }
 
-/* === TITELS === */
+/* =========================================================
+   TITELS
+========================================================= */
 .h1 { font-size: clamp(22px, 2.8vw, 32px); margin: 0 0 12px; }
 .h2 { font-size: clamp(16px, 2vw, 18px); color: var(--muted); margin: 0 0 24px; }
 
-/* === TOPBAR === */
+/* =========================================================
+   TOPBAR
+========================================================= */
 .topbar {
   display: none;
   position: sticky;
@@ -178,37 +196,44 @@ body {
 }
 .topbar h1 { font-size: 16px; margin: 0; letter-spacing: .02em; }
 .topbar .hamburger {
-  width: 38px; height: 38px; border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
 }
 @media (max-width: 900px) { .topbar { display: flex; } }
 
-/* === ANIMATIE === */
+/* =========================================================
+   ANIMATIE
+========================================================= */
 @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
 .fade-in { animation: fadeIn 0.8s ease; }
 
-/* === SIDEBAR – 240px breed, logo bovenaan gecentreerd === */
+/* =========================================================
+   SIDEBAR – LAYOUT EN STIJL
+========================================================= */
 aside {
   width: 240px !important;
   padding: 24px 20px 24px 24px !important;
-  font-size: 14px;
   font-family: "Open Sans", sans-serif;
-  line-height: 1.4em;
   border-right: 1px solid rgba(255,121,0,0.3) !important;
 
   display: flex;
   flex-direction: column;
-  align-items: center;     /* horizontaal centreren logo */
-  justify-content: flex-start; /* logo bovenaan */
+  align-items: center;
+  justify-content: flex-start;
   overflow: hidden !important;
   position: relative;
+  background: var(--panel);
 }
 
-/* === LOGO BOVENAAN EN GECENTREERD === */
+/* =========================================================
+   LOGO
+========================================================= */
 aside img {
   display: block;
-  margin: 10px auto 36px auto; /* centreren + ruimte onder logo */
+  margin: 10px auto 36px auto;
   width: 80%;
   height: auto;
   filter: drop-shadow(0 0 10px rgba(255,121,0,0.3));
@@ -219,7 +244,9 @@ aside img:hover {
   filter: drop-shadow(0 0 14px rgba(255,121,0,0.45));
 }
 
-/* Menu schaalbaar bij lage resoluties */
+/* =========================================================
+   NAVIGATIE
+========================================================= */
 aside nav {
   flex: 1;
   display: flex;
@@ -233,9 +260,14 @@ aside nav {
 @media (max-height: 700px) { aside nav { transform: scale(0.9); } }
 @media (max-height: 600px) { aside nav { transform: scale(0.85); } }
 
-/* Oranje sectietitels */
+/* =========================================================
+   TITELS EN SUBITEMS
+========================================================= */
+
+/* Oranje hoofdtitels (14px) */
 aside div[style*="color: var(--accent)"] {
   padding-left: 8px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   letter-spacing: 0.08em;
   margin: 14px 0 !important;
@@ -243,12 +275,14 @@ aside div[style*="color: var(--accent)"] {
   text-transform: uppercase;
 }
 
-/* Witte subitems (compact & uppercase) */
+/* Subitems (12px, wit) */
 aside nav div > div { display: grid; gap: 4px !important; }
+
 aside nav button {
   padding: 8px 0 8px 24px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em;
+  font-size: 12px !important;
   color: rgba(255,255,255,0.9);
   font-weight: 500;
   transition: color 0.2s ease, background 0.2s ease;
@@ -261,37 +295,20 @@ aside nav button:hover {
 /* Afstand tussen secties */
 aside nav > div { margin-bottom: 28px !important; }
 
-/* Chevron-knoppen correct uitgelijnd voor 240px sidebar */
+/* =========================================================
+   CHEVRON-KNOPPEN (rechts uitgelijnd)
+========================================================= */
+/* =========================================================
+   HOVER EFFECTEN (voor chevrons binnen en buiten sidebar)
+========================================================= */
 button[title="Sidebar verbergen"],
-button[title="Sidebar openen"] {
-  left: 16px !important;
-  color: var(--text);
+button[title="Sidebar openen"],
+aside div[title="Sidebar verbergen"],
+aside div[title="Sidebar openen"] {
   transition: color 0.2s ease;
 }
-button[title="Sidebar openen"] { left: 18px !important; }
-button[title="Sidebar verbergen"]:hover,
-button[title="Sidebar openen"]:hover {
+aside div[title="Sidebar verbergen"]:hover,
+aside div[title="Sidebar openen"]:hover {
   color: var(--accent-hover);
 }
 
-/* === FORCEER UNIFORME TEKSTGROOTTE IN SIDEBAR === */
-/* === FORCEER UNIFORME TEKSTGROOTTE IN SIDEBAR === */
-aside * {
-  font-size: 12px !important;     /* verlaagd van 14 naar 12 */
-  line-height: 1.4em !important;
-}
-
-/* Chevron-knoppen correct uitgelijnd aan rechterkant */
-button[title="Sidebar verbergen"],
-button[title="Sidebar openen"] {
-  position: absolute !important;
-  top: 18px !important;
-  right: 16px !important;          /* verplaatst naar rechtszijde */
-  color: var(--text);
-  transition: color 0.2s ease;
-  z-index: 10;
-}
-button[title="Sidebar verbergen"]:hover,
-button[title="Sidebar openen"]:hover {
-  color: var(--accent-hover);
-}

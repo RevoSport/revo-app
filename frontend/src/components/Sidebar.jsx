@@ -42,29 +42,24 @@ export default function Sidebar({ currentPage, onNavigate }) {
         }}
       >
         {/* 🔹 Toggle-knop (sluiten) */}
-        <div
+        <button
+          onClick={() => setCollapsed(true)}
+          title="Sidebar verbergen"
           style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            marginBottom: 10,
+            position: "absolute",
+            top: 18,
+            right: 16,
+            color: "var(--text)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px",
+            transition: "color 0.2s ease",
+            zIndex: 150,
           }}
         >
-          <button
-            onClick={() => setCollapsed(true)}
-            style={{
-              color: "var(--text)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px",
-              transition: "color 0.2s ease",
-            }}
-            title="Sidebar verbergen"
-          >
-            <ChevronLeft size={22} strokeWidth={2.2} />
-          </button>
-        </div>
+          <ChevronLeft size={22} strokeWidth={2.2} />
+        </button>
 
         {/* 🔸 Logo */}
         <div
@@ -96,8 +91,8 @@ export default function Sidebar({ currentPage, onNavigate }) {
             <div key={section.title} style={{ marginBottom: 10 }}>
               <div
                 style={{
-                  fontSize: 12,
-                  fontWeight: 800,
+                  fontSize: 14,
+                  fontWeight: 700,
                   letterSpacing: ".08em",
                   color: "var(--accent)",
                   textTransform: "uppercase",
@@ -120,9 +115,9 @@ export default function Sidebar({ currentPage, onNavigate }) {
                         background: "transparent",
                         color: isActive ? "var(--muted)" : "var(--text)",
                         textAlign: "left",
-                        padding: "12px 14px",
-                        borderRadius: 12,
-                        fontSize: 16,
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        fontSize: 12,
                         fontWeight: isActive ? 700 : 500,
                         cursor: "pointer",
                         transition: "color .2s ease, background .2s ease",
@@ -163,23 +158,23 @@ export default function Sidebar({ currentPage, onNavigate }) {
         </div>
       </aside>
 
-      {/* 🟢 Zelfde ChevronRight (openen) */}
+      {/* 🟢 Chevron-knop (openen) */}
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
+          title="Sidebar openen"
           style={{
             position: "fixed",
-            top: 20,
-            left: 14,
+            top: 18,
+            right: 16,
             color: "var(--text)",
             background: "none",
             border: "none",
             cursor: "pointer",
             padding: "4px",
-            zIndex: 150,
+            zIndex: 200,
             transition: "color 0.2s ease",
           }}
-          title="Sidebar openen"
         >
           <ChevronRight size={22} strokeWidth={2.2} />
         </button>
