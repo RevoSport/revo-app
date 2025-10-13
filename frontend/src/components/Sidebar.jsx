@@ -21,141 +21,152 @@ export default function Sidebar({ currentPage, onNavigate }) {
   return (
     <>
       {/* 🟠 Sidebar */}
-    <aside
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        height: "100vh",
-        width: WIDTH,
-        background: "var(--panel)",
-        borderRight: "1px solid var(--accent)",
-        padding: "18px 16px",
-        transform: collapsed ? "translateX(-110%)" : "translateX(0)",
-        transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
-        zIndex: 100,
-        display: "flex",
-        flexDirection: "column",
-        fontFamily:
-          "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-        color: "var(--text)",
-      }}
-    >
-      {/* 🔹 Toggle-knop (sluiten) */}
-      <button
-        onClick={() => setCollapsed(true)}
-        title="Sidebar verbergen"
+      <aside
         style={{
-          position: "absolute",
-          top: 18,
-          right: 16,
-          color: "var(--text)",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: "4px",
-          transition: "color 0.2s ease",
-          zIndex: 150,
-        }}
-      >
-        <ChevronLeft size={22} strokeWidth={2.2} />
-      </button>
-
-      {/* === HEADERZONE: logo verticaal gecentreerd tussen top en eerste sectie === */}
-      <div
-        style={{
-          flexShrink: 0,
-          height: "20%", // bepaalt de bovenruimte (aanpasbaar)
+          position: "fixed",
+          top: 0,
+          left: 0,
+          height: "100vh",
+          width: WIDTH,
+          background: "var(--panel)",
+          borderRight: "1px solid var(--accent)",
+          padding: "18px 16px",
+          transform: collapsed ? "translateX(-110%)" : "translateX(0)",
+          transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
+          zIndex: 100,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          flexDirection: "column",
+          fontFamily:
+            "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+          color: "var(--text)",
         }}
       >
-        <img
-          src={logo}
-          alt="AI.ATHLETE"
+        {/* 🔹 Toggle-knop (sluiten) */}
+        <button
+          onClick={() => setCollapsed(true)}
+          title="Sidebar verbergen"
           style={{
-            width: "80%",
-            height: "auto",
-            filter: "drop-shadow(0 0 10px rgba(255,121,0,0.35))",
-            transition: "transform 0.2s ease, filter 0.2s ease",
+            position: "absolute",
+            top: 18,
+            right: 16,
+            color: "var(--text)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px",
+            transition: "color 0.2s ease",
+            zIndex: 150,
           }}
-        />
-      </div>
+        >
+          <ChevronLeft size={22} strokeWidth={2.2} />
+        </button>
 
-      {/* === MENUZONE === */}
-      <nav style={{ flex: 1, overflowY: "auto" }}>
-        {sections.map((section) => (
-          <div key={section.title} style={{ marginBottom: 10 }}>
-            <div
+        {/* === HEADER + MENU als flex kolom === */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center", // ✅ centreert logo tussen top en menu
+            flex: 1,
+            gap: 20,
+          }}
+        >
+          {/* 🔸 Logo */}
+          <div
+            onClick={() => onNavigate("Home")}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              cursor: "pointer",
+              paddingTop: 10,
+            }}
+          >
+            <img
+              src={logo}
+              alt="AI.Thlete Logo"
               style={{
-                fontSize: 14,
-                fontWeight: 700,
-                letterSpacing: ".08em",
-                color: "var(--accent)",
-                textTransform: "uppercase",
-                margin: "14px 2px 8px",
+                width: "80%",
+                height: "auto",
+                filter: "drop-shadow(0 0 10px rgba(255,121,0,0.35))",
+                transition: "transform 0.2s ease, filter 0.2s ease",
               }}
-            >
-              {section.title}
-            </div>
-
-            <div style={{ display: "grid", gap: 8 }}>
-              {section.items.map((item) => {
-                const isActive = currentPage === item;
-                return (
-                  <button
-                    key={item}
-                    onClick={() => onNavigate(item)}
-                    style={{
-                      appearance: "none",
-                      border: 0,
-                      background: "transparent",
-                      color: isActive ? "var(--muted)" : "var(--text)",
-                      textAlign: "left",
-                      padding: "10px 14px",
-                      borderRadius: 10,
-                      fontSize: 12,
-                      fontWeight: isActive ? 700 : 500,
-                      cursor: "pointer",
-                      transition: "color .2s ease, background .2s ease",
-                      background: isActive
-                        ? "rgba(255,255,255,0.06)"
-                        : "transparent",
-                      boxShadow: isActive
-                        ? "inset 3px 0 0 var(--accent)"
-                        : "inset 3px 0 0 transparent",
-                    }}
-                  >
-                    {item}
-                  </button>
-                );
-              })}
-            </div>
+            />
           </div>
-        ))}
-      </nav>
 
-      {/* === FOOTER === */}
-      <div
-        style={{
-          marginTop: "auto",
-          fontSize: 12,
-          color: "var(--muted)",
-          textAlign: "center",
-          paddingTop: 10,
-          fontWeight: 400,
-        }}
-      >
-        <div style={{ opacity: 0.8, marginTop: 12 }}>
-          Powered by{" "}
-          <span style={{ color: "var(--accent)", fontWeight: 700 }}>
-            REVO SPORT
-          </span>
+          {/* 🔸 Menu-items */}
+          <nav style={{ flexShrink: 0 }}>
+            {sections.map((section) => (
+              <div key={section.title} style={{ marginBottom: 10 }}>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: ".08em",
+                    color: "var(--accent)",
+                    textTransform: "uppercase",
+                    margin: "14px 2px 8px",
+                  }}
+                >
+                  {section.title}
+                </div>
+
+                <div style={{ display: "grid", gap: 8 }}>
+                  {section.items.map((item) => {
+                    const isActive = currentPage === item;
+                    return (
+                      <button
+                        key={item}
+                        onClick={() => onNavigate(item)}
+                        style={{
+                          appearance: "none",
+                          border: 0,
+                          background: "transparent",
+                          color: isActive ? "var(--muted)" : "var(--text)",
+                          textAlign: "left",
+                          padding: "10px 14px",
+                          borderRadius: 10,
+                          fontSize: 12,
+                          fontWeight: isActive ? 700 : 500,
+                          cursor: "pointer",
+                          transition: "color .2s ease, background .2s ease",
+                          background: isActive
+                            ? "rgba(255,255,255,0.06)"
+                            : "transparent",
+                          boxShadow: isActive
+                            ? "inset 3px 0 0 var(--accent)"
+                            : "inset 3px 0 0 transparent",
+                        }}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
         </div>
-      </div>
-    </aside>
 
+        {/* === FOOTER === */}
+        <div
+          style={{
+            marginTop: "auto",
+            fontSize: 12,
+            color: "var(--muted)",
+            textAlign: "center",
+            paddingTop: 10,
+            fontWeight: 400,
+          }}
+        >
+          <div style={{ opacity: 0.8, marginTop: 12 }}>
+            Powered by{" "}
+            <span style={{ color: "var(--accent)", fontWeight: 700 }}>
+              REVO SPORT
+            </span>
+          </div>
+        </div>
+      </aside>
 
       {/* 🟢 Chevron-knop (openen links) */}
       {collapsed && (
@@ -165,7 +176,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           style={{
             position: "fixed",
             top: 18,
-            left: 16, // ✅ verplaatst naar linkerkant
+            left: 16, // links op dezelfde hoogte
             color: "var(--text)",
             background: "none",
             border: "none",
