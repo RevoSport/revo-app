@@ -147,7 +147,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           style={{
             marginTop: "auto",
             fontSize: 12,
-            color: "#888",
+            color: "#FFFFFF",
             textAlign: "center",
             paddingTop: 10,
           }}
