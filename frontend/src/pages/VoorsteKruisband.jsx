@@ -1,70 +1,110 @@
 import React from "react";
+import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
 
 export default function VoorsteKruisband() {
+  const cards = [
+    {
+      title: "POPULATIE BESCHRIJVING",
+      icon: <User size={36} color="var(--accent)" />,
+      onClick: () => console.log("Populatie Beschrijving"),
+    },
+    {
+      title: "ANTROPOMETRIE & MOBILITEIT",
+      icon: <Ruler size={36} color="var(--accent)" />,
+      onClick: () => console.log("Antropometrie & Mobiliteit"),
+    },
+    {
+      title: "KRACHT",
+      icon: <Dumbbell size={36} color="var(--accent)" />,
+      onClick: () => console.log("Kracht"),
+    },
+    {
+      title: "FUNCTIONELE TESTING",
+      icon: <ClipboardList size={36} color="var(--accent)" />,
+      onClick: () => console.log("Functionele Testing"),
+    },
+  ];
+
   return (
     <div
       style={{
-        padding: "50px 60px",
+        padding: "60px 80px",
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "center",
+        textAlign: "center",
+        minHeight: "100vh",
       }}
     >
       {/* === TITEL === */}
       <h1
         style={{
-          fontSize: "36px",
+          fontSize: "40px",
           textTransform: "uppercase",
           color: "#ffffff",
           letterSpacing: "2px",
-          marginBottom: "30px",
           fontWeight: 700,
+          marginBottom: "8px",
         }}
       >
         VOORSTE KRUISBAND
       </h1>
-
-      {/* === BUTTONS === */}
-      <div
+      <p
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "18px",
+          color: "var(--muted)",
+          fontSize: "18px",
+          marginBottom: "50px",
+          letterSpacing: "0.5px",
         }}
       >
-        {[
-          "POPULATIE BESCHRIJVING",
-          "ANTROPOMETRIE & MOBILITEIT",
-          "KRACHT",
-          "FUNCTIONELE TESTING",
-        ].map((label) => (
-          <button
-            key={label}
+        DATA-DRIVEN REHABILITATION INSIGHTS
+      </p>
+
+      {/* === KAARTEN === */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+          gap: "24px",
+          width: "100%",
+          maxWidth: "950px",
+        }}
+      >
+        {cards.map((card) => (
+          <div
+            key={card.title}
+            onClick={card.onClick}
             style={{
-              padding: "10px 22px",
-              border: "2px solid var(--accent)",
-              borderRadius: "8px",
-              backgroundColor: "transparent",
-              color: "var(--accent)",
-              fontWeight: 600,
-              fontSize: "13px",
-              letterSpacing: "1px",
-              textTransform: "uppercase",
+              backgroundColor: "#1a1a1a",
+              borderRadius: "12px",
+              padding: "40px 20px",
+              border: "2px solid transparent",
               cursor: "pointer",
               transition: "all 0.25s ease",
+              boxShadow: "0 0 10px rgba(0,0,0,0.3)",
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.color = "#ffffff";
-              e.currentTarget.style.borderColor = "#ffffff";
+              e.currentTarget.style.borderColor = "var(--accent)";
+              e.currentTarget.style.transform = "translateY(-4px)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.color = "var(--accent)";
-              e.currentTarget.style.borderColor = "var(--accent)";
+              e.currentTarget.style.borderColor = "transparent";
+              e.currentTarget.style.transform = "translateY(0px)";
             }}
-            onClick={() => console.log(`Navigeren naar ${label}`)}
           >
-            {label}
-          </button>
+            <div style={{ marginBottom: "20px" }}>{card.icon}</div>
+            <h3
+              style={{
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "white",
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+              }}
+            >
+              {card.title}
+            </h3>
+          </div>
         ))}
       </div>
     </div>
