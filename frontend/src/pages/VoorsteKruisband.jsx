@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
 
 export default function VoorsteKruisband() {
+  const [activeCard, setActiveCard] = useState(null);
+
   const cards = [
     { title: "POPULATIE", icon: <User size={24} color="var(--accent)" /> },
     { title: "METRICS", icon: <Ruler size={24} color="var(--accent)" /> },
@@ -30,7 +32,7 @@ export default function VoorsteKruisband() {
           textTransform: "uppercase",
           color: "#ffffff",
           letterSpacing: "1.5px",
-          fontWeight: 600,
+          fontWeight: 700,
           marginBottom: "6px",
         }}
       >
@@ -43,21 +45,21 @@ export default function VoorsteKruisband() {
           color: "var(--muted)",
           fontSize: "14px",
           marginBottom: "35px",
-          letterSpacing: "0.5px",
+          letterSpacing: "0.4px",
         }}
       >
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === CONTAINER VOOR CARDS EN LIJNEN === */}
+      {/* === CONTAINER VOOR CARDS + LIJNEN === */}
       <div style={{ width: "100%", maxWidth: "950px" }}>
-        {/* 🔸 BOVENSTE LIJN */}
+        {/* BOVENSTE LIJN */}
         <div
           style={{
             width: "100%",
             height: "1px",
             backgroundColor: "#FF7900",
-            marginBottom: "24px",
+            marginBottom: "20px",
           }}
         ></div>
 
@@ -67,52 +69,58 @@ export default function VoorsteKruisband() {
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
             gap: "24px",
-            marginBottom: "24px",
+            marginBottom: "20px",
           }}
         >
-          {cards.map((card) => (
-            <div
-              key={card.title}
-              style={{
-                backgroundColor: "#1a1a1a",
-                borderRadius: "10px",
-                border: "1.5px solid transparent",
-                cursor: "pointer",
-                transition: "all 0.25s ease",
-                boxShadow: "0 0 8px rgba(0,0,0,0.3)",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100px",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = "var(--accent)";
-                e.currentTarget.style.transform = "translateY(-3px)";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = "transparent";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <div style={{ marginBottom: "6px" }}>{card.icon}</div>
-              <h3
+          {cards.map((card, index) => {
+            const isActive = activeCard === index;
+            return (
+              <div
+                key={card.title}
+                onClick={() => setActiveCard(index)}
                 style={{
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  color: "white",
-                  letterSpacing: "0.7px",
-                  textTransform: "uppercase",
-                  lineHeight: "1.2",
+                  backgroundColor: "#1a1a1a",
+                  borderRadius: "10px",
+                  border: isActive
+                    ? "1.5px solid var(--accent)"
+                    : "1.5px solid transparent",
+                  cursor: "pointer",
+                  transition: "all 0.25s ease",
+                  boxShadow: "0 0 8px rgba(0,0,0,0.3)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100px",
+                  transform: isActive ? "translateY(-2px)" : "translateY(0)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = "var(--accent)";
+                }}
+                onMouseOut={(e) => {
+                  if (!isActive)
+                    e.currentTarget.style.borderColor = "transparent";
                 }}
               >
-                {card.title}
-              </h3>
-            </div>
-          ))}
+                <div style={{ marginBottom: "6px" }}>{card.icon}</div>
+                <h3
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    color: isActive ? "#727170" : "white", // 👈 actieve kleur
+                    letterSpacing: "0.7px",
+                    textTransform: "uppercase",
+                    lineHeight: "1.2",
+                  }}
+                >
+                  {card.title}
+                </h3>
+              </div>
+            );
+          })}
         </div>
 
-        {/* 🔸 ONDERSTE LIJN */}
+        {/* ONDERSTE LIJN */}
         <div
           style={{
             width: "100%",
