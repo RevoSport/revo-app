@@ -39,7 +39,7 @@ export default function VoorsteKruisband() {
       {/* === TITEL === */}
       <h1
         style={{
-          fontSize: "16px",
+          fontSize: "20px",
           textTransform: "uppercase",
           color: "#ffffff",
           letterSpacing: "1.5px",
