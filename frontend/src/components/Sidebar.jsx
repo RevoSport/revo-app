@@ -63,7 +63,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
 
         {/* === HEADERZONE === */}
         <div
-          onClick={() => onNavigate("Home")} // ✅ logo navigeert naar Home
+          onClick={() => onNavigate("Home")}
           style={{
             display: "flex",
             flexDirection: "column",
@@ -110,24 +110,25 @@ export default function Sidebar({ currentPage, onNavigate }) {
                     <button
                       key={item}
                       onClick={() => onNavigate(item)}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = "var(--accent)")
-                      }
+                      onMouseEnter={(e) => {
+                        if (!isActive)
+                          e.currentTarget.style.color = "var(--accent)";
+                      }}
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = isActive
-                          ? "#727170" // ✅ actieve kleur grijs
+                          ? "#727170"
                           : "var(--text)")
                       }
                       style={{
                         appearance: "none",
                         border: 0,
                         background: "transparent",
-                        color: isActive ? "#727170" : "var(--text)", // ✅ actief grijs
+                        color: isActive ? "#727170" : "var(--text)",
                         textAlign: "left",
                         padding: "10px 14px",
                         borderRadius: 10,
                         fontSize: 12,
-                        fontWeight: isActive ? 500,
+                        fontWeight: 500, // ✅ zelfde dikte voor alles
                         cursor: "pointer",
                         transition: "color .2s ease",
                       }}
