@@ -6,7 +6,83 @@
   font-style: normal;
   font-display: swap;
 }
-/* … (andere @font-face regels ongewijzigd) … */
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-300italic.woff2") format("woff2");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-400italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500italic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-600italic.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700italic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800italic.woff2") format("woff2");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
 
 /* === THEMA VARIABELEN === */
 :root {
@@ -112,10 +188,10 @@ body {
 @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
 .fade-in { animation: fadeIn 0.8s ease; }
 
-/* === SIDEBAR – 220px breed, logo volledig gecentreerd, meeschalend === */
+/* === SIDEBAR – 240px breed, logo bovenaan gecentreerd === */
 aside {
-  width: 220px !important;
-  padding: 0 18px !important;
+  width: 240px !important;
+  padding: 24px 20px 24px 24px !important;
   font-size: 14px;
   font-family: "Open Sans", sans-serif;
   line-height: 1.4em;
@@ -123,26 +199,23 @@ aside {
 
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;       /* verticaal + horizontaal centreren logo */
+  align-items: center;     /* horizontaal centreren logo */
+  justify-content: flex-start; /* logo bovenaan */
   overflow: hidden !important;
   position: relative;
 }
 
-/* Logo precies in het midden */
+/* === LOGO BOVENAAN EN GECENTREERD === */
 aside img {
   display: block;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* horizontaal + verticaal centreren */
+  margin: 10px auto 36px auto; /* centreren + ruimte onder logo */
   width: 80%;
   height: auto;
   filter: drop-shadow(0 0 10px rgba(255,121,0,0.3));
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 aside img:hover {
-  transform: translate(-50%, -50%) scale(1.03);
+  transform: scale(1.03);
   filter: drop-shadow(0 0 14px rgba(255,121,0,0.45));
 }
 
@@ -154,7 +227,7 @@ aside nav {
   justify-content: center;
   overflow: visible !important;
   transform-origin: top;
-  transition: transform 0.25s ease; /* zachte schaalovergang */
+  transition: transform 0.25s ease;
 }
 @media (max-height: 800px) { aside nav { transform: scale(0.95); } }
 @media (max-height: 700px) { aside nav { transform: scale(0.9); } }
@@ -173,7 +246,7 @@ aside div[style*="color: var(--accent)"] {
 /* Witte subitems (compact & uppercase) */
 aside nav div > div { display: grid; gap: 4px !important; }
 aside nav button {
-  padding: 8px 0 8px 22px !important;
+  padding: 8px 0 8px 24px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em;
   color: rgba(255,255,255,0.9);
@@ -188,14 +261,14 @@ aside nav button:hover {
 /* Afstand tussen secties */
 aside nav > div { margin-bottom: 28px !important; }
 
-/* Chevron-knoppen */
+/* Chevron-knoppen correct uitgelijnd voor 240px sidebar */
 button[title="Sidebar verbergen"],
 button[title="Sidebar openen"] {
-  left: 12px !important;
+  left: 16px !important;
   color: var(--text);
   transition: color 0.2s ease;
 }
-button[title="Sidebar openen"] { left: 14px !important; }
+button[title="Sidebar openen"] { left: 18px !important; }
 button[title="Sidebar verbergen"]:hover,
 button[title="Sidebar openen"]:hover {
   color: var(--accent-hover);
@@ -203,6 +276,6 @@ button[title="Sidebar openen"]:hover {
 
 /* === FORCEER UNIFORME TEKSTGROOTTE IN SIDEBAR === */
 aside * {
-  font-size: 14px !important;  /* of 15/16 als je iets groter wil */
+  font-size: 14px !important;
   line-height: 1.4em !important;
 }
