@@ -63,13 +63,15 @@ export default function Sidebar({ currentPage, onNavigate }) {
 
         {/* === HEADERZONE === */}
         <div
+          onClick={() => onNavigate("Home")} // ✅ logo navigeert naar Home
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "flex-end",
-            height: "clamp(90px, 15vh, 130px)", // iets compacter
+            height: "clamp(90px, 15vh, 130px)",
             marginBottom: 6,
+            cursor: "pointer",
           }}
         >
           <img
@@ -113,14 +115,14 @@ export default function Sidebar({ currentPage, onNavigate }) {
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = isActive
-                          ? "var(--accent)"
+                          ? "#727170" // ✅ actieve kleur grijs
                           : "var(--text)")
                       }
                       style={{
                         appearance: "none",
                         border: 0,
                         background: "transparent",
-                        color: isActive ? "var(--accent)" : "var(--text)",
+                        color: isActive ? "#727170" : "var(--text)", // ✅ actief grijs
                         textAlign: "left",
                         padding: "10px 14px",
                         borderRadius: 10,
