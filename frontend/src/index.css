@@ -295,10 +295,33 @@ aside * {
 /* === ORANJE SECTIETITELS IN SIDEBAR (minder vet) === */
 aside div {
   font-weight: 500; /* standaard voor alle divs, zachter lettergewicht */
+  text-transform: uppercase;
 }
 
 aside div[style*="color: var(--accent)"] {
   font-weight: 600 !important;  /* iets vetter dan standaard, maar niet te zwaar */
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+/* === SIDEBAR SPACING EN STRUCTUUR === */
+
+/* Logo extra marge onderaan */
+aside img {
+  margin-bottom: 36px !important; /* vroeger 20px → meer ruimte */
+}
+
+/* Secties duidelijker gescheiden */
+aside nav > div {
+  margin-bottom: 26px !important; /* meer witruimte tussen secties */
+}
+
+/* Oranje sectietitels subtieler */
+aside div[style*="color: var(--accent)"] {
+  font-weight: 600 !important; /* minder vet */
+  margin-top: 10px !important;
+  margin-bottom: 10px !important;
   letter-spacing: 0.08em;
   color: var(--accent);
   text-transform: uppercase;
