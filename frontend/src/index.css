@@ -282,7 +282,7 @@ body {
 
 /* === UNIFORME TEKSTGROOTTE IN SIDEBAR === */
 aside {
-  font-size: 16px;                  /* bepaal hier de grootte */
+  font-size: 14px;                  /* bepaal hier de grootte */
   font-family: "Open Sans", sans-serif;
   line-height: 1.4em;
 }
@@ -290,4 +290,16 @@ aside {
 aside * {
   font-size: inherit !important;
   line-height: inherit;
+}
+
+/* === ORANJE SECTIETITELS IN SIDEBAR (minder vet) === */
+aside div {
+  font-weight: 500; /* standaard voor alle divs, zachter lettergewicht */
+}
+
+aside div[style*="color: var(--accent)"] {
+  font-weight: 600 !important;  /* iets vetter dan standaard, maar niet te zwaar */
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
 }
