@@ -61,15 +61,15 @@ export default function Sidebar({ currentPage, onNavigate }) {
           <ChevronLeft size={22} strokeWidth={2.2} />
         </button>
 
-        {/* === HEADERZONE: logo gecentreerd tussen top en eerste sectie === */}
+        {/* === HEADERZONE === */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "flex-end",
-            height: "clamp(110px, 18vh, 160px)", // dynamische hoogte
-            marginBottom: 10,
+            height: "clamp(90px, 15vh, 130px)", // iets compacter
+            marginBottom: 6,
           }}
         >
           <img
@@ -108,10 +108,25 @@ export default function Sidebar({ currentPage, onNavigate }) {
                     <button
                       key={item}
                       onClick={() => onNavigate(item)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "var(--accent)";
+                        e.currentTarget.style.background =
+                          "rgba(255,121,0,0.08)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = isActive
+                          ? "var(--muted)"
+                          : "var(--text)";
+                        e.currentTarget.style.background = isActive
+                          ? "rgba(255,255,255,0.06)"
+                          : "transparent";
+                      }}
                       style={{
                         appearance: "none",
                         border: 0,
-                        background: "transparent",
+                        background: isActive
+                          ? "rgba(255,255,255,0.06)"
+                          : "transparent",
                         color: isActive ? "var(--muted)" : "var(--text)",
                         textAlign: "left",
                         padding: "10px 14px",
@@ -119,10 +134,8 @@ export default function Sidebar({ currentPage, onNavigate }) {
                         fontSize: 12,
                         fontWeight: isActive ? 700 : 500,
                         cursor: "pointer",
-                        transition: "color .2s ease, background .2s ease",
-                        background: isActive
-                          ? "rgba(255,255,255,0.06)"
-                          : "transparent",
+                        transition:
+                          "color .2s ease, background .2s ease, transform .2s ease",
                         boxShadow: isActive
                           ? "inset 3px 0 0 var(--accent)"
                           : "inset 3px 0 0 transparent",
@@ -165,7 +178,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           style={{
             position: "fixed",
             top: 18,
-            left: 16, // links op dezelfde hoogte
+            left: 16,
             color: "var(--text)",
             background: "none",
             border: "none",
