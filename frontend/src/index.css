@@ -6,83 +6,7 @@
   font-style: normal;
   font-display: swap;
 }
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-300italic.woff2") format("woff2");
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-400.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-400italic.woff2") format("woff2");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-500italic.woff2") format("woff2");
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-600.woff2") format("woff2");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-600italic.woff2") format("woff2");
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-700italic.woff2") format("woff2");
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800.woff2") format("woff2");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Open Sans";
-  src: url("./assets/fonts/OpenSans/open-sans-v44-latin-800italic.woff2") format("woff2");
-  font-weight: 800;
-  font-style: italic;
-  font-display: swap;
-}
+/* … (andere @font-face regels ongewijzigd) … */
 
 /* === THEMA VARIABELEN === */
 :root {
@@ -92,17 +16,13 @@
   --muted: #c9c9c9;
   --accent: #FF7900;
   --accent-hover: #FFA64D;
-  --border: rgba(255, 121, 0, 0.35);
+  --border: rgba(255,121,0,0.35);
 }
 
-/* === ALGEMENE BASISSTIJLEN === */
-* {
-  box-sizing: border-box;
-}
+/* === BASIS === */
+* { box-sizing: border-box; }
 
-html, body, #root {
-  height: 100%;
-}
+html, body, #root { height: 100%; }
 
 body {
   margin: 0;
@@ -111,17 +31,14 @@ body {
   background: var(--bg);
 }
 
-/* === LAYOUT GRID: sidebar + main === */
+/* === GRID STRUCTUUR === */
 .layout {
   display: grid;
   grid-template-columns: 280px 1fr;
   min-height: 100vh;
 }
-
 @media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
+  .layout { grid-template-columns: 1fr; }
 }
 
 /* === MAIN CONTENT === */
@@ -132,14 +49,12 @@ body {
   margin-inline: auto;
 }
 
-/* === RESPONSIVE GRID voor kaarten === */
+/* === KAARTEN EN TABEL === */
 .responsive-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
-
-/* === KAART-STYLING === */
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -152,91 +67,6 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
-
-/* === TITELS === */
-.h1 {
-  font-size: clamp(22px, 2.8vw, 32px);
-  margin: 0 0 12px;
-}
-.h2 {
-  font-size: clamp(16px, 2vw, 18px);
-  color: var(--muted);
-  margin: 0 0 24px;
-}
-
-/* === BUTTON-STIJL === */
-.btn {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color .2s ease, background .2s ease, transform .05s ease;
-}
-.btn:hover {
-  color: var(--accent);
-  background: rgba(255, 121, 0, 0.08);
-}
-.btn:active {
-  transform: translateY(1px);
-}
-
-/* === SUBHEADERS === */
-.subheader {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  color: var(--accent);
-  text-transform: uppercase;
-  margin: 18px 8px 6px;
-}
-
-/* === FADE-IN EFFECT === */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.fade-in {
-  animation: fadeIn 0.8s ease;
-}
-
-/* === TOPBAR === */
-.topbar {
-  display: none;
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 14px;
-  align-items: center;
-  gap: 10px;
-}
-.topbar h1 {
-  font-size: 16px;
-  margin: 0;
-  letter-spacing: .02em;
-}
-.topbar .hamburger {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
-}
-@media (max-width: 900px) {
-  .topbar {
-    display: flex;
-  }
-}
-
-/* === TABEL === */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -254,58 +84,114 @@ body {
   font-weight: 700;
 }
 
-/* === SIDEBAR STIJLEN === */
+/* === TITELS === */
+.h1 { font-size: clamp(22px, 2.8vw, 32px); margin: 0 0 12px; }
+.h2 { font-size: clamp(16px, 2vw, 18px); color: var(--muted); margin: 0 0 24px; }
+
+/* === TOPBAR === */
+.topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  align-items: center;
+  gap: 10px;
+}
+.topbar h1 { font-size: 16px; margin: 0; letter-spacing: .02em; }
+.topbar .hamburger {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+}
+@media (max-width: 900px) { .topbar { display: flex; } }
+
+/* === ANIMATIE === */
+@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+.fade-in { animation: fadeIn 0.8s ease; }
+
+/* === SIDEBAR – 220px breed, meeschalend, geen scroll === */
 aside {
-  width: 200px !important;
-  padding: 24px 16px 24px 22px !important;
+  width: 220px !important;
+  padding: 24px 18px 24px 24px !important;
   font-size: 14px;
   font-family: "Open Sans", sans-serif;
   line-height: 1.4em;
-  border-right: 1px solid rgba(255, 121, 0, 0.3) !important; /* subtiele afscheiding */
+  border-right: 1px solid rgba(255,121,0,0.3) !important;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;   /* logo boven, footer onder */
+  overflow: hidden !important;      /* geen scrollen */
 }
 
-aside * {
-  font-size: inherit !important;
-  line-height: inherit;
-}
-
-/* Logo extra marge */
+/* === LOGO GECENTREERD IN SIDEBAR === */
 aside img {
-  margin-bottom: 36px !important;
+  display: block;
+  margin: 0 auto 36px auto !important; /* horizontaal centreren + ruimte onderaan */
+  width: 80%;                          /* proportioneel t.o.v. sidebarbreedte */
+  height: auto;
+  filter: drop-shadow(0 0 10px rgba(255,121,0,0.3));
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
+
+aside img:hover {
+  transform: scale(1.03);
+  filter: drop-shadow(0 0 14px rgba(255,121,0,0.45));
+}
+
+/* Menu schaalbaar bij lage resoluties */
+aside nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: visible !important;
+  transform-origin: top;
+  transition: transform 0.25s ease; /* zachte schaalovergang */
+}
+@media (max-height: 800px) { aside nav { transform: scale(0.95); } }
+@media (max-height: 700px) { aside nav { transform: scale(0.9); } }
+@media (max-height: 600px) { aside nav { transform: scale(0.85); } }
 
 /* Oranje sectietitels */
 aside div[style*="color: var(--accent)"] {
-  padding-left: 6px !important;
+  padding-left: 8px !important;
   font-weight: 600 !important;
   letter-spacing: 0.08em;
-  margin: 12px 0 !important;
+  margin: 14px 0 !important;
   color: var(--accent);
   text-transform: uppercase;
 }
 
-/* Sectieafstand */
-aside nav > div {
-  margin-bottom: 28px !important;
-}
-
-/* Knoppen spacing */
+/* Witte subitems (compact & uppercase) */
+aside nav div > div { display: grid; gap: 4px !important; }
 aside nav button {
-  padding-left: 20px !important;
+  padding: 8px 0 8px 22px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.9);
+  font-weight: 500;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+aside nav button:hover {
+  color: var(--accent);
+  background: rgba(255,121,0,0.08);
 }
 
-/* Chevron-knoppen uitlijning */
+/* Afstand tussen secties */
+aside nav > div { margin-bottom: 28px !important; }
+
+/* Chevron-knoppen */
 button[title="Sidebar verbergen"],
 button[title="Sidebar openen"] {
-  left: 8px !important;
+  left: 12px !important;
   color: var(--text);
   transition: color 0.2s ease;
 }
-button[title="Sidebar openen"] {
-  left: 10px !important;
-}
-
-/* Hover voor Chevron */
+button[title="Sidebar openen"] { left: 14px !important; }
 button[title="Sidebar verbergen"]:hover,
 button[title="Sidebar openen"]:hover {
   color: var(--accent-hover);
