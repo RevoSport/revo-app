@@ -127,7 +127,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
                         padding: "10px 14px",
                         borderRadius: 10,
                         fontSize: 12,
-                        fontWeight: isActive ? 700 : 500,
+                        fontWeight: isActive ? 500,
                         cursor: "pointer",
                         transition: "color .2s ease",
                       }}
