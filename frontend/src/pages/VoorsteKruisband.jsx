@@ -39,7 +39,7 @@ export default function VoorsteKruisband() {
       {/* === TITEL === */}
       <h1
         style={{
-          fontSize: "28px",
+          fontSize: "16px",
           textTransform: "uppercase",
           color: "#ffffff",
           letterSpacing: "1.5px",
@@ -62,7 +62,7 @@ export default function VoorsteKruisband() {
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === 4 CARDS (compactere hoogte) === */}
+      {/* === 4 CARDS === */}
       <div
         style={{
           display: "grid",
@@ -70,6 +70,7 @@ export default function VoorsteKruisband() {
           gap: "28px",
           width: "100%",
           maxWidth: "1100px",
+          marginBottom: "35px",
         }}
       >
         {cards.map((card) => (
@@ -79,7 +80,7 @@ export default function VoorsteKruisband() {
             style={{
               backgroundColor: "#1a1a1a",
               borderRadius: "12px",
-              padding: "22px 10px", // 🔹 verminderd van 30px naar 22px (≈75%)
+              padding: "22px 10px",
               border: "1.8px solid transparent",
               cursor: "pointer",
               transition: "all 0.25s ease",
@@ -114,6 +115,16 @@ export default function VoorsteKruisband() {
           </div>
         ))}
       </div>
+
+      {/* === ORANJE LIJN ONDER DE CARDS === */}
+      <div
+        style={{
+          width: "100%",
+          height: "1px", // even dik als menu-lijn
+          backgroundColor: "var(--accent)",
+          opacity: 0.7,
+        }}
+      ></div>
     </div>
   );
 }
