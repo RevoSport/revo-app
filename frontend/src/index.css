@@ -275,7 +275,23 @@ button[title="Sidebar openen"]:hover {
 }
 
 /* === FORCEER UNIFORME TEKSTGROOTTE IN SIDEBAR === */
+/* === FORCEER UNIFORME TEKSTGROOTTE IN SIDEBAR === */
 aside * {
-  font-size: 14px !important;
+  font-size: 12px !important;     /* verlaagd van 14 naar 12 */
   line-height: 1.4em !important;
+}
+
+/* Chevron-knoppen correct uitgelijnd aan rechterkant */
+button[title="Sidebar verbergen"],
+button[title="Sidebar openen"] {
+  position: absolute !important;
+  top: 18px !important;
+  right: 16px !important;          /* verplaatst naar rechtszijde */
+  color: var(--text);
+  transition: color 0.2s ease;
+  z-index: 10;
+}
+button[title="Sidebar verbergen"]:hover,
+button[title="Sidebar openen"]:hover {
+  color: var(--accent-hover);
 }
