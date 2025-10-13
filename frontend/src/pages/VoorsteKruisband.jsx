@@ -43,7 +43,7 @@ export default function VoorsteKruisband() {
           color: "var(--muted)",
           fontSize: "14px",
           marginBottom: "35px",
-          letterSpacing: "0.4px",
+          letterSpacing: "0.5px",
         }}
       >
         DATA-DRIVEN REHABILITATION INSIGHTS
@@ -116,7 +116,7 @@ export default function VoorsteKruisband() {
         <div
           style={{
             width: "100%",
-            height: "1px",
+            height: "0.8px",
             backgroundColor: "#FF7900",
           }}
         ></div>
