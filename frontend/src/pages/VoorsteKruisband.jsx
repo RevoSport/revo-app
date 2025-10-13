@@ -4,12 +4,12 @@ import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
 export default function VoorsteKruisband() {
   const cards = [
     {
-      title: "POPULATIE BESCHRIJVING",
+      title: "POPULATIE",
       icon: <User size={30} color="var(--accent)" />,
       onClick: () => console.log("Populatie Beschrijving"),
     },
     {
-      title: "ANTROPOMETRIE & MOBILITEIT",
+      title: "METRICS",
       icon: <Ruler size={30} color="var(--accent)" />,
       onClick: () => console.log("Antropometrie & Mobiliteit"),
     },
