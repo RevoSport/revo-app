@@ -39,7 +39,7 @@ export default function VoorsteKruisband() {
       {/* === TITEL === */}
       <h1
         style={{
-          fontSize: "20px",
+          fontSize: "28px",
           textTransform: "uppercase",
           color: "#ffffff",
           letterSpacing: "1.5px",
@@ -55,14 +55,14 @@ export default function VoorsteKruisband() {
         style={{
           color: "var(--muted)",
           fontSize: "14px",
-          marginBottom: "40px",
+          marginBottom: "35px",
           letterSpacing: "0.4px",
         }}
       >
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === 4 CARDS (4x1) === */}
+      {/* === 4 CARDS (compactere hoogte) === */}
       <div
         style={{
           display: "grid",
@@ -79,7 +79,7 @@ export default function VoorsteKruisband() {
             style={{
               backgroundColor: "#1a1a1a",
               borderRadius: "12px",
-              padding: "30px 15px",
+              padding: "22px 10px", // 🔹 verminderd van 30px naar 22px (≈75%)
               border: "1.8px solid transparent",
               cursor: "pointer",
               transition: "all 0.25s ease",
@@ -98,7 +98,7 @@ export default function VoorsteKruisband() {
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <div style={{ marginBottom: "12px" }}>{card.icon}</div>
+            <div style={{ marginBottom: "8px" }}>{card.icon}</div>
             <h3
               style={{
                 fontSize: "12px",
