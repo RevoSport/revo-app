@@ -1,8 +1,24 @@
 import React, { useState } from "react";
 import Sidebar from "./components/Sidebar";
+import Home from "./pages/Home"; // 🔹 jouw echte Home-pagina importeren
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("Home");
+
+  // 🔹 eenvoudige router-switch (later uitbreidbaar)
+  const renderPage = () => {
+    switch (currentPage) {
+      case "Home":
+        return <Home />;
+      default:
+        return (
+          <div>
+            <h1>{currentPage}</h1>
+            <p>Inhoud van {currentPage}</p>
+          </div>
+        );
+    }
+  };
 
   return (
     <div>
@@ -18,19 +34,15 @@ export default function App() {
           padding: "24px",
         }}
       >
-        <h1>{currentPage}</h1>
-        <p>Inhoud van {currentPage}</p>
+        {renderPage()}
       </main>
 
       <style>{`
-        /* Sidebar open = 280px ruimte links */
-        body:not(.sidebar-collapsed) {
-          --sidebar-offset: 280px;
-        }
-
-        /* Sidebar dicht = geen marge links */
         body.sidebar-collapsed {
           --sidebar-offset: 0px;
+        }
+        body:not(.sidebar-collapsed) {
+          --sidebar-offset: 280px;
         }
       `}</style>
     </div>
