@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Sidebar from "./Sidebar";
+import Sidebar from "./components/Sidebar";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("Home");
