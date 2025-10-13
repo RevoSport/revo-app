@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
+import Populatie from "./Populatie"; // 🔹 importeren
 
 export default function VoorsteKruisband() {
   const [activeCard, setActiveCard] = useState(null);
+  const [activeSection, setActiveSection] = useState(null); // 🔹 bepaalt welke sectie getoond wordt
 
   const cards = [
-    { title: "POPULATIE", icon: <User size={24} color="var(--accent)" /> },
-    { title: "METRICS", icon: <Ruler size={24} color="var(--accent)" /> },
-    { title: "KRACHT", icon: <Dumbbell size={24} color="var(--accent)" /> },
-    {
-      title: "FUNCTIONELE TESTING",
-      icon: <ClipboardList size={24} color="var(--accent)" />,
-    },
+    { title: "POPULATIE", key: "populatie", icon: <User size={24} color="var(--accent)" /> },
+    { title: "METRICS", key: "metrics", icon: <Ruler size={24} color="var(--accent)" /> },
+    { title: "KRACHT", key: "kracht", icon: <Dumbbell size={24} color="var(--accent)" /> },
+    { title: "FUNCTIONELE TESTING", key: "functioneel", icon: <ClipboardList size={24} color="var(--accent)" /> },
   ];
 
   return (
@@ -28,7 +27,7 @@ export default function VoorsteKruisband() {
       {/* === TITEL === */}
       <h1
         style={{
-          fontSize: "28px",
+          fontSize: "22px",
           textTransform: "uppercase",
           color: "#ffffff",
           letterSpacing: "1.5px",
@@ -77,7 +76,10 @@ export default function VoorsteKruisband() {
             return (
               <div
                 key={card.title}
-                onClick={() => setActiveCard(index)}
+                onClick={() => {
+                  setActiveCard(index);
+                  setActiveSection(card.key); // 🔹 toont juiste sectie
+                }}
                 style={{
                   backgroundColor: "#1a1a1a",
                   borderRadius: "10px",
@@ -107,7 +109,7 @@ export default function VoorsteKruisband() {
                   style={{
                     fontSize: "10px",
                     fontWeight: 600,
-                    color: isActive ? "#727170" : "white", // 👈 actieve kleur
+                    color: isActive ? "#727170" : "white",
                     letterSpacing: "0.7px",
                     textTransform: "uppercase",
                     lineHeight: "1.2",
@@ -126,9 +128,17 @@ export default function VoorsteKruisband() {
             width: "100%",
             height: "0.8px",
             backgroundColor: "#FF7900",
+            marginBottom: "30px",
           }}
         ></div>
       </div>
+
+      {/* === CONDITIONEEL DE POPULATIECOMPONENT TONEN === */}
+      {activeSection === "populatie" && (
+        <div style={{ width: "100%" }}>
+          <Populatie />
+        </div>
+      )}
     </div>
   );
 }
