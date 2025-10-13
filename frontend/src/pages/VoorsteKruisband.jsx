@@ -5,22 +5,22 @@ export default function VoorsteKruisband() {
   const cards = [
     {
       title: "POPULATIE BESCHRIJVING",
-      icon: <User size={28} color="var(--accent)" />,
+      icon: <User size={26} color="var(--accent)" />,
       onClick: () => console.log("Populatie Beschrijving"),
     },
     {
       title: "ANTROPOMETRIE & MOBILITEIT",
-      icon: <Ruler size={28} color="var(--accent)" />,
+      icon: <Ruler size={26} color="var(--accent)" />,
       onClick: () => console.log("Antropometrie & Mobiliteit"),
     },
     {
       title: "KRACHT",
-      icon: <Dumbbell size={28} color="var(--accent)" />,
+      icon: <Dumbbell size={26} color="var(--accent)" />,
       onClick: () => console.log("Kracht"),
     },
     {
       title: "FUNCTIONELE TESTING",
-      icon: <ClipboardList size={28} color="var(--accent)" />,
+      icon: <ClipboardList size={26} color="var(--accent)" />,
       onClick: () => console.log("Functionele Testing"),
     },
   ];
@@ -62,14 +62,14 @@ export default function VoorsteKruisband() {
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === 4 RESPONSIVE CARDS === */}
+      {/* === 4 CARDS ALTIJD 4x1 === */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gridTemplateColumns: "repeat(4, 1fr)",
           gap: "24px",
           width: "100%",
-          maxWidth: "900px",
+          maxWidth: "1000px",
         }}
       >
         {cards.map((card) => (
@@ -79,13 +79,14 @@ export default function VoorsteKruisband() {
             style={{
               backgroundColor: "transparent",
               borderRadius: "10px",
-              padding: "22px 10px",
+              padding: "24px 10px",
               border: "1.8px solid var(--accent)",
               cursor: "pointer",
               transition: "all 0.25s ease",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
+              minWidth: "0", // voorkomt overflow
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.borderColor = "#ffffff";
