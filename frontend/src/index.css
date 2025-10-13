@@ -217,8 +217,7 @@ aside {
   width: 240px !important;
   padding: 24px 20px 24px 24px !important;
   font-family: "Open Sans", sans-serif;
-  border-right: 1px solid #FF7900 !important;
-
+  border-right: 1px solid rgba(255,121,0,0.3) !important;
   display: flex;
   flex-direction: column;
   align-items: center;
