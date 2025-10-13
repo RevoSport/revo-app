@@ -112,10 +112,10 @@ body {
 @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
 .fade-in { animation: fadeIn 0.8s ease; }
 
-/* === SIDEBAR – 220px breed, meeschalend, geen scroll === */
+/* === SIDEBAR – 220px breed, logo volledig gecentreerd, meeschalend === */
 aside {
   width: 220px !important;
-  padding: 24px 18px 24px 24px !important;
+  padding: 0 18px !important;
   font-size: 14px;
   font-family: "Open Sans", sans-serif;
   line-height: 1.4em;
@@ -123,22 +123,26 @@ aside {
 
   display: flex;
   flex-direction: column;
-  justify-content: space-between;   /* logo boven, footer onder */
-  overflow: hidden !important;      /* geen scrollen */
+  align-items: center;
+  justify-content: center;       /* verticaal + horizontaal centreren logo */
+  overflow: hidden !important;
+  position: relative;
 }
 
-/* === LOGO GECENTREERD IN SIDEBAR === */
+/* Logo precies in het midden */
 aside img {
   display: block;
-  margin: 0 auto 36px auto !important; /* horizontaal centreren + ruimte onderaan */
-  width: 80%;                          /* proportioneel t.o.v. sidebarbreedte */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* horizontaal + verticaal centreren */
+  width: 80%;
   height: auto;
   filter: drop-shadow(0 0 10px rgba(255,121,0,0.3));
   transition: transform 0.2s ease, filter 0.2s ease;
 }
-
 aside img:hover {
-  transform: scale(1.03);
+  transform: translate(-50%, -50%) scale(1.03);
   filter: drop-shadow(0 0 14px rgba(255,121,0,0.45));
 }
 
@@ -195,4 +199,10 @@ button[title="Sidebar openen"] { left: 14px !important; }
 button[title="Sidebar verbergen"]:hover,
 button[title="Sidebar openen"]:hover {
   color: var(--accent-hover);
+}
+
+/* === FORCEER UNIFORME TEKSTGROOTTE IN SIDEBAR === */
+aside * {
+  font-size: 14px !important;  /* of 15/16 als je iets groter wil */
+  line-height: 1.4em !important;
 }
