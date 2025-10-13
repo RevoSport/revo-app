@@ -39,7 +39,7 @@ export default function VoorsteKruisband() {
       {/* === TITEL === */}
       <h1
         style={{
-          fontSize: "16px",
+          fontSize: "28px",
           textTransform: "uppercase",
           color: "#ffffff",
           letterSpacing: "1.5px",
@@ -62,7 +62,7 @@ export default function VoorsteKruisband() {
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === 4 COMPACTE CARDS === */}
+      {/* === 4 CARDS === */}
       <div
         style={{
           display: "grid",
@@ -80,15 +80,15 @@ export default function VoorsteKruisband() {
             style={{
               backgroundColor: "#1a1a1a",
               borderRadius: "10px",
-              padding: "16px 8px", // 🔹 kleiner
               border: "1.5px solid transparent",
               cursor: "pointer",
               transition: "all 0.25s ease",
               boxShadow: "0 0 8px rgba(0,0,0,0.3)",
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "center", // 🔹 verticale centrering
+              alignItems: "center", // 🔹 horizontale centrering
+              height: "100px", // 🔹 vaste hoogte zorgt voor perfecte uitlijning
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.borderColor = "var(--accent)";
