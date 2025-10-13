@@ -29,7 +29,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           height: "100vh",
           width: WIDTH,
           background: "var(--panel)",
-          borderRight: "1px solid #FF7900", // 🟠 zelfde kleur & dikte als horizontale lijn
+          borderRight: "2px solid #FF7900", // 🟠 zelfde kleur & dikte als horizontale lijn
           padding: "18px 16px",
           transform: collapsed ? "translateX(-110%)" : "translateX(0)",
           transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
