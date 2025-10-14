@@ -92,3 +92,34 @@ def register_therapist(
     db.refresh(new_user)
 
     return {"status": "✅ Gebruiker toegevoegd", "id": new_user.id, "email": new_user.email}
+
+# -----------------------------------------------------
+# TIJDELIJK: EERSTE OWNER REGISTREREN
+# -----------------------------------------------------
+@router.post("/register_owner")
+def register_owner(
+    email: str,
+    full_name: str,
+    password: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Tijdelijke route om de eerste owner-account aan te maken via Swagger.
+    Wordt verwijderd zodra de eerste gebruiker bestaat.
+    """
+    # Bestaat al?
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=400, detail="Email bestaat al.")
+
+    new_user = User(
+        email=email,
+        full_name=full_name,
+        role="owner",
+        password_hash=hash_password(password),
+        is_active=True,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"status": "✅ Owner-account aangemaakt", "email": new_user.email}
