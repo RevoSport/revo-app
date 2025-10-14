@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import logo from "../assets/logo.png";
+
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -39,7 +41,7 @@ export default function Login({ onLogin }) {
     }
   };
 
-  return (
+    return (
     <div
       style={{
         minHeight: "100vh",
@@ -50,76 +52,116 @@ export default function Login({ onLogin }) {
         alignItems: "center",
       }}
     >
-      <form
-        onSubmit={handleSubmit}
+      {/* 🔸 Fade-in container */}
+      <div
         style={{
-          backgroundColor: "#1b1b1b",
-          padding: "2rem",
-          borderRadius: 16,
-          width: 320,
-          textAlign: "center",
-          border: "1px solid rgba(255,121,0,0.4)",
+          animation: "fadeIn 0.9s ease-out",
         }}
       >
-        <h2 style={{ color: "#FF7900", marginBottom: 20 }}>Revo Sport Login</h2>
-
-        <input
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+        <form
+          onSubmit={handleSubmit}
           style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 10,
-            borderRadius: 8,
-            border: "1px solid #555",
-            backgroundColor: "#222",
-            color: "white",
-          }}
-        />
-
-        <input
-          type="password"
-          placeholder="Wachtwoord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 20,
-            borderRadius: 8,
-            border: "1px solid #555",
-            backgroundColor: "#222",
-            color: "white",
-          }}
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 8,
-            border: "none",
-            backgroundColor: "#FF7900",
-            color: "white",
-            fontWeight: 600,
-            cursor: "pointer",
+            backgroundColor: "#1b1b1b",
+            padding: "2rem",
+            borderRadius: 16,
+            width: 320,
+            textAlign: "center",
+            border: "1px solid rgba(255,121,0,0.4)",
+            boxShadow: "0 0 25px rgba(0,0,0,0.3)",
           }}
         >
-          {loading ? "Aan het inloggen..." : "Login"}
-        </button>
+          {/* 🔹 Logo gecentreerd */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
+              marginBottom: 25,
+            }}
+          >
+            <img
+              src={logo}
+              alt="Revo Sport Logo"
+              style={{
+                width: 160,
+                marginBottom: 10,
+                filter: "drop-shadow(0 0 8px rgba(255,121,0,0.5))",
+                opacity: 0.95,
+              }}
+            />
+          </div>
 
-        {error && (
-          <p style={{ color: "tomato", marginTop: 15, fontSize: 14 }}>
-            {error}
-          </p>
-        )}
-      </form>
+          {/* 🔹 Inputvelden */}
+          <input
+            type="email"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              width: "100%",
+              padding: 10,
+              marginBottom: 10,
+              borderRadius: 8,
+              border: "1px solid #555",
+              backgroundColor: "#222",
+              color: "white",
+            }}
+          />
+
+          <input
+            type="password"
+            placeholder="Wachtwoord"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{
+              width: "100%",
+              padding: 10,
+              marginBottom: 20,
+              borderRadius: 8,
+              border: "1px solid #555",
+              backgroundColor: "#222",
+              color: "white",
+            }}
+          />
+
+          {/* 🔹 Login-knop */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: 10,
+              borderRadius: 8,
+              border: "none",
+              backgroundColor: "#FF7900",
+              color: "white",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "background 0.3s",
+            }}
+            onMouseEnter={(e) => (e.target.style.background = "#FFA64D")}
+            onMouseLeave={(e) => (e.target.style.background = "#FF7900")}
+          >
+            {loading ? "Aan het inloggen..." : "Login"}
+          </button>
+
+          {error && (
+            <p style={{ color: "tomato", marginTop: 15, fontSize: 14 }}>
+              {error}
+            </p>
+          )}
+        </form>
+      </div>
+
+      {/* 🔸 Fade-in animatie CSS */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
-}
