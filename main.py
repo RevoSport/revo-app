@@ -7,6 +7,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from colorama import Fore, Style, init as colorama_init
 from routers import onedrive_routes
+from routers import auth_router
+from fastapi import Depends
+from security import get_current_user
+
 
 # =====================================================
 #   Router-imports (lokaal)
@@ -20,6 +24,7 @@ from routers import (
     maand45,
     maand6,
     timeline
+    
 )
 
 # =====================================================
@@ -57,15 +62,28 @@ app.add_middleware(
 # =====================================================
 #   ROUTERS REGISTREREN
 # =====================================================
-app.include_router(patient.router)
-app.include_router(blessure.router)
-app.include_router(baseline.router)
-app.include_router(week6.router)
-app.include_router(maand3.router)
-app.include_router(maand45.router)
-app.include_router(maand6.router)
-app.include_router(timeline.router)
-app.include_router(onedrive_routes.router)
+# =====================================================
+#   ROUTERS REGISTREREN
+# =====================================================
+
+# Publieke router (login & registratie)
+app.include_router(auth_router.router)
+
+# Alle andere routes vereisen login
+protected = [Depends(get_current_user)]
+
+app.include_router(patient.router,  dependencies=protected)
+app.include_router(blessure.router, dependencies=protected)
+app.include_router(baseline.router, dependencies=protected)
+app.include_router(week6.router,    dependencies=protected)
+app.include_router(maand3.router,   dependencies=protected)
+app.include_router(maand45.router,  dependencies=protected)
+app.include_router(maand6.router,   dependencies=protected)
+app.include_router(timeline.router, dependencies=protected)
+app.include_router(onedrive_routes.router, dependencies=protected)
+
+
+
 
 # =====================================================
 #   ROOT ENDPOINT
