@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import logo from "../assets/logo.png";
 
-
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_URL = process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
+  const API_URL =
+    process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +41,7 @@ export default function Login({ onLogin }) {
     }
   };
 
-    return (
+  return (
     <div
       style={{
         minHeight: "100vh",
@@ -165,3 +165,4 @@ export default function Login({ onLogin }) {
       `}</style>
     </div>
   );
+}
