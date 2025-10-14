@@ -7,3 +7,17 @@
 **/.vscode/
 **/.DS_Store
 **/*.pyc
+
+# 🔒 Gevoelige configuratie
+.env
+.env.*
+onedrive_token.json
+onedrive_config.json
+
+# Render / Vercel
+.render/
+.vercel/
+
+# Local scripts of tijdelijke bestanden
+scripts/*.py~
+scripts/temp_*.py
