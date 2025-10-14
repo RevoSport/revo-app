@@ -3,19 +3,13 @@
 # Revo Sport API v2.0 — Productieversie met CORS-beveiliging
 # =====================================================
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from colorama import Fore, Style, init as colorama_init
-from routers import onedrive_routes
-from routers import auth_router
-from fastapi import Depends
-from security import get_current_user
 
-
-# =====================================================
-#   Router-imports (lokaal)
-# =====================================================
+# Routers importeren
 from routers import (
+    auth_router,
     patient,
     blessure,
     baseline,
@@ -23,9 +17,10 @@ from routers import (
     maand3,
     maand45,
     maand6,
-    timeline
-    
+    timeline,
+    onedrive_routes,
 )
+from security import get_current_user
 
 # =====================================================
 #   Kleur initialisatie
@@ -38,16 +33,18 @@ colorama_init(autoreset=True)
 app = FastAPI(
     title="Revo Sport Database API",
     version="2.0",
-    description="Modulaire FastAPI-structuur met kleur-logging (productieversie)."
+    description="Modulaire FastAPI-structuur met kleur-logging (productieversie).",
 )
 
 # =====================================================
 #   CORS MIDDLEWARE (Frontend-toegang)
 # =====================================================
 origins = [
-    "http://localhost:3000",                # lokaal
-    "https://*.vercel.app",                 # alle preview builds op Vercel
-    "https://app.revosport.be"              # je eigen domein
+    "http://localhost:3000",          # lokaal (React)
+    "http://localhost:5173",          # lokaal (Vite)
+    "https://aithlete.revosport.be",  # NIEUWE frontend
+    "https://app.revosport.be",       # oude frontend
+    "https://*.vercel.app",           # eventuele preview builds
 ]
 
 app.add_middleware(
@@ -58,32 +55,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # =====================================================
 #   ROUTERS REGISTREREN
 # =====================================================
-# =====================================================
-#   ROUTERS REGISTREREN
-# =====================================================
-
-# Publieke router (login & registratie)
+# Publieke router (login)
 app.include_router(auth_router.router)
 
 # Alle andere routes vereisen login
 protected = [Depends(get_current_user)]
 
-app.include_router(patient.router,  dependencies=protected)
+app.include_router(patient.router, dependencies=protected)
 app.include_router(blessure.router, dependencies=protected)
 app.include_router(baseline.router, dependencies=protected)
-app.include_router(week6.router,    dependencies=protected)
-app.include_router(maand3.router,   dependencies=protected)
-app.include_router(maand45.router,  dependencies=protected)
-app.include_router(maand6.router,   dependencies=protected)
+app.include_router(week6.router, dependencies=protected)
+app.include_router(maand3.router, dependencies=protected)
+app.include_router(maand45.router, dependencies=protected)
+app.include_router(maand6.router, dependencies=protected)
 app.include_router(timeline.router, dependencies=protected)
 app.include_router(onedrive_routes.router, dependencies=protected)
-
-
-
 
 # =====================================================
 #   ROOT ENDPOINT
@@ -103,7 +92,7 @@ def home():
             "/maand45",
             "/maand6",
             "/timeline",
-            "/upload_dynamic"
+            "/upload_dynamic",
         ],
     }
 
@@ -113,6 +102,10 @@ def home():
 @app.on_event("startup")
 def startup_event():
     print(Fore.GREEN + "✅ FastAPI app gestart - Revo Sport API v2 actief" + Style.RESET_ALL)
-    print(Fore.YELLOW + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes" + Style.RESET_ALL)
+    print(
+        Fore.YELLOW
+        + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes"
+        + Style.RESET_ALL
+    )
     print(Fore.CYAN + "🌐 Swagger Docs: https://revo-backend-5dji.onrender.com/docs" + Style.RESET_ALL)
     print(Fore.MAGENTA + "💡 Tip: kleur-logs verschijnen bij elke CRUD-actie in de terminal." + Style.RESET_ALL)
