@@ -1,10 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
-import Populatie from "./Populatie"; // 🔹 importeren
+import { apiGet } from "../api"; // ✅ JWT-beveiligde helper
+import Populatie from "./Populatie";
 
 export default function VoorsteKruisband() {
   const [activeCard, setActiveCard] = useState(null);
-  const [activeSection, setActiveSection] = useState(null); // 🔹 bepaalt welke sectie getoond wordt
+  const [activeSection, setActiveSection] = useState(null);
+
+  // 🔹 Data states
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // 🧠 Ophalen populatiegegevens wanneer "Populatie" actief is
+  useEffect(() => {
+    if (activeSection === "populatie") {
+      setLoading(true);
+      setError("");
+      apiGet("/patients/")
+        .then((data) => setPatients(data))
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    }
+  }, [activeSection]);
 
   const cards = [
     { title: "POPULATIE", key: "populatie", icon: <User size={24} color="var(--accent)" /> },
@@ -38,7 +56,6 @@ export default function VoorsteKruisband() {
         VOORSTE KRUISBAND
       </h1>
 
-      {/* === SUBTITEL === */}
       <p
         style={{
           color: "var(--muted)",
@@ -50,19 +67,10 @@ export default function VoorsteKruisband() {
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === CONTAINER VOOR CARDS + LIJNEN === */}
+      {/* === NAVIGATIECARDS === */}
       <div style={{ width: "100%", maxWidth: "950px" }}>
-        {/* BOVENSTE LIJN */}
-        <div
-          style={{
-            width: "100%",
-            height: "1px",
-            backgroundColor: "#FF7900",
-            marginBottom: "20px",
-          }}
-        ></div>
+        <div style={{ height: "1px", backgroundColor: "#FF7900", marginBottom: "20px" }}></div>
 
-        {/* === 4 CARDS === */}
         <div
           style={{
             display: "grid",
@@ -78,7 +86,7 @@ export default function VoorsteKruisband() {
                 key={card.title}
                 onClick={() => {
                   setActiveCard(index);
-                  setActiveSection(card.key); // 🔹 toont juiste sectie
+                  setActiveSection(card.key);
                 }}
                 style={{
                   backgroundColor: "#1a1a1a",
@@ -95,13 +103,6 @@ export default function VoorsteKruisband() {
                   alignItems: "center",
                   height: "100px",
                   transform: isActive ? "translateY(-2px)" : "translateY(0)",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.borderColor = "var(--accent)";
-                }}
-                onMouseOut={(e) => {
-                  if (!isActive)
-                    e.currentTarget.style.borderColor = "transparent";
                 }}
               >
                 <div style={{ marginBottom: "6px" }}>{card.icon}</div>
@@ -122,21 +123,21 @@ export default function VoorsteKruisband() {
           })}
         </div>
 
-        {/* ONDERSTE LIJN */}
-        <div
-          style={{
-            width: "100%",
-            height: "0.8px",
-            backgroundColor: "#FF7900",
-            marginBottom: "30px",
-          }}
-        ></div>
+        <div style={{ height: "0.8px", backgroundColor: "#FF7900", marginBottom: "30px" }}></div>
       </div>
 
-      {/* === CONDITIONEEL DE POPULATIECOMPONENT TONEN === */}
+      {/* === CONTENT === */}
       {activeSection === "populatie" && (
         <div style={{ width: "100%" }}>
-          <Populatie />
+          {loading ? (
+            <p style={{ color: "#FF7900" }}>Gegevens laden...</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>{error}</p>
+          ) : patients.length === 0 ? (
+            <p style={{ color: "#888" }}>Nog geen patiënten gevonden.</p>
+          ) : (
+            <Populatie data={patients} />
+          )}
         </div>
       )}
     </div>
