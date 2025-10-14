@@ -254,6 +254,9 @@ function ChartCard({ title, data, type }) {
     padding: "25px 20px",
     textAlign: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
   };
   const titleStyle = {
     fontSize: "12px",
@@ -266,63 +269,67 @@ function ChartCard({ title, data, type }) {
     return (
       <div style={cardStyle}>
         <h4 style={titleStyle}>{title}</h4>
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="40%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={80}
-              paddingAngle={3}
-              dataKey="value"
-              labelLine
-              label={({ cx, cy, midAngle, outerRadius, percent }) => {
-                const RADIAN = Math.PI / 180;
-                const radius = outerRadius + 18;
-                const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                return (
-                  <text
-                    x={x}
-                    y={y}
-                    fill="#ffffff"
-                    textAnchor={x > cx ? "start" : "end"}
-                    dominantBaseline="central"
-                    fontSize={12}
-                    fontWeight={700}
-                    style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.4))" }}
-                  >
-                    {(percent * 100).toFixed(0)}%
-                  </text>
-                );
-              }}
-            >
-              {data.map((_, i) => (
-                <Cell
-                  key={i}
-                  fill={COLORS[i % COLORS.length]}
-                  stroke="#111"
-                  strokeWidth={1.5}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              verticalAlign="middle"
-              align="right"
-              layout="vertical"
-              iconType="circle"
-              iconSize={10}
-              wrapperStyle={{
-                color: "#c9c9c9",
-                fontSize: 12,
-                lineHeight: "20px",
-                paddingLeft: "4px",
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <div style={{ width: "100%", height: "100%", minHeight: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius="45%"
+                outerRadius="70%"
+                paddingAngle={3}
+                dataKey="value"
+                labelLine
+                label={({ cx, cy, midAngle, outerRadius, percent }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = outerRadius + 16;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="#ffffff"
+                      textAnchor={x > cx ? "start" : "end"}
+                      dominantBaseline="central"
+                      fontSize={12}
+                      fontWeight={700}
+                      style={{
+                        filter: "drop-shadow(0 0 2px rgba(0,0,0,0.4))",
+                      }}
+                    >
+                      {(percent * 100).toFixed(0)}%
+                    </text>
+                  );
+                }}
+              >
+                {data.map((_, i) => (
+                  <Cell
+                    key={i}
+                    fill={COLORS[i % COLORS.length]}
+                    stroke="#111"
+                    strokeWidth={1.5}
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                verticalAlign="middle"
+                align="right"
+                layout="vertical"
+                iconType="circle"
+                iconSize={10}
+                wrapperStyle={{
+                  color: "#c9c9c9",
+                  fontSize: 12,
+                  lineHeight: "20px",
+                  paddingLeft: "4px",
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     );
   }
