@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   PieChart,
   Pie,
@@ -9,56 +9,111 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
 
 const COLORS = ["#FF7900", "#555555"];
 
-export default function Populatie() {
-  // --- Dummydata (later via MySQL) ---
-  const genderData = [
-    { name: "Vrouw", value: 65 },
-    { name: "Man", value: 35 },
-  ];
-  const sportData = [
-    { name: "Voetbal", value: 6 },
-    { name: "Korfbal", value: 3 },
-    { name: "Ander", value: 1 },
-  ];
-  const sportniveauData = [
-    { name: "Recreatief", value: 5 },
-    { name: "Competitief", value: 5 },
-    { name: "Sedentair", value: 2 },
-  ];
-  const etiologieData = [
-    { name: "Non-Contact", value: 72 },
-    { name: "Contact", value: 28 },
-  ];
-  const artsData = [
-    { name: "Dr. Dobbelaere", value: 8 },
-    { name: "Dr. Vanstiphout", value: 2 },
-    { name: "Dr. De Neve", value: 2 },
-    { name: "Dr. Scherpens", value: 1 },
-    { name: "Dr. Moens", value: 1 },
-  ];
-  const operatieData = [
-    { name: "Hamstringpees", value: 13 },
-    { name: "Niet gekend", value: 2 },
-    { name: "Quadricepspees", value: 1 },
-  ];
-  const letselsData = [
-    { name: "NVM", value: 10 },
-    { name: "Meniscusscheur", value: 2 },
-    { name: "Meniscus dissectie", value: 1 },
-  ];
-  const monoloopData = [
-    { name: "Ja", value: 57 },
-    { name: "Nee", value: 43 },
-  ];
-  const kpiData = [
-    { label: "Aantal patiënten", value: "16" },
-    { label: "Gem. tijd ongeval → operatie", value: "31.2 dagen" },
-    { label: "Gem. tijd operatie → intake", value: "4.3 dagen" },
-  ];
+// 🔍 Helper om veldnamen flexibel op te vragen
+function getField(obj, possibleKeys = []) {
+  if (!obj) return null;
+  for (const key of possibleKeys) {
+    if (obj[key] !== undefined && obj[key] !== null && obj[key] !== "")
+      return obj[key];
+  }
+  return null;
+}
+
+// 🔢 Dagenverschil tussen twee datums (veilig)
+function daysBetween(date1, date2) {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  if (isNaN(d1) || isNaN(d2)) return null;
+  const diff = (d2 - d1) / (1000 * 60 * 60 * 24);
+  return diff > 0 && diff < 400 ? diff : null;
+}
+
+export default function Populatie({ data }) {
+  const stats = useMemo(() => {
+    const counts = {
+      geslacht: {},
+      sport: {},
+      sportniveau: {},
+      etiologie: {},
+      operatie: {},
+      arts: {},
+      letsel: {},
+      monoloop: {},
+    };
+
+    let ongevalOperatieDays = [];
+    let operatieIntakeDays = [];
+
+    data.forEach((p) => {
+      const geslacht = getField(p, ["Geslacht", "geslacht"]);
+      if (geslacht)
+        counts.geslacht[geslacht] = (counts.geslacht[geslacht] || 0) + 1;
+
+      (p.blessures || []).forEach((b) => {
+        const sport = getField(b, ["Sport", "sport"]);
+        const sportniveau = getField(b, ["Sportniveau", "sportniveau"]);
+        const etiologie = getField(b, ["Etiologie", "etiologie"]);
+        const operatie = getField(b, ["Operatie", "operatie", "Type_operatie", "type_operatie"]);
+        const arts = getField(b, ["Arts", "arts"]);
+        const letsel = getField(b, ["Bijkomende_letsels", "Bijkomende letsels", "letsels"]);
+        const monoloop = getField(b, ["Monoloop", "monoloop"]);
+
+        if (sport) counts.sport[sport] = (counts.sport[sport] || 0) + 1;
+        if (sportniveau) counts.sportniveau[sportniveau] = (counts.sportniveau[sportniveau] || 0) + 1;
+        if (etiologie) counts.etiologie[etiologie] = (counts.etiologie[etiologie] || 0) + 1;
+        if (operatie) counts.operatie[operatie] = (counts.operatie[operatie] || 0) + 1;
+        if (arts) counts.arts[arts] = (counts.arts[arts] || 0) + 1;
+        if (letsel) counts.letsel[letsel] = (counts.letsel[letsel] || 0) + 1;
+        if (monoloop) counts.monoloop[monoloop] = (counts.monoloop[monoloop] || 0) + 1;
+
+        // 🗓️ Gemiddelde tijden berekenen
+        const dOngeval = getField(b, ["Datum_ongeval", "datum_ongeval", "Datum ongeval", "datum ongeval"]);
+        const dOperatie = getField(b, ["Datum_operatie", "datum_operatie", "Datum operatie", "datum operatie"]);
+        const dIntake = getField(b, ["Datum_intake", "datum_intake", "Datum intake", "datum intake"]);
+
+        const diff1 = daysBetween(dOngeval, dOperatie);
+        const diff2 = daysBetween(dOperatie, dIntake);
+
+        if (diff1 !== null) ongevalOperatieDays.push(diff1);
+        if (diff2 !== null) operatieIntakeDays.push(diff2);
+      });
+    });
+
+    const toArray = (obj) => {
+      const total = Object.values(obj).reduce((a, b) => a + b, 0);
+      return Object.entries(obj)
+        .filter(([k, v]) => k && v)
+        .map(([k, v]) => ({
+          name: k,
+          value: v,
+          percent: total ? ((v / total) * 100).toFixed(1) : 0,
+        }));
+    };
+
+    const avg = (arr) =>
+      arr.length > 0
+        ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)
+        : null;
+
+    return {
+      genderData: toArray(counts.geslacht),
+      sportData: toArray(counts.sport),
+      sportniveauData: toArray(counts.sportniveau),
+      etiologieData: toArray(counts.etiologie),
+      operatieData: toArray(counts.operatie),
+      artsData: toArray(counts.arts),
+      letselsData: toArray(counts.letsel),
+      monoloopData: toArray(counts.monoloop),
+      totalPatients: data.length,
+      avgOngevalOperatie: avg(ongevalOperatieDays),
+      avgOperatieIntake: avg(operatieIntakeDays),
+    };
+  }, [data]);
 
   const cardStyle = {
     background: "#1a1a1a",
@@ -67,12 +122,22 @@ export default function Populatie() {
     textAlign: "center",
     boxShadow: "0 0 8px rgba(0,0,0,0.25)",
   };
-  const titleStyle = {
-    fontSize: "12px",
-    color: "#FFFFFF",
-    marginBottom: 10,
-    textTransform: "uppercase",
-  };
+
+  const kpiData = [
+    { label: "Aantal patiënten", value: stats.totalPatients },
+    {
+      label: "Gem. tijd ongeval → operatie",
+      value: stats.avgOngevalOperatie
+        ? `${stats.avgOngevalOperatie} dagen`
+        : "–",
+    },
+    {
+      label: "Gem. tijd operatie → intake",
+      value: stats.avgOperatieIntake
+        ? `${stats.avgOperatieIntake} dagen`
+        : "–",
+    },
+  ];
 
   return (
     <div
@@ -82,21 +147,8 @@ export default function Populatie() {
         margin: "0 auto",
         padding: "20px 0 60px 0",
         color: "var(--text)",
-        animation: "fadeIn 0.6s ease",
       }}
     >
-      <style>
-        {`
-          @media (max-width: 1199px) {
-            .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-          }
-          @media (max-width: 799px) {
-            .grid-4, .grid-3 { grid-template-columns: 1fr !important; }
-          }
-        `}
-      </style>
-
-      {/* === TITEL POPULATIE === */}
       <h2
         style={{
           color: "#ffffff",
@@ -111,9 +163,8 @@ export default function Populatie() {
         POPULATIE BESCHRIJVING
       </h2>
 
-      {/* === KPI-TILES === */}
+      {/* === KPI === */}
       <div
-        className="grid-3"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -133,76 +184,19 @@ export default function Populatie() {
 
       {/* === POPULATIE GRAFIEKEN === */}
       <div
-        className="grid-4"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
           gap: "20px",
-          justifyContent: "center",
           marginBottom: "40px",
         }}
       >
-        {/* Gemiddelde Tijd */}
-        <div style={{ ...cardStyle, textAlign: "left" }}>
-          <h4 style={{ ...titleStyle, textAlign: "center" }}>
-            Gemiddelde Tijd
-          </h4>
-          <p style={{ fontSize: "12px", color: "#c9c9c9", marginTop: 4 }}>
-            Gemiddelde tijd tussen ongeval & operatie:{" "}
-            <b style={{ color: "#FF7900" }}>31.2 dagen</b> <br />
-            Gemiddelde tijd tussen operatie & intake:{" "}
-            <b style={{ color: "#FF7900" }}>4.3 dagen</b>
-          </p>
-        </div>
-
-        {/* Geslacht */}
-        <div style={cardStyle}>
-          <h4 style={titleStyle}>Geslacht</h4>
-          <ResponsiveContainer width="100%" height={150}>
-            <PieChart>
-              <Pie
-                data={genderData}
-                dataKey="value"
-                innerRadius={40}
-                outerRadius={60}
-                paddingAngle={4}
-              >
-                {genderData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Sport */}
-        <div style={cardStyle}>
-          <h4 style={titleStyle}>Sport</h4>
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={sportData}>
-              <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
-              <YAxis hide />
-              <Tooltip />
-              <Bar dataKey="value" fill="#FF7900" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Sportniveau */}
-        <div style={cardStyle}>
-          <h4 style={titleStyle}>Sportniveau</h4>
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={sportniveauData}>
-              <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
-              <YAxis hide />
-              <Tooltip />
-              <Bar dataKey="value" fill="#FF7900" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartCard title="Geslacht" data={stats.genderData} type="pie" />
+        <ChartCard title="Sport" data={stats.sportData} type="bar" />
+        <ChartCard title="Sportniveau" data={stats.sportniveauData} type="bar" />
+        <ChartCard title="Etiologie" data={stats.etiologieData} type="pie" />
       </div>
 
-      {/* --- SCHEIDINGSLIJN --- */}
       <div
         style={{
           height: "1px",
@@ -212,7 +206,7 @@ export default function Populatie() {
         }}
       ></div>
 
-      {/* === MEDISCH SECTIE === */}
+      {/* === MEDISCH === */}
       <h2
         style={{
           color: "#ffffff",
@@ -228,93 +222,109 @@ export default function Populatie() {
       </h2>
 
       <div
-        className="grid-4"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
           gap: "24px",
-          justifyContent: "center",
         }}
       >
-        {/* Arts */}
-        <div style={cardStyle}>
-          <h4 style={titleStyle}>Arts</h4>
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={artsData}>
-              <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
-              <YAxis hide />
-              <Tooltip />
-              <Bar dataKey="value" fill="#FF7900" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Etiologie + Monoloop */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={cardStyle}>
-            <h4 style={titleStyle}>Etiologie</h4>
-            <ResponsiveContainer width="100%" height={120}>
-              <PieChart>
-                <Pie
-                  data={etiologieData}
-                  dataKey="value"
-                  innerRadius={35}
-                  outerRadius={55}
-                  paddingAngle={4}
-                >
-                  {etiologieData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div style={cardStyle}>
-            <h4 style={titleStyle}>Monoloop</h4>
-            <ResponsiveContainer width="100%" height={120}>
-              <PieChart>
-                <Pie
-                  data={monoloopData}
-                  dataKey="value"
-                  innerRadius={35}
-                  outerRadius={55}
-                  paddingAngle={4}
-                >
-                  {monoloopData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Operatie Type */}
-        <div style={cardStyle}>
-          <h4 style={titleStyle}>Operatie Type</h4>
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={operatieData}>
-              <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
-              <YAxis hide />
-              <Tooltip />
-              <Bar dataKey="value" fill="#FF7900" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Bijkomende Letsels */}
-        <div style={cardStyle}>
-          <h4 style={titleStyle}>Bijkomende Letsels</h4>
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={letselsData}>
-              <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
-              <YAxis hide />
-              <Tooltip />
-              <Bar dataKey="value" fill="#FF7900" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartCard title="Arts" data={stats.artsData} type="bar" />
+        <ChartCard title="Operatie Type" data={stats.operatieData} type="bar" />
+        <ChartCard title="Bijkomende Letsels" data={stats.letselsData} type="bar" />
+        <ChartCard title="Monoloop" data={stats.monoloopData} type="pie" />
       </div>
+    </div>
+  );
+}
+
+// 📊 Subcomponent voor herbruikbare grafiek met animatie + percentages
+function ChartCard({ title, data, type }) {
+  const cardStyle = {
+    background: "#1a1a1a",
+    borderRadius: "10px",
+    padding: "25px 20px",
+    textAlign: "center",
+    boxShadow: "0 0 8px rgba(0,0,0,0.25)",
+  };
+  const titleStyle = {
+    fontSize: "12px",
+    color: "#FFFFFF",
+    marginBottom: 10,
+    textTransform: "uppercase",
+  };
+
+  return (
+    <div style={cardStyle}>
+      <h4 style={titleStyle}>{title}</h4>
+      <ResponsiveContainer width="100%" height={150}>
+        {type === "pie" ? (
+          <PieChart>
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #FF7900",
+                color: "#fff",
+                fontSize: 11,
+              }}
+              formatter={(value, name, entry) => [
+                `${value} (${entry.payload.percent}%)`,
+                name,
+              ]}
+            />
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={35}
+              outerRadius={55}
+              paddingAngle={4}
+              animationBegin={0}
+              animationDuration={900}
+              animationEasing="ease-out"
+              label={({ name, percent }) =>
+                `${name}: ${(percent * 100).toFixed(0)}%`
+              }
+            >
+              {data.map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+          </PieChart>
+        ) : (
+          <BarChart data={data}>
+            <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
+            <YAxis hide />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #FF7900",
+                color: "#fff",
+                fontSize: 11,
+              }}
+              formatter={(value, name, entry) => [
+                `${value} (${entry.payload.percent}%)`,
+                name,
+              ]}
+            />
+            <Bar
+              dataKey="value"
+              fill="#FF7900"
+              radius={4}
+              animationBegin={0}
+              animationDuration={900}
+              animationEasing="ease-out"
+            >
+              <LabelList
+                dataKey="percent"
+                position="top"
+                formatter={(v) => `${v}%`}
+                fill="#c9c9c9"
+                fontSize={10}
+              />
+            </Bar>
+          </BarChart>
+        )}
+      </ResponsiveContainer>
     </div>
   );
 }
