@@ -86,7 +86,7 @@ export default function Login({ onLogin }) {
               style={{
                 width: 160,
                 marginBottom: 10,
-                filter: "drop-shadow(0 0 8px rgba(255,121,0,0.5))",
+                filter: "drop-shadow(0 0 8px rgba(255,121,0,0.4))",
                 opacity: 0.95,
               }}
             />
@@ -135,18 +135,25 @@ export default function Login({ onLogin }) {
               width: "100%",
               padding: 10,
               borderRadius: 8,
-              border: "none",
-              backgroundColor: "#FF7900",
-              color: "white",
+              border: "1px solid rgba(255,121,0,0.4)",
+              backgroundColor: "transparent",
+              color: rgba(255,121,0,0.4),
               fontWeight: 500,
               cursor: "pointer",
-              transition: "background 0.3s",
+              transition: "all 0.3s ease",
             }}
-            onMouseEnter={(e) => (e.target.style.background = "#FFA64D")}
-            onMouseLeave={(e) => (e.target.style.background = "#FF7900")}
+            onMouseEnter={(e) => {
+              e.target.style.color = "#FFFFFF";
+              e.target.style.borderColor = "#FFFFFF";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = rgba(255,121,0,0.4);
+              e.target.style.borderColor = rgba(255,121,0,0.4);
+            }}
           >
             {loading ? "Aan het inloggen..." : "Login"}
           </button>
+
 
           {error && (
             <p style={{ color: "tomato", marginTop: 15, fontSize: 14 }}>
