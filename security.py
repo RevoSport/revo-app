@@ -35,12 +35,26 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 # PASSWORD HASHING
 # -----------------------------------------------------
 def hash_password(plain: str) -> str:
-    """Maak een bcrypt-hash van een plaintext wachtwoord."""
-    return bcrypt.hash(plain)
+    """
+    Maak een bcrypt-hash van een plaintext wachtwoord.
+    Bcrypt ondersteunt maximaal 72 bytes → we truncaten dit uit veiligheidsoverweging.
+    """
+    if not isinstance(plain, str):
+        raise ValueError("Wachtwoord moet een string zijn.")
+    plain = plain[:72]
+    return bcrypt.using(rounds=12).hash(plain)
+
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """Controleer of het ingevoerde wachtwoord overeenkomt met de hash."""
-    return bcrypt.verify(plain, hashed)
+    """
+    Controleer of het ingevoerde wachtwoord overeenkomt met de opgeslagen hash.
+    Truncate naar 72 bytes zoals bcrypt vereist.
+    """
+    plain = plain[:72]
+    try:
+        return bcrypt.verify(plain, hashed)
+    except Exception:
+        return False
 
 # -----------------------------------------------------
 # JWT TOKEN FUNCTIES
@@ -50,6 +64,7 @@ def create_access_token(subject: str, role: str) -> str:
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": subject, "role": role, "exp": expire, "iat": datetime.utcnow()}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
 
 def decode_token(token: str) -> dict:
     """Decodeer en valideer een JWT token."""
@@ -82,6 +97,7 @@ def get_current_user(
         raise auth_error
 
     return user
+
 
 def require_role(*allowed_roles: str):
     """Gebruik: Depends(require_role('owner')) of meerdere rollen."""

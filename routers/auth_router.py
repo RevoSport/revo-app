@@ -19,7 +19,6 @@ from security import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-
 # -----------------------------------------------------
 # LOGIN ROUTE
 # -----------------------------------------------------
@@ -35,7 +34,14 @@ def login(
     Retourneert een JWT-token bij succesvolle login.
     """
     user = db.query(User).filter(User.email == form.username).first()
-    if not user or not verify_password(form.password, user.password_hash):
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="❌ Ongeldige login of wachtwoord"
+        )
+
+    if not verify_password(form.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="❌ Ongeldige login of wachtwoord"
@@ -80,6 +86,9 @@ def register_therapist(
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="Email bestaat al.")
 
+    # truncate wachtwoord preventief (bcrypt-limiet)
+    password = password[:72]
+
     new_user = User(
         email=email,
         full_name=full_name,
@@ -92,6 +101,7 @@ def register_therapist(
     db.refresh(new_user)
 
     return {"status": "✅ Gebruiker toegevoegd", "id": new_user.id, "email": new_user.email}
+
 
 # -----------------------------------------------------
 # TIJDELIJK: EERSTE OWNER REGISTREREN
@@ -107,9 +117,11 @@ def register_owner(
     Tijdelijke route om de eerste owner-account aan te maken via Swagger.
     Wordt verwijderd zodra de eerste gebruiker bestaat.
     """
-    # Bestaat al?
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="Email bestaat al.")
+
+    # truncate wachtwoord preventief (bcrypt-limiet)
+    password = password[:72]
 
     new_user = User(
         email=email,
