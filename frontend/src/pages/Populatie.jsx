@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
+  Legend,
 } from "recharts";
 
 const COLORS = ["#FF7900", "#555555"];
@@ -32,6 +33,29 @@ function daysBetween(date1, date2) {
   const diff = (d2 - d1) / (1000 * 60 * 60 * 24);
   return diff > 0 && diff < 400 ? diff : null;
 }
+
+// 🟠 Tooltip voor PIE met dynamische segmentkleur
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const { name, value, fill } = payload[0];
+    return (
+      <div
+        style={{
+          backgroundColor: fill,
+          color: "#fff",
+          padding: "6px 10px",
+          borderRadius: "8px",
+          fontSize: "0.8rem",
+          fontWeight: 600,
+          boxShadow: "0 0 6px rgba(0,0,0,0.3)",
+        }}
+      >
+        {name}: {value}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function Populatie({ data }) {
   const stats = useMemo(() => {
@@ -71,14 +95,12 @@ export default function Populatie({ data }) {
         if (letsel) counts.letsel[letsel] = (counts.letsel[letsel] || 0) + 1;
         if (monoloop) counts.monoloop[monoloop] = (counts.monoloop[monoloop] || 0) + 1;
 
-        // 🗓️ Gemiddelde tijden berekenen
-        const dOngeval = getField(b, ["Datum_ongeval", "datum_ongeval", "Datum ongeval", "datum ongeval"]);
-        const dOperatie = getField(b, ["Datum_operatie", "datum_operatie", "Datum operatie", "datum operatie"]);
-        const dIntake = getField(b, ["Datum_intake", "datum_intake", "Datum intake", "datum intake"]);
+        const dOngeval = getField(b, ["Datum_ongeval", "datum_ongeval", "Datum ongeval"]);
+        const dOperatie = getField(b, ["Datum_operatie", "datum_operatie", "Datum operatie"]);
+        const dIntake = getField(b, ["Datum_intake", "datum_intake", "Datum intake"]);
 
         const diff1 = daysBetween(dOngeval, dOperatie);
         const diff2 = daysBetween(dOperatie, dIntake);
-
         if (diff1 !== null) ongevalOperatieDays.push(diff1);
         if (diff2 !== null) operatieIntakeDays.push(diff2);
       });
@@ -117,25 +139,21 @@ export default function Populatie({ data }) {
 
   const cardStyle = {
     background: "#1a1a1a",
-    borderRadius: "10px",
+    borderRadius: "12px",
     padding: "25px 20px",
     textAlign: "center",
-    boxShadow: "0 0 8px rgba(0,0,0,0.25)",
+    boxShadow: "0 0 10px rgba(0,0,0,0.25)",
   };
 
   const kpiData = [
     { label: "Aantal patiënten", value: stats.totalPatients },
     {
       label: "Gem. tijd ongeval → operatie",
-      value: stats.avgOngevalOperatie
-        ? `${stats.avgOngevalOperatie} dagen`
-        : "–",
+      value: stats.avgOngevalOperatie ? `${stats.avgOngevalOperatie} dagen` : "–",
     },
     {
       label: "Gem. tijd operatie → intake",
-      value: stats.avgOperatieIntake
-        ? `${stats.avgOperatieIntake} dagen`
-        : "–",
+      value: stats.avgOperatieIntake ? `${stats.avgOperatieIntake} dagen` : "–",
     },
   ];
 
@@ -197,15 +215,6 @@ export default function Populatie({ data }) {
         <ChartCard title="Etiologie" data={stats.etiologieData} type="pie" />
       </div>
 
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "#FF7900",
-          width: "100%",
-          margin: "25px 0 40px 0",
-        }}
-      ></div>
-
       {/* === MEDISCH === */}
       <h2
         style={{
@@ -237,14 +246,14 @@ export default function Populatie({ data }) {
   );
 }
 
-// 📊 Subcomponent voor herbruikbare grafiek met animatie + percentages
+// 📊 Subcomponent voor grafieken
 function ChartCard({ title, data, type }) {
   const cardStyle = {
     background: "#1a1a1a",
-    borderRadius: "10px",
+    borderRadius: "12px",
     padding: "25px 20px",
     textAlign: "center",
-    boxShadow: "0 0 8px rgba(0,0,0,0.25)",
+    boxShadow: "0 0 10px rgba(0,0,0,0.25)",
   };
   const titleStyle = {
     fontSize: "12px",
@@ -253,77 +262,101 @@ function ChartCard({ title, data, type }) {
     textTransform: "uppercase",
   };
 
+  if (type === "pie") {
+    return (
+      <div style={cardStyle}>
+        <h4 style={titleStyle}>{title}</h4>
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="40%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={80}
+              paddingAngle={3}
+              dataKey="value"
+              labelLine
+              label={({ cx, cy, midAngle, outerRadius, percent }) => {
+                const RADIAN = Math.PI / 180;
+                const radius = outerRadius + 18;
+                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    fill="#ffffff"
+                    textAnchor={x > cx ? "start" : "end"}
+                    dominantBaseline="central"
+                    fontSize={12}
+                    fontWeight={700}
+                    style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.4))" }}
+                  >
+                    {(percent * 100).toFixed(0)}%
+                  </text>
+                );
+              }}
+            >
+              {data.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={COLORS[i % COLORS.length]}
+                  stroke="#111"
+                  strokeWidth={1.5}
+                />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend
+              verticalAlign="middle"
+              align="right"
+              layout="vertical"
+              iconType="circle"
+              iconSize={10}
+              wrapperStyle={{
+                color: "#c9c9c9",
+                fontSize: 12,
+                lineHeight: "20px",
+                paddingLeft: "4px",
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  // === BAR ===
   return (
     <div style={cardStyle}>
       <h4 style={titleStyle}>{title}</h4>
       <ResponsiveContainer width="100%" height={150}>
-        {type === "pie" ? (
-          <PieChart>
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1a1a1a",
-                border: "1px solid #FF7900",
-                color: "#fff",
-                fontSize: 11,
-              }}
-              formatter={(value, name, entry) => [
-                `${value} (${entry.payload.percent}%)`,
-                name,
-              ]}
+        <BarChart data={data}>
+          <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
+          <YAxis hide />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#1a1a1a",
+              border: "1px solid #FF7900",
+              color: "#fff",
+              fontSize: 11,
+            }}
+            formatter={(value, name, entry) => [
+              `${value} (${entry.payload.percent}%)`,
+              name,
+            ]}
+          />
+          <Bar dataKey="value" fill="#FF7900" radius={4}>
+            <LabelList
+              dataKey="percent"
+              position="top"
+              formatter={(v) => `${v}%`}
+              fill="#c9c9c9"
+              fontSize={10}
             />
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={35}
-              outerRadius={55}
-              paddingAngle={4}
-              animationBegin={0}
-              animationDuration={900}
-              animationEasing="ease-out"
-              label={({ name, percent }) =>
-                `${name}: ${(percent * 100).toFixed(0)}%`
-              }
-            >
-              {data.map((_, i) => (
-                <Cell key={i} fill={COLORS[i % COLORS.length]} />
-              ))}
-            </Pie>
-          </PieChart>
-        ) : (
-          <BarChart data={data}>
-            <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
-            <YAxis hide />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1a1a1a",
-                border: "1px solid #FF7900",
-                color: "#fff",
-                fontSize: 11,
-              }}
-              formatter={(value, name, entry) => [
-                `${value} (${entry.payload.percent}%)`,
-                name,
-              ]}
-            />
-            <Bar
-              dataKey="value"
-              fill="#FF7900"
-              radius={4}
-              animationBegin={0}
-              animationDuration={900}
-              animationEasing="ease-out"
-            >
-              <LabelList
-                dataKey="percent"
-                position="top"
-                formatter={(v) => `${v}%`}
-                fill="#c9c9c9"
-                fontSize={10}
-              />
-            </Bar>
-          </BarChart>
-        )}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
