@@ -52,12 +52,7 @@ export default function Login({ onLogin }) {
         alignItems: "center",
       }}
     >
-      {/* 🔸 Fade-in container */}
-      <div
-        style={{
-          animation: "fadeIn 0.9s ease-out",
-        }}
-      >
+      <div style={{ animation: "fadeIn 0.9s ease-out" }}>
         <form
           onSubmit={handleSubmit}
           style={{
@@ -70,7 +65,7 @@ export default function Login({ onLogin }) {
             boxShadow: "0 0 25px rgba(0,0,0,0.3)",
           }}
         >
-          {/* 🔹 Logo gecentreerd */}
+          {/* 🔹 Logo */}
           <div
             style={{
               display: "flex",
@@ -86,13 +81,13 @@ export default function Login({ onLogin }) {
               style={{
                 width: 160,
                 marginBottom: 10,
-                filter: "drop-shadow(0 0 8px rgba(255,121,0,0.4))",
+                filter: "drop-shadow(0 0 8px rgba(255,121,0,0.5))",
                 opacity: 0.95,
               }}
             />
           </div>
 
-          {/* 🔹 Inputvelden */}
+          {/* 🔹 Inputs */}
           <input
             type="email"
             placeholder="E-mail"
@@ -135,9 +130,9 @@ export default function Login({ onLogin }) {
               width: "100%",
               padding: 10,
               borderRadius: 8,
-              border: "1px solid rgba(255,121,0,0.4)",
+              border: "1px solid #FF7900",
               backgroundColor: "transparent",
-              color: rgba(255,121,0,0.4),
+              color: "#FF7900",
               fontWeight: 500,
               cursor: "pointer",
               transition: "all 0.3s ease",
@@ -147,13 +142,12 @@ export default function Login({ onLogin }) {
               e.target.style.borderColor = "#FFFFFF";
             }}
             onMouseLeave={(e) => {
-              e.target.style.color = rgba(255,121,0,0.4);
-              e.target.style.borderColor = rgba(255,121,0,0.4);
+              e.target.style.color = "#FF7900";
+              e.target.style.borderColor = "#FF7900";
             }}
           >
             {loading ? "Aan het inloggen..." : "Login"}
           </button>
-
 
           {error && (
             <p style={{ color: "tomato", marginTop: 15, fontSize: 14 }}>
@@ -163,7 +157,6 @@ export default function Login({ onLogin }) {
         </form>
       </div>
 
-      {/* 🔸 Fade-in animatie CSS */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(15px); }
