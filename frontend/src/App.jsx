@@ -87,7 +87,7 @@ export default function App() {
     }, SESSION_TIMEOUT_MS);
   };
 
-  // 🖱️ Reset timer bij activiteit (volledig hooks-veilig)
+  // 🖱️ Reset timer bij activiteit (hooks veilig, 1 enkele versie)
   useEffect(() => {
     const resetTimer = () => startSessionTimer();
     const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
