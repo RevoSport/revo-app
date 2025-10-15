@@ -49,6 +49,8 @@ export default function Populatie({ data }) {
 
     let ongevalOperatieDays = [];
     let operatieIntakeDays = [];
+    let operatieLopenDays = [];
+    let operatieAutorijdenDays = [];
 
     data.forEach((p) => {
       const geslacht = getField(p, ["Geslacht", "geslacht"]);
@@ -75,11 +77,18 @@ export default function Populatie({ data }) {
         const dOngeval = getField(b, ["Datum_ongeval", "datum_ongeval", "Datum ongeval"]);
         const dOperatie = getField(b, ["Datum_operatie", "datum_operatie", "Datum operatie"]);
         const dIntake = getField(b, ["Datum_intake", "datum_intake", "Datum intake"]);
+        const dLopen = getField(b, ["Datum_start_lopen", "datum_start_lopen", "Datum start lopen"]);
+        const dAutorijden = getField(b, ["Datum_start_autorijden", "datum_start_autorijden", "Datum start autorijden"]);
 
         const diff1 = daysBetween(dOngeval, dOperatie);
         const diff2 = daysBetween(dOperatie, dIntake);
+        const diff3 = daysBetween(dOperatie, dLopen);
+        const diff4 = daysBetween(dOperatie, dAutorijden);
+
         if (diff1 !== null) ongevalOperatieDays.push(diff1);
         if (diff2 !== null) operatieIntakeDays.push(diff2);
+        if (diff3 !== null) operatieLopenDays.push(diff3);
+        if (diff4 !== null) operatieAutorijdenDays.push(diff4);
       });
     });
 
@@ -126,6 +135,8 @@ export default function Populatie({ data }) {
       totalPatients: data.length,
       avgOngevalOperatie: avg(ongevalOperatieDays),
       avgOperatieIntake: avg(operatieIntakeDays),
+      avgOperatieLopen: avg(operatieLopenDays),
+      avgOperatieAutorijden: avg(operatieAutorijdenDays),
     };
   }, [data]);
 
@@ -147,6 +158,14 @@ export default function Populatie({ data }) {
       label: "Gem. tijd operatie → intake",
       value: stats.avgOperatieIntake ? `${stats.avgOperatieIntake} dagen` : "–",
     },
+    {
+      label: "Gem. tijd operatie → lopen",
+      value: stats.avgOperatieLopen ? `${stats.avgOperatieLopen} dagen` : "–",
+    },
+    {
+      label: "Gem. tijd operatie → autorijden",
+      value: stats.avgOperatieAutorijden ? `${stats.avgOperatieAutorijden} dagen` : "–",
+    },
   ];
 
   const man = stats.genderData.find((g) => g.name.toLowerCase().includes("man"))?.percent || 0;
@@ -156,7 +175,7 @@ export default function Populatie({ data }) {
     <div
       style={{
         width: "100%",
-        maxWidth: "1250px",
+        maxWidth: "1400px",
         margin: "0 auto",
         padding: "20px 0 60px 0",
         color: "var(--text)",
@@ -180,7 +199,7 @@ export default function Populatie({ data }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(6, 1fr)",
           gap: "20px",
           marginBottom: "35px",
         }}
@@ -194,7 +213,7 @@ export default function Populatie({ data }) {
           </div>
         ))}
 
-        {/* Geslachtkaart (boven elkaar, geen titel) */}
+        {/* Geslachtkaart */}
         <div
           style={{
             ...cardStyle,
@@ -202,22 +221,24 @@ export default function Populatie({ data }) {
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
-            gap: "14px",
+            gap: "22px",
+            paddingTop: "30px",
+            paddingBottom: "30px",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-            <FaMars color="#555555" size={22} />
-            <div style={{ fontSize: "22px", fontWeight: 700, color: "#c9c9c9" }}>{man}%</div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+            <FaMars color="#555555" size={28} />
+            <div style={{ fontSize: "26px", fontWeight: 700, color: "#c9c9c9" }}>{man}%</div>
           </div>
-          <div style={{ height: "1px", width: "25px", background: "#333" }} />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-            <FaVenus color="#FF7900" size={22} />
-            <div style={{ fontSize: "22px", fontWeight: 700, color: "#FF7900" }}>{vrouw}%</div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+            <FaVenus color="#FF7900" size={28} />
+            <div style={{ fontSize: "26px", fontWeight: 700, color: "#FF7900" }}>{vrouw}%</div>
           </div>
         </div>
       </div>
 
-      {/* === POPULATIE GRAFIEKEN === */}
+      {/* === Charts (rest identiek) === */}
       <div
         style={{
           display: "grid",
@@ -232,7 +253,6 @@ export default function Populatie({ data }) {
         <ChartCard title="Arts" data={stats.artsData} type="bar" />
       </div>
 
-      {/* === MEDISCH === */}
       <h2
         style={{
           color: "#ffffff",
@@ -262,7 +282,7 @@ export default function Populatie({ data }) {
   );
 }
 
-// 📊 Subcomponent voor grafieken
+// === Subcomponent ChartCard (identiek aan vorige finale versie) ===
 function ChartCard({ title, data, type }) {
   const baseCard = {
     background: "#1a1a1a",
@@ -285,7 +305,6 @@ function ChartCard({ title, data, type }) {
     minHeight: "18px",
   };
 
-  // === PIE / DONUT CHART ===
   if (type === "pie") {
     return (
       <div style={baseCard}>
@@ -335,8 +354,7 @@ function ChartCard({ title, data, type }) {
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.transform = "scale(1.02)";
-                      e.target.style.filter =
-                        "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
+                      e.target.style.filter = "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
                     }}
                     onMouseLeave={(e) => {
                       e.target.style.transform = "scale(1)";
@@ -364,7 +382,6 @@ function ChartCard({ title, data, type }) {
     );
   }
 
-  // === BAR CHART ===
   return (
     <div style={baseCard}>
       <h4 style={titleStyle}>{title}</h4>
@@ -406,8 +423,8 @@ function ChartCard({ title, data, type }) {
               }}
               onMouseEnter={(e) => {
                 e.target.style.transform = "scale(1.02)";
-                e.target.style.filter =
-                  "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
+                e.target.style.filter
+                e.target.style.filter = "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
               }}
               onMouseLeave={(e) => {
                 e.target.style.transform = "scale(1)";

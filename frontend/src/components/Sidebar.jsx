@@ -286,19 +286,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             <LogOut size={16} strokeWidth={2} />
             Uitloggen
           </button>
-
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--muted)",
-              textAlign: "center",
-              fontWeight: 400,
-              opacity: 0.8,
-            }}
-          >
-            Powered by{" "}
-            <span style={{ color: "#FF7900", fontWeight: 700 }}>REVO SPORT</span>
-          </div>
         </div>
       </aside>
 
