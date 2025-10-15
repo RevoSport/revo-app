@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, ChevronLeft, LogOut } from "lucide-react";
 
 export default function Sidebar({ currentPage, onNavigate, onLogout, userName }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -8,7 +8,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
   const [animateOut, setAnimateOut] = useState(false);
   const WIDTH = 280;
 
-  // 📱 Detecteer mobiele schermen
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -24,14 +23,13 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
     document.body.classList.toggle("sidebar-collapsed", collapsed);
   }, [collapsed]);
 
-  // 🕹️ Smooth sluiten (slide-out animatie)
   const handleClose = () => {
     if (isMobile) {
       setAnimateOut(true);
       setTimeout(() => {
         setCollapsed(true);
         setAnimateOut(false);
-      }, 350); // zelfde duur als animatie
+      }, 350);
     } else {
       setCollapsed(true);
     }
@@ -47,7 +45,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
 
   return (
     <>
-      {/* 🔳 Overlay bij open sidebar (mobiel) */}
       {!collapsed && isMobile && (
         <div
           onClick={handleClose}
@@ -65,7 +62,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
         ></div>
       )}
 
-      {/* 🟠 SIDEBAR */}
       <aside
         style={{
           position: "fixed",
@@ -96,12 +92,12 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
               : "none",
           boxShadow:
             !collapsed && !animateOut
-              ? "4px 0 15px rgba(0, 0, 0, 0.15)" // subtiele schaduw
+              ? "4px 0 15px rgba(0, 0, 0, 0.15)"
               : "none",
         }}
       >
-        {/* 🔹 SLUITKNOP — X bij mobiel */}
-        {isMobile && (
+        {/* 🔹 SLUITKNOP — X bij mobiel / Chevron bij desktop */}
+        {isMobile ? (
           <button
             onClick={handleClose}
             title="Sluiten"
@@ -122,9 +118,30 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           >
             <X size={22} strokeWidth={2.2} />
           </button>
+        ) : (
+          <button
+            onClick={() => setCollapsed(true)}
+            title="Sidebar verbergen"
+            style={{
+              position: "absolute",
+              top: 18,
+              right: 8,
+              color: "var(--text)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px",
+              zIndex: 150,
+              transition: "color 0.25s ease-in-out, transform 0.25s ease-in-out",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF7900")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text)")}
+          >
+            <ChevronLeft size={22} strokeWidth={2.2} />
+          </button>
         )}
 
-        {/* === HEADERZONE === */}
+        {/* === HEADER === */}
         <div
           onClick={() => onNavigate("Home")}
           style={{
@@ -158,17 +175,18 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             }}
           />
 
-          {/* 🧑 Welkomsttekst */}
+          {/* 🧑 Welkomsttekst (uppercase) */}
           <p
             style={{
-              marginTop: 4,
+              marginTop: 0,
               fontSize: 12,
-              color: "#FFA65C",
-              fontWeight: 600,
-              letterSpacing: 0.6,
+              color: "#FF7900",
+              fontWeight: 700,
+              letterSpacing: 1,
+              textTransform: "uppercase",
             }}
           >
-            Welkom, {userName || "Gebruiker"}
+            Welkom, {userName ? userName.toUpperCase() : "GEBRUIKER"}
           </p>
         </div>
 
@@ -245,7 +263,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
               border: "1px solid #FF7900",
               color: "#FF7900",
               fontSize: 13,
-              fontWeight: 400,
+              fontWeight: 600,
               padding: "8px 0",
               borderRadius: 8,
               cursor: "pointer",
