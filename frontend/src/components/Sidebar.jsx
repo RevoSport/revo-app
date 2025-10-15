@@ -1,14 +1,41 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
-import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 
 export default function Sidebar({ currentPage, onNavigate, onLogout, userName }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [animateOut, setAnimateOut] = useState(false);
   const WIDTH = 280;
+
+  // 📱 Detecteer mobiele schermen
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setCollapsed(true);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     document.body.classList.toggle("sidebar-collapsed", collapsed);
   }, [collapsed]);
+
+  // 🕹️ Smooth sluiten (slide-out animatie)
+  const handleClose = () => {
+    if (isMobile) {
+      setAnimateOut(true);
+      setTimeout(() => {
+        setCollapsed(true);
+        setAnimateOut(false);
+      }, 350); // zelfde duur als animatie
+    } else {
+      setCollapsed(true);
+    }
+  };
 
   const sections = [
     { title: "Revalidatie", items: ["Voorste Kruisband"] },
@@ -20,6 +47,24 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
 
   return (
     <>
+      {/* 🔳 Overlay bij open sidebar (mobiel) */}
+      {!collapsed && isMobile && (
+        <div
+          onClick={handleClose}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 90,
+            backdropFilter: "blur(2px)",
+            animation: "fadeInOverlay 0.4s ease forwards",
+          }}
+        ></div>
+      )}
+
       {/* 🟠 SIDEBAR */}
       <aside
         style={{
@@ -31,7 +76,11 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           background: "var(--panel)",
           borderRight: "2px solid #FF7900",
           padding: "18px 16px",
-          transform: collapsed ? "translateX(-110%)" : "translateX(0)",
+          transform: collapsed
+            ? "translateX(-110%)"
+            : animateOut
+            ? "translateX(-110%)"
+            : "translateX(0)",
           transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
           zIndex: 100,
           display: "flex",
@@ -39,27 +88,41 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           fontFamily:
             "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
           color: "var(--text)",
+          animation:
+            !collapsed && !animateOut && isMobile
+              ? "slideIn 0.45s ease-out"
+              : animateOut
+              ? "slideOut 0.35s ease-in"
+              : "none",
+          boxShadow:
+            !collapsed && !animateOut
+              ? "4px 0 15px rgba(0, 0, 0, 0.15)" // subtiele schaduw
+              : "none",
         }}
       >
-        {/* 🔹 SLUITKNOP */}
-        <button
-          onClick={() => setCollapsed(true)}
-          title="Sidebar verbergen"
-          style={{
-            position: "absolute",
-            top: 18,
-            right: 16,
-            color: "var(--text)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "4px",
-            transition: "color 0.2s ease",
-            zIndex: 150,
-          }}
-        >
-          <ChevronLeft size={22} strokeWidth={2.2} />
-        </button>
+        {/* 🔹 SLUITKNOP — X bij mobiel */}
+        {isMobile && (
+          <button
+            onClick={handleClose}
+            title="Sluiten"
+            style={{
+              position: "absolute",
+              top: 18,
+              right: 12,
+              color: "var(--text)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px",
+              zIndex: 150,
+              transition: "color 0.25s ease-in-out",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF7900")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text)")}
+          >
+            <X size={22} strokeWidth={2.2} />
+          </button>
+        )}
 
         {/* === HEADERZONE === */}
         <div
@@ -70,13 +133,13 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             alignItems: "center",
             justifyContent: "flex-end",
             height: "clamp(90px, 15vh, 130px)",
-            marginBottom: 8,
+            marginBottom: 4,
             cursor: "pointer",
           }}
         >
           <img
             src={logo}
-            alt="Revo Sport Logo"
+            alt="AI.THLETE Logo"
             style={{
               width: "80%",
               height: "auto",
@@ -98,11 +161,11 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           {/* 🧑 Welkomsttekst */}
           <p
             style={{
-              marginTop: 10,
-              fontSize: 13,
-              color: "#FF7900",
+              marginTop: 4,
+              fontSize: 12,
+              color: "#FFA65C",
               fontWeight: 600,
-              letterSpacing: 0.4,
+              letterSpacing: 0.6,
             }}
           >
             Welkom, {userName || "Gebruiker"}
@@ -139,26 +202,21 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
                       }}
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = isActive
-                          ? "#FF7900"
+                          ? "#727170"
                           : "var(--text)")
                       }
                       style={{
                         appearance: "none",
                         border: 0,
-                        background: isActive
-                          ? "rgba(255,121,0,0.08)"
-                          : "transparent",
-                        color: isActive ? "#FF7900" : "var(--text)",
+                        background: "transparent",
+                        color: isActive ? "#727170" : "var(--text)",
                         textAlign: "left",
                         padding: "10px 14px",
                         borderRadius: 10,
                         fontSize: 12,
                         fontWeight: 500,
                         cursor: "pointer",
-                        transition: "all .25s ease",
-                        borderLeft: isActive
-                          ? "3px solid #FF7900"
-                          : "3px solid transparent",
+                        transition: "color .25s ease",
                       }}
                     >
                       {item}
@@ -178,7 +236,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             paddingTop: 10,
           }}
         >
-          {/* 🔸 Logout-knop */}
           <button
             onClick={onLogout}
             title="Uitloggen"
@@ -188,7 +245,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
               border: "1px solid #FF7900",
               color: "#FF7900",
               fontSize: 13,
-              fontWeight: 600,
+              fontWeight: 400,
               padding: "8px 0",
               borderRadius: 8,
               cursor: "pointer",
@@ -212,7 +269,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             Uitloggen
           </button>
 
-          {/* Footer */}
           <div
             style={{
               fontSize: 12,
@@ -228,11 +284,11 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
         </div>
       </aside>
 
-      {/* 🟢 OPENKNOP */}
+      {/* 🍔 HAMBURGER-KNOP (openen) */}
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          title="Sidebar openen"
+          title="Menu openen"
           style={{
             position: "fixed",
             top: 18,
@@ -243,16 +299,30 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             cursor: "pointer",
             padding: "4px",
             zIndex: 200,
-            transition: "color 0.2s ease, transform 0.2s ease",
+            transition: "color 0.25s ease-in-out, transform 0.25s ease-in-out",
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#FF7900")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text)")}
         >
-          <ChevronRight
-            size={22}
-            strokeWidth={2.2}
-            style={{ transition: "transform 0.2s ease" }}
-          />
+          <Menu size={24} strokeWidth={2.2} />
         </button>
       )}
+
+      {/* ✨ Animaties */}
+      <style>{`
+        @keyframes slideIn {
+          0% { transform: translateX(-110%); opacity: 0.6; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          0% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(-110%); opacity: 0; }
+        }
+        @keyframes fadeInOverlay {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </>
   );
 }
