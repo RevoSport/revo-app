@@ -98,7 +98,7 @@ export default function App() {
       >
         {/* Logo */}
         <img
-          src={logo2}
+          src={logo}
           alt="AI.THLETE Logo"
           style={{
             width: "50vw",
