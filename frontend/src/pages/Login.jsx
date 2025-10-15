@@ -32,7 +32,15 @@ export default function Login({ onLogin }) {
       }
 
       const data = await res.json();
+
+      // ✅ Bewaar zowel token als gebruikersnaam
       localStorage.setItem("token", data.access_token);
+      if (data.user_name) {
+        localStorage.setItem("user_name", data.user_name);
+      } else {
+        localStorage.setItem("user_name", email.split("@")[0]);
+      }
+
       onLogin && onLogin(data.access_token);
     } catch (err) {
       setError(err.message);
@@ -65,7 +73,6 @@ export default function Login({ onLogin }) {
             boxShadow: "0 0 25px rgba(0,0,0,0.3)",
           }}
         >
-          {/* 🔹 Logo */}
           <div
             style={{
               display: "flex",
@@ -87,7 +94,6 @@ export default function Login({ onLogin }) {
             />
           </div>
 
-          {/* 🔹 Inputs */}
           <input
             type="email"
             placeholder="E-mail"
@@ -122,7 +128,6 @@ export default function Login({ onLogin }) {
             }}
           />
 
-          {/* 🔹 Login-knop */}
           <button
             type="submit"
             disabled={loading}

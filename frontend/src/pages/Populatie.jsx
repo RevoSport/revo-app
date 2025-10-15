@@ -315,7 +315,7 @@ function ChartCard({ title, data, type }) {
     minHeight: "18px",
   };
 
-  // === PIE CHART ===
+  // === PIE / DONUT CHART ===
   if (type === "pie") {
     return (
       <div style={baseCard}>
@@ -357,22 +357,20 @@ function ChartCard({ title, data, type }) {
                 <Cell
                   key={i}
                   fill={COLORS[i % COLORS.length]}
-                  stroke="#111"
-                  strokeWidth={1.5}
+                  stroke="none"
                   style={{
                     transition: "all 0.25s ease-in-out",
                     cursor: "pointer",
-                    filter: "drop-shadow(0 0 0 rgba(255,255,255,0))",
+                    transformOrigin: "center center",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.transform = "scale(1.05)";
-                    e.target.style.filter = "drop-shadow(0 0 6px rgba(255,255,255,0.35))";
-                    e.target.style.zIndex = "2";
+                    e.target.style.transform = "scale(1.02)";
+                    e.target.style.filter =
+                      "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.transform = "scale(1)";
-                    e.target.style.filter = "drop-shadow(0 0 0 rgba(255,255,255,0))";
-                    e.target.style.zIndex = "1";
+                    e.target.style.filter = "none";
                   }}
                 />
               ))}
@@ -387,8 +385,8 @@ function ChartCard({ title, data, type }) {
                 boxShadow: "0 0 6px rgba(0,0,0,0.25)",
               }}
               formatter={(value, name, entry) => [
-                `${value} (${entry.payload.percent}%)`,
-                `Aantal ${entry.payload.name}`,
+                `Aantal ${entry.payload.name}: ${value} (${entry.payload.percent}%)`,
+                "",
               ]}
               labelFormatter={() => ""}
             />
@@ -398,69 +396,76 @@ function ChartCard({ title, data, type }) {
     );
   }
 
-  // === BAR CHART ===
-  return (
-    <div style={baseCard}>
-      <h4 style={titleStyle}>{title}</h4>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart
-          data={data}
-          margin={{ top: 0, right: 10, left: 0, bottom: 60 }}
+// === BAR CHART ===
+return (
+  <div style={baseCard}>
+    <h4 style={titleStyle}>{title}</h4>
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart
+        data={data}
+        margin={{ top: 0, right: 10, left: 0, bottom: 70 }}
+      >
+        <XAxis
+          dataKey="name"
+          stroke="#c9c9c9"
+          fontSize={
+            data.length > 8 ? 8 : data.length > 5 ? 9 : 10
+          }
+          interval={0}
+          angle={data.length > 5 ? -90 : 0}
+          textAnchor={data.length > 5 ? "end" : "middle"}
+          height={data.length > 5 ? 85 : 30}
+          dy={10}
+          style={{
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+          }}
+        />
+        <YAxis hide />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "#1a1a1a",
+            border: "1px solid #FF7900",
+            color: "#fff",
+            fontSize: 11,
+            borderRadius: "6px",
+            boxShadow: "0 0 6px rgba(0,0,0,0.25)",
+          }}
+          formatter={(value, name, entry) => [
+            `Aantal ${entry.payload.name}: ${value} (${entry.payload.percent}%)`,
+            "",
+          ]}
+          labelFormatter={() => ""}
+        />
+        <Bar
+          dataKey="value"
+          fill="#FF7900"
+          radius={4}
+          style={{
+            transition: "all 0.25s ease-in-out",
+            cursor: "pointer",
+            transformOrigin: "center bottom",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = "scale(1.02)";
+            e.target.style.filter =
+              "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = "scale(1)";
+            e.target.style.filter = "none";
+          }}
         >
-          <XAxis
-            dataKey="name"
-            stroke="#c9c9c9"
-            fontSize={
-              data.length > 8 ? 8 : data.length > 5 ? 9 : 10
-            }
-            interval={0}
-            angle={data.length > 10 ? -45 : data.length > 5 ? -30 : 0}
-            textAnchor={data.length > 5 ? "end" : "middle"}
-            height={data.length > 10 ? 70 : data.length > 5 ? 55 : 30}
-            dy={10}
-            style={{
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-            }}
+          <LabelList
+            dataKey="percent"
+            position="top"
+            formatter={(v) => `${v}%`}
+            fill="#c9c9c9"
+            fontSize={10}
           />
-          <YAxis hide />
-          <Tooltip
-            cursor={{ fill: "rgba(255,255,255,0.08)" }}
-            contentStyle={{
-              backgroundColor: "#1a1a1a",
-              border: "1px solid #FF7900",
-              color: "#fff",
-              fontSize: 11,
-              borderRadius: "6px",
-              boxShadow: "0 0 6px rgba(0,0,0,0.25)",
-            }}
-            formatter={(value, name, entry) => [
-              `${value} (${entry.payload.percent}%)`,
-              `Aantal ${entry.payload.name}`,
-            ]}
-            labelFormatter={() => ""}
-          />
-          <Bar
-            dataKey="value"
-            fill="#FF7900"
-            radius={4}
-            style={{
-              transition: "all 0.25s ease-in-out",
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => (e.target.style.fill = "#ffffff")}
-            onMouseOut={(e) => (e.target.style.fill = "#FF7900")}
-          >
-            <LabelList
-              dataKey="percent"
-              position="top"
-              formatter={(v) => `${v}%`}
-              fill="#c9c9c9"
-              fontSize={10}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
 }

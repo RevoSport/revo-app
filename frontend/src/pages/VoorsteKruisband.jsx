@@ -3,16 +3,14 @@ import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
 import { apiGet } from "../api"; // ✅ JWT-beveiligde helper
 import Populatie from "./Populatie";
 
-export default function VoorsteKruisband() {
-  const [activeCard, setActiveCard] = useState(null);
-  const [activeSection, setActiveSection] = useState(null);
-
-  // 🔹 Data states
+export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
+  // 🔹 Tabs & data state
+  const [activeSection, setActiveSection] = useState(defaultTab.toLowerCase());
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🧠 Ophalen populatiegegevens wanneer "Populatie" actief is
+  // 🧠 Ophalen van data bij Populatie
   useEffect(() => {
     if (activeSection === "populatie") {
       setLoading(true);
@@ -24,6 +22,7 @@ export default function VoorsteKruisband() {
     }
   }, [activeSection]);
 
+  // 🔸 Kaartdefinitie
   const cards = [
     { title: "POPULATIE", key: "populatie", icon: <User size={24} color="var(--accent)" /> },
     { title: "METRICS", key: "metrics", icon: <Ruler size={24} color="var(--accent)" /> },
@@ -31,6 +30,7 @@ export default function VoorsteKruisband() {
     { title: "FUNCTIONELE TESTING", key: "functioneel", icon: <ClipboardList size={24} color="var(--accent)" /> },
   ];
 
+  // === UI ===
   return (
     <div
       style={{
@@ -79,15 +79,12 @@ export default function VoorsteKruisband() {
             marginBottom: "20px",
           }}
         >
-          {cards.map((card, index) => {
-            const isActive = activeCard === index;
+          {cards.map((card) => {
+            const isActive = activeSection === card.key;
             return (
               <div
-                key={card.title}
-                onClick={() => {
-                  setActiveCard(index);
-                  setActiveSection(card.key);
-                }}
+                key={card.key}
+                onClick={() => setActiveSection(card.key)}
                 style={{
                   backgroundColor: "#1a1a1a",
                   borderRadius: "10px",
@@ -139,6 +136,18 @@ export default function VoorsteKruisband() {
             <Populatie data={patients} />
           )}
         </div>
+      )}
+
+      {activeSection === "metrics" && (
+        <p style={{ color: "var(--muted)" }}>Metrics-module in ontwikkeling…</p>
+      )}
+
+      {activeSection === "kracht" && (
+        <p style={{ color: "var(--muted)" }}>Kracht-module in ontwikkeling…</p>
+      )}
+
+      {activeSection === "functioneel" && (
+        <p style={{ color: "var(--muted)" }}>Functionele testing in ontwikkeling…</p>
       )}
     </div>
   );

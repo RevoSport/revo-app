@@ -1,37 +1,122 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import VoorsteKruisband from "./pages/VoorsteKruisband";
+import { RingLoader } from "react-spinners";
+import logo from "./assets/logo.png";
 
 export default function App() {
-  // 🧠 1️⃣ Token ophalen uit localStorage bij opstart
   const [token, setToken] = useState(localStorage.getItem("token"));
+  const [userName, setUserName] = useState(localStorage.getItem("user_name") || "Gebruiker");
   const [currentPage, setCurrentPage] = useState("Home");
+  const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState("");
+  const [fadeOut, setFadeOut] = useState(false);
+
+  const API_URL = process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
+  const logoutTimer = useRef(null); // ⏱️ sessietimer-referentie
+  const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 60 minuten
+
+  // ✅ Backend-check bij opstart
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const res = await fetch(`${API_URL}/`);
+        const data = await res.json();
+        if (data.status) setStatus(data.status);
+      } catch {
+        setStatus("❌ Backend niet bereikbaar");
+      } finally {
+        setTimeout(() => {
+          setFadeOut(true);
+          setTimeout(() => setIsLoading(false), 600);
+        }, 800);
+      }
+    };
+    checkBackend();
+  }, []);
+
+  // 🌀 Loader-scherm
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#111111",
+          color: "#FF7900",
+          opacity: fadeOut ? 0 : 1,
+          transition: "opacity 0.6s ease-in-out",
+        }}
+      >
+        <img src={logo} alt="Revo Sport Logo" style={{ width: 120, marginBottom: 25 }} />
+        <RingLoader color="#FF7900" size={65} />
+        <p style={{ marginTop: 20, fontSize: 13, opacity: 0.8 }}>
+          {status || "Verbinden..."}
+        </p>
+      </div>
+    );
+  }
 
   // ✅ Login & Logout handlers
   const handleLogin = (accessToken) => {
     localStorage.setItem("token", accessToken);
     setToken(accessToken);
+    setUserName(localStorage.getItem("user_name") || "Gebruiker");
+    startSessionTimer(); // start timer bij login
   };
 
   const handleLogout = () => {
+    clearTimeout(logoutTimer.current);
     localStorage.removeItem("token");
+    localStorage.removeItem("user_name");
     setToken(null);
+    setUserName("Gebruiker");
   };
 
-  // 🧱 2️⃣ Login-check: toon loginpagina als geen token
+  // ⏱️ Functie om sessietimer te (her)starten
+  const startSessionTimer = () => {
+    clearTimeout(logoutTimer.current);
+    logoutTimer.current = setTimeout(() => {
+      alert("Sessie verlopen — je wordt automatisch uitgelogd.");
+      handleLogout();
+    }, SESSION_TIMEOUT_MS);
+  };
+
+  // 🖱️ Reset timer bij activiteit
+  useEffect(() => {
+    if (!token) return;
+    const resetTimer = () => startSessionTimer();
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+
+    events.forEach((ev) => window.addEventListener(ev, resetTimer));
+    startSessionTimer(); // start meteen
+
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
+      clearTimeout(logoutTimer.current);
+    };
+  }, [token]);
+
+  // 🔐 Login check
   if (!token) {
     return <Login onLogin={handleLogin} />;
   }
 
-  // 🧩 3️⃣ Toon app als ingelogd
+  // 🧩 Router
   const renderPage = () => {
     switch (currentPage) {
       case "Home":
         return <Home />;
+
       case "Voorste Kruisband":
-        return <VoorsteKruisband />;
+        // ✅ Automatisch tonen van de Populatie-subpagina
+        return <VoorsteKruisband defaultTab="Populatie" />;
+
       default:
         return (
           <div style={{ padding: "20px 30px" }}>
@@ -42,28 +127,16 @@ export default function App() {
     }
   };
 
+
+  // 🎯 Layout
   return (
     <div>
-      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
-
-      {/* 🔸 Logout-knop */}
-      <button
-        onClick={handleLogout}
-        style={{
-          position: "fixed",
-          top: 15,
-          right: 20,
-          background: "#FF7900",
-          color: "white",
-          border: "none",
-          padding: "6px 12px",
-          borderRadius: "6px",
-          cursor: "pointer",
-          zIndex: 999,
-        }}
-      >
-        Logout
-      </button>
+      <Sidebar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+        userName={userName}
+      />
 
       <main
         style={{
@@ -78,7 +151,6 @@ export default function App() {
         {renderPage()}
       </main>
 
-      {/* 🔹 CSS variabele om sidebar in/out te schuiven */}
       <style>{`
         body.sidebar-collapsed {
           --sidebar-offset: 0px;
