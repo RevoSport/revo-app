@@ -87,26 +87,24 @@ export default function App() {
     }, SESSION_TIMEOUT_MS);
   };
 
-  // 🖱️ Reset timer bij activiteit
-  useEffect(() => {
-    const resetTimer = () => startSessionTimer();
-    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    // 🖱️ Reset timer bij activiteit
+    useEffect(() => {
+      const resetTimer = () => startSessionTimer();
+      const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
 
-    if (token) {
-      events.forEach((ev) => window.addEventListener(ev, resetTimer));
-      startSessionTimer(); // start meteen
-    }
+      // ✅ De hook wordt altijd uitgevoerd, maar alleen actief als er een token is
+      if (token) {
+        events.forEach((ev) => window.addEventListener(ev, resetTimer));
+        startSessionTimer();
+      }
 
-    return () => {
-      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
-      clearTimeout(logoutTimer.current);
-    };
-  }, [token]);
+      return () => {
+        events.forEach((ev) => window.removeEventListener(ev, resetTimer));
+        clearTimeout(logoutTimer.current);
+      };
+    }, [token]);
 
-  // 🔐 Login check
-  if (!token) {
-    return <Login onLogin={handleLogin} />;
-  }
+      }
 
   // 🧩 Router
   const renderPage = () => {
