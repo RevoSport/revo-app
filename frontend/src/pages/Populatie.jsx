@@ -423,7 +423,6 @@ function ChartCard({ title, data, type }) {
               }}
               onMouseEnter={(e) => {
                 e.target.style.transform = "scale(1.02)";
-                e.target.style.filter
                 e.target.style.filter = "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
               }}
               onMouseLeave={(e) => {
