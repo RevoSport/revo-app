@@ -3,7 +3,7 @@ import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import VoorsteKruisband from "./pages/VoorsteKruisband";
-import { RingLoader } from "react-spinners";
+import { PuffLoader } from "react-spinners";
 import logo from "./assets/logo.png";
 
 export default function App() {
@@ -62,7 +62,7 @@ export default function App() {
     }, SESSION_TIMEOUT_MS);
   };
 
-  // 🖱️ Reset timer bij activiteit — altijd aangeroepen, geen return erboven!
+  // 🖱️ Reset timer bij activiteit
   useEffect(() => {
     const resetTimer = () => startSessionTimer();
     const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
@@ -78,7 +78,7 @@ export default function App() {
     };
   }, [token]);
 
-  // 🌀 Loader-scherm (mag pas hier na de hooks)
+  // 🌀 Loader-scherm met fade-in animatie en responsieve verhoudingen
   if (isLoading) {
     return (
       <div
@@ -92,13 +92,48 @@ export default function App() {
           color: "#FF7900",
           opacity: fadeOut ? 0 : 1,
           transition: "opacity 0.6s ease-in-out",
+          textAlign: "center",
+          animation: "fadeIn 1.2s ease-in-out",
         }}
       >
-        <img src={logo} alt="Revo Sport Logo" style={{ width: 120, marginBottom: 25 }} />
-        <RingLoader color="#FF7900" size={65} />
-        <p style={{ marginTop: 20, fontSize: 13, opacity: 0.8 }}>
+        <img
+          src={logo}
+          alt="Revo Sport Logo"
+          style={{
+            width: "50vw",          // 50% van schermbreedte
+            maxWidth: "320px",
+            minWidth: "160px",
+            marginBottom: "4vh",
+            animation: "fadeIn 1.4s ease-in-out",
+          }}
+        />
+
+        <PuffLoader
+          color="#FF7900"
+          size={Math.min(window.innerWidth * 0.15, 100)} // 15% van breedte, max 100px
+          style={{
+            animation: "fadeIn 1.6s ease-in-out",
+          }}
+        />
+
+        <p
+          style={{
+            marginTop: "4vh",
+            fontSize: "clamp(14px, 2vw, 18px)",
+            letterSpacing: 0.5,
+            opacity: 0.85,
+            animation: "fadeIn 1.8s ease-in-out",
+          }}
+        >
           {status || "Verbinden..."}
         </p>
+
+        <style>{`
+          @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </div>
     );
   }
