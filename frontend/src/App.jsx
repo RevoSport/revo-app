@@ -96,11 +96,12 @@ export default function App() {
           animation: "fadeIn 1.2s ease-in-out",
         }}
       >
+        {/* Logo */}
         <img
           src={logo}
-          alt="Revo Sport Logo"
+          alt="AI.THLETE Logo"
           style={{
-            width: "50vw",          // 50% van schermbreedte
+            width: "50vw",
             maxWidth: "320px",
             minWidth: "160px",
             marginBottom: "4vh",
@@ -108,17 +109,27 @@ export default function App() {
           }}
         />
 
-        <PuffLoader
-          color="#FF7900"
-          size={Math.min(window.innerWidth * 0.15, 100)} // 15% van breedte, max 100px
+        {/* Spinner gecentreerd onder logo */}
+        <div
           style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+            marginBottom: "4vh",
             animation: "fadeIn 1.6s ease-in-out",
           }}
-        />
+        >
+          <PuffLoader
+            color="#FF7900"
+            size={Math.min(window.innerWidth * 0.15, 100)} // 15% van breedte, max 100px
+          />
+        </div>
 
+        {/* Status-tekst */}
         <p
           style={{
-            marginTop: "4vh",
+            marginTop: "1vh",
             fontSize: "clamp(14px, 2vw, 18px)",
             letterSpacing: 0.5,
             opacity: 0.85,
