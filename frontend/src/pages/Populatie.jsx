@@ -34,29 +34,6 @@ function daysBetween(date1, date2) {
   return diff > 0 && diff < 400 ? diff : null;
 }
 
-// 🟠 Tooltip voor PIE met dynamische segmentkleur
-const CustomTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const { name, value, fill } = payload[0];
-    return (
-      <div
-        style={{
-          backgroundColor: fill,
-          color: "#fff",
-          padding: "6px 10px",
-          borderRadius: "8px",
-          fontSize: "0.8rem",
-          fontWeight: 600,
-          boxShadow: "0 0 6px rgba(0,0,0,0.3)",
-        }}
-      >
-        {name}: {value}
-      </div>
-    );
-  }
-  return null;
-};
-
 export default function Populatie({ data }) {
   const stats = useMemo(() => {
     const counts = {
@@ -217,32 +194,25 @@ export default function Populatie({ data }) {
           </div>
         ))}
 
-        {/* Geslachtbalk */}
-        <div style={{ ...cardStyle, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "24px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaMars color="#555555" size={20} />
-              <span style={{ color: "#c9c9c9", fontSize: "13px", fontWeight: 600 }}>
-                {man}%
-              </span>
-            </div>
-            <div style={{ width: "1px", height: "25px", background: "#333" }}></div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaVenus color="#FF7900" size={20} />
-              <span style={{ color: "#FF7900", fontSize: "13px", fontWeight: 600 }}>
-                {vrouw}%
-              </span>
-            </div>
+        {/* Geslachtkaart (boven elkaar, geen titel) */}
+        <div
+          style={{
+            ...cardStyle,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "14px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+            <FaMars color="#555555" size={22} />
+            <div style={{ fontSize: "22px", fontWeight: 700, color: "#c9c9c9" }}>{man}%</div>
           </div>
-          <div
-            style={{
-              marginTop: "10px",
-              color: "#c9c9c9",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            GESLACHT
+          <div style={{ height: "1px", width: "25px", background: "#333" }} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+            <FaVenus color="#FF7900" size={22} />
+            <div style={{ fontSize: "22px", fontWeight: 700, color: "#FF7900" }}>{vrouw}%</div>
           </div>
         </div>
       </div>
@@ -302,7 +272,7 @@ function ChartCard({ title, data, type }) {
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
   };
 
   const titleStyle = {
@@ -320,152 +290,141 @@ function ChartCard({ title, data, type }) {
     return (
       <div style={baseCard}>
         <h4 style={titleStyle}>{title}</h4>
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="55%"
-              innerRadius="55%"
-              outerRadius="82%"
-              paddingAngle={3}
-              dataKey="value"
-              labelLine={false}
-              label={({ cx, cy, midAngle, innerRadius, outerRadius, index }) => {
-                const RADIAN = Math.PI / 180;
-                const radius = innerRadius + (outerRadius - innerRadius) * 1.25;
-                const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                const value = data[index]?.percent || 0;
-                return (
-                  <text
-                    x={x}
-                    y={y}
-                    fill="#ffffff"
-                    textAnchor={x > cx ? "start" : "end"}
-                    dominantBaseline="central"
-                    fontSize={12}
-                    fontWeight={700}
-                    style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.4))" }}
-                  >
-                    {`${value}%`}
-                  </text>
-                );
-              }}
-            >
-              {data.map((_, i) => (
-                <Cell
-                  key={i}
-                  fill={COLORS[i % COLORS.length]}
-                  stroke="none"
-                  style={{
-                    transition: "all 0.25s ease-in-out",
-                    cursor: "pointer",
-                    transformOrigin: "center center",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = "scale(1.02)";
-                    e.target.style.filter =
-                      "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = "scale(1)";
-                    e.target.style.filter = "none";
-                  }}
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1a1a1a",
-                border: "1px solid #FF7900",
-                color: "#fff",
-                fontSize: 11,
-                borderRadius: "6px",
-                boxShadow: "0 0 6px rgba(0,0,0,0.25)",
-              }}
-              formatter={(value, name, entry) => [
-                `Aantal ${entry.payload.name}: ${value} (${entry.payload.percent}%)`,
-                "",
-              ]}
-              labelFormatter={() => ""}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <div style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius="55%"
+                outerRadius="82%"
+                paddingAngle={3}
+                dataKey="value"
+                labelLine={false}
+                label={({ cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = innerRadius + (outerRadius - innerRadius) * 1.25;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  const value = data[index]?.percent || 0;
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="#ffffff"
+                      textAnchor={x > cx ? "start" : "end"}
+                      dominantBaseline="central"
+                      fontSize={12}
+                      fontWeight={400}
+                    >
+                      {`${value}%`}
+                    </text>
+                  );
+                }}
+              >
+                {data.map((_, i) => (
+                  <Cell
+                    key={i}
+                    fill={COLORS[i % COLORS.length]}
+                    stroke="none"
+                    style={{
+                      transition: "all 0.25s ease-in-out",
+                      cursor: "pointer",
+                      transformOrigin: "center center",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = "scale(1.02)";
+                      e.target.style.filter =
+                        "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = "scale(1)";
+                      e.target.style.filter = "none";
+                    }}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1a1a1a",
+                  border: "1px solid #FF7900",
+                  color: "#FF7900",
+                  fontSize: 11,
+                  borderRadius: "6px",
+                  boxShadow: "0 0 6px rgba(0,0,0,0.25)",
+                }}
+                formatter={(value) => [`Aantal: ${value}`, ""]}
+                labelFormatter={() => ""}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     );
   }
 
-// === BAR CHART ===
-return (
-  <div style={baseCard}>
-    <h4 style={titleStyle}>{title}</h4>
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart
-        data={data}
-        margin={{ top: 0, right: 10, left: 0, bottom: 70 }}
-      >
-        <XAxis
-          dataKey="name"
-          stroke="#c9c9c9"
-          fontSize={
-            data.length > 8 ? 8 : data.length > 5 ? 9 : 10
-          }
-          interval={0}
-          angle={data.length > 5 ? -90 : 0}
-          textAnchor={data.length > 5 ? "end" : "middle"}
-          height={data.length > 5 ? 85 : 30}
-          dy={10}
-          style={{
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-          }}
-        />
-        <YAxis hide />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: "#1a1a1a",
-            border: "1px solid #FF7900",
-            color: "#fff",
-            fontSize: 11,
-            borderRadius: "6px",
-            boxShadow: "0 0 6px rgba(0,0,0,0.25)",
-          }}
-          formatter={(value, name, entry) => [
-            `Aantal ${entry.payload.name}: ${value} (${entry.payload.percent}%)`,
-            "",
-          ]}
-          labelFormatter={() => ""}
-        />
-        <Bar
-          dataKey="value"
-          fill="#FF7900"
-          radius={4}
-          style={{
-            transition: "all 0.25s ease-in-out",
-            cursor: "pointer",
-            transformOrigin: "center bottom",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = "scale(1.02)";
-            e.target.style.filter =
-              "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = "scale(1)";
-            e.target.style.filter = "none";
-          }}
-        >
-          <LabelList
-            dataKey="percent"
-            position="top"
-            formatter={(v) => `${v}%`}
-            fill="#c9c9c9"
-            fontSize={10}
-          />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-);
+  // === BAR CHART ===
+  return (
+    <div style={baseCard}>
+      <h4 style={titleStyle}>{title}</h4>
+      <div style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={data} margin={{ top: 0, right: 10, left: 0, bottom: 70 }}>
+            <XAxis
+              dataKey="name"
+              stroke="#c9c9c9"
+              fontSize={data.length > 8 ? 8 : data.length > 5 ? 9 : 10}
+              interval={0}
+              angle={data.length > 5 ? -90 : 0}
+              textAnchor={data.length > 5 ? "end" : "middle"}
+              height={data.length > 5 ? 85 : 30}
+              dy={10}
+              style={{ whiteSpace: "nowrap", textOverflow: "ellipsis" }}
+            />
+            <YAxis hide />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #FF7900",
+                color: "#FF7900",
+                fontSize: 11,
+                borderRadius: "6px",
+                boxShadow: "0 0 6px rgba(0,0,0,0.25)",
+              }}
+              formatter={(value) => [`Aantal: ${value}`, ""]}
+              labelFormatter={() => ""}
+            />
+            <Bar
+              dataKey="value"
+              fill="#FF7900"
+              radius={4}
+              style={{
+                transition: "all 0.25s ease-in-out",
+                cursor: "pointer",
+                transformOrigin: "center bottom",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = "scale(1.02)";
+                e.target.style.filter =
+                  "drop-shadow(0 0 4px rgba(255,255,255,0.15))";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = "scale(1)";
+                e.target.style.filter = "none";
+              }}
+            >
+              <LabelList
+                dataKey="percent"
+                position="top"
+                formatter={(v) => `${v}%`}
+                fill="#c9c9c9"
+                fontSize={10}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
