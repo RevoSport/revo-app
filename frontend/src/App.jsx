@@ -89,12 +89,13 @@ export default function App() {
 
   // 🖱️ Reset timer bij activiteit
   useEffect(() => {
-    if (!token) return;
     const resetTimer = () => startSessionTimer();
     const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
 
-    events.forEach((ev) => window.addEventListener(ev, resetTimer));
-    startSessionTimer(); // start meteen
+    if (token) {
+      events.forEach((ev) => window.addEventListener(ev, resetTimer));
+      startSessionTimer(); // start meteen
+    }
 
     return () => {
       events.forEach((ev) => window.removeEventListener(ev, resetTimer));
