@@ -199,7 +199,7 @@ export default function Populatie({ data }) {
         POPULATIE BESCHRIJVING
       </h2>
 
-      {/* KPI + GESLACHT */}
+      {/* === KPI + GESLACHT === */}
       <div
         style={{
           display: "grid",
@@ -234,13 +234,20 @@ export default function Populatie({ data }) {
               </span>
             </div>
           </div>
-          <div style={{ marginTop: "10px", color: "#fff", fontSize: "11px", textTransform: "uppercase" }}>
-            Geslacht
+          <div
+            style={{
+              marginTop: "10px",
+              color: "#c9c9c9",
+              fontSize: "12px",
+              fontWeight: 600,
+            }}
+          >
+            GESLACHT
           </div>
         </div>
       </div>
 
-      {/* POPULATIE GRAFIEKEN */}
+      {/* === POPULATIE GRAFIEKEN === */}
       <div
         style={{
           display: "grid",
@@ -255,7 +262,7 @@ export default function Populatie({ data }) {
         <ChartCard title="Arts" data={stats.artsData} type="bar" />
       </div>
 
-      {/* MEDISCH */}
+      {/* === MEDISCH === */}
       <h2
         style={{
           color: "#ffffff",
@@ -290,18 +297,22 @@ function ChartCard({ title, data, type }) {
   const baseCard = {
     background: "#1a1a1a",
     borderRadius: "12px",
-    padding: "25px 20px",
+    padding: "20px 20px 25px 20px",
     textAlign: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
+    justifyContent: "flex-start",
   };
+
   const titleStyle = {
     fontSize: "12px",
     color: "#FFFFFF",
-    marginBottom: 10,
     textTransform: "uppercase",
+    fontWeight: 700,
+    margin: "0 0 10px 0",
+    letterSpacing: "0.5px",
+    minHeight: "18px",
   };
 
   // === PIE CHART ===
@@ -351,16 +362,17 @@ function ChartCard({ title, data, type }) {
                   style={{
                     transition: "all 0.25s ease-in-out",
                     cursor: "pointer",
+                    filter: "drop-shadow(0 0 0 rgba(255,255,255,0))",
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.fill = "#ffffff";
-                    e.target.style.stroke = "#FF7900";
-                    e.target.style.strokeWidth = "2.5px";
+                    e.target.style.transform = "scale(1.05)";
+                    e.target.style.filter = "drop-shadow(0 0 6px rgba(255,255,255,0.35))";
+                    e.target.style.zIndex = "2";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.fill = COLORS[i % COLORS.length];
-                    e.target.style.stroke = "#111";
-                    e.target.style.strokeWidth = "1.5px";
+                    e.target.style.transform = "scale(1)";
+                    e.target.style.filter = "drop-shadow(0 0 0 rgba(255,255,255,0))";
+                    e.target.style.zIndex = "1";
                   }}
                 />
               ))}
@@ -391,16 +403,25 @@ function ChartCard({ title, data, type }) {
     <div style={baseCard}>
       <h4 style={titleStyle}>{title}</h4>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 45 }}>
+        <BarChart
+          data={data}
+          margin={{ top: 0, right: 10, left: 0, bottom: 60 }}
+        >
           <XAxis
             dataKey="name"
             stroke="#c9c9c9"
-            fontSize={data.length > 6 ? 9 : 10}
+            fontSize={
+              data.length > 8 ? 8 : data.length > 5 ? 9 : 10
+            }
             interval={0}
-            angle={data.length > 3 ? -45 : 0}
-            textAnchor={data.length > 3 ? "end" : "middle"}
-            height={data.length > 3 ? 55 : 25}
+            angle={data.length > 10 ? -45 : data.length > 5 ? -30 : 0}
+            textAnchor={data.length > 5 ? "end" : "middle"}
+            height={data.length > 10 ? 70 : data.length > 5 ? 55 : 30}
             dy={10}
+            style={{
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
           />
           <YAxis hide />
           <Tooltip
@@ -423,7 +444,10 @@ function ChartCard({ title, data, type }) {
             dataKey="value"
             fill="#FF7900"
             radius={4}
-            style={{ transition: "all 0.25s ease-in-out", cursor: "pointer" }}
+            style={{
+              transition: "all 0.25s ease-in-out",
+              cursor: "pointer",
+            }}
             onMouseOver={(e) => (e.target.style.fill = "#ffffff")}
             onMouseOut={(e) => (e.target.style.fill = "#FF7900")}
           >
