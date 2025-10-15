@@ -35,32 +35,7 @@ export default function App() {
       }
     };
     checkBackend();
-  }, []);
-
-  // 🌀 Loader-scherm
-  if (isLoading) {
-    return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#111111",
-          color: "#FF7900",
-          opacity: fadeOut ? 0 : 1,
-          transition: "opacity 0.6s ease-in-out",
-        }}
-      >
-        <img src={logo} alt="Revo Sport Logo" style={{ width: 120, marginBottom: 25 }} />
-        <RingLoader color="#FF7900" size={65} />
-        <p style={{ marginTop: 20, fontSize: 13, opacity: 0.8 }}>
-          {status || "Verbinden..."}
-        </p>
-      </div>
-    );
-  }
+  }, [API_URL]);
 
   // ✅ Login & Logout handlers
   const handleLogin = (accessToken) => {
@@ -87,7 +62,7 @@ export default function App() {
     }, SESSION_TIMEOUT_MS);
   };
 
-  // 🖱️ Reset timer bij activiteit (hooks veilig, 1 enkele versie)
+  // 🖱️ Reset timer bij activiteit — altijd aangeroepen, geen return erboven!
   useEffect(() => {
     const resetTimer = () => startSessionTimer();
     const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
@@ -103,7 +78,32 @@ export default function App() {
     };
   }, [token]);
 
-  // 🔐 Login-check
+  // 🌀 Loader-scherm (mag pas hier na de hooks)
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#111111",
+          color: "#FF7900",
+          opacity: fadeOut ? 0 : 1,
+          transition: "opacity 0.6s ease-in-out",
+        }}
+      >
+        <img src={logo} alt="Revo Sport Logo" style={{ width: 120, marginBottom: 25 }} />
+        <RingLoader color="#FF7900" size={65} />
+        <p style={{ marginTop: 20, fontSize: 13, opacity: 0.8 }}>
+          {status || "Verbinden..."}
+        </p>
+      </div>
+    );
+  }
+
+  // 🔐 Login check
   if (!token) {
     return <Login onLogin={handleLogin} />;
   }
