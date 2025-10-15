@@ -15,7 +15,7 @@ export default function App() {
   const [fadeOut, setFadeOut] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
-  const logoutTimer = useRef(null); // ⏱️ sessietimer-referentie
+  const logoutTimer = useRef(null);
   const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 60 minuten
 
   // ✅ Backend-check bij opstart
@@ -67,7 +67,7 @@ export default function App() {
     localStorage.setItem("token", accessToken);
     setToken(accessToken);
     setUserName(localStorage.getItem("user_name") || "Gebruiker");
-    startSessionTimer(); // start timer bij login
+    startSessionTimer();
   };
 
   const handleLogout = () => {
@@ -78,7 +78,7 @@ export default function App() {
     setUserName("Gebruiker");
   };
 
-  // ⏱️ Functie om sessietimer te (her)starten
+  // ⏱️ Sessie-timer starten of resetten
   const startSessionTimer = () => {
     clearTimeout(logoutTimer.current);
     logoutTimer.current = setTimeout(() => {
@@ -87,35 +87,34 @@ export default function App() {
     }, SESSION_TIMEOUT_MS);
   };
 
-    // 🖱️ Reset timer bij activiteit
-    useEffect(() => {
-      const resetTimer = () => startSessionTimer();
-      const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+  // 🖱️ Reset timer bij activiteit (volledig hooks-veilig)
+  useEffect(() => {
+    const resetTimer = () => startSessionTimer();
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
 
-      // ✅ De hook wordt altijd uitgevoerd, maar alleen actief als er een token is
-      if (token) {
-        events.forEach((ev) => window.addEventListener(ev, resetTimer));
-        startSessionTimer();
-      }
+    if (token) {
+      events.forEach((ev) => window.addEventListener(ev, resetTimer));
+      startSessionTimer();
+    }
 
-      return () => {
-        events.forEach((ev) => window.removeEventListener(ev, resetTimer));
-        clearTimeout(logoutTimer.current);
-      };
-    }, [token]);
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
+      clearTimeout(logoutTimer.current);
+    };
+  }, [token]);
 
-      }
+  // 🔐 Login-check
+  if (!token) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   // 🧩 Router
   const renderPage = () => {
     switch (currentPage) {
       case "Home":
         return <Home />;
-
       case "Voorste Kruisband":
-        // ✅ Automatisch tonen van de Populatie-subpagina
         return <VoorsteKruisband defaultTab="Populatie" />;
-
       default:
         return (
           <div style={{ padding: "20px 30px" }}>
@@ -125,7 +124,6 @@ export default function App() {
         );
     }
   };
-
 
   // 🎯 Layout
   return (
