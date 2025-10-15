@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import VoorsteKruisband from "./pages/VoorsteKruisband";
 import { PuffLoader } from "react-spinners";
-import logo from "./assets/logo.png";
+import logo2 from "./assets/revo_icon.png"; // ✅ nieuw logo toegevoegd
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -98,7 +98,7 @@ export default function App() {
       >
         {/* Logo */}
         <img
-          src={logo}
+          src={logo2}
           alt="AI.THLETE Logo"
           style={{
             width: "50vw",
