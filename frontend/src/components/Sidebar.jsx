@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 
-export default function Sidebar({ currentPage, onNavigate }) {
+export default function Sidebar({ currentPage, onNavigate, onLogout, userName }) {
   const [collapsed, setCollapsed] = useState(false);
   const WIDTH = 280;
 
@@ -20,7 +20,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
 
   return (
     <>
-      {/* 🟠 Sidebar */}
+      {/* 🟠 SIDEBAR */}
       <aside
         style={{
           position: "fixed",
@@ -29,7 +29,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           height: "100vh",
           width: WIDTH,
           background: "var(--panel)",
-          borderRight: "2px solid #FF7900", // 🟠 zelfde kleur & dikte als horizontale lijn
+          borderRight: "2px solid #FF7900",
           padding: "18px 16px",
           transform: collapsed ? "translateX(-110%)" : "translateX(0)",
           transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -41,7 +41,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
           color: "var(--text)",
         }}
       >
-        {/* 🔹 Toggle-knop (sluiten) */}
+        {/* 🔹 SLUITKNOP */}
         <button
           onClick={() => setCollapsed(true)}
           title="Sidebar verbergen"
@@ -70,26 +70,49 @@ export default function Sidebar({ currentPage, onNavigate }) {
             alignItems: "center",
             justifyContent: "flex-end",
             height: "clamp(90px, 15vh, 130px)",
-            marginBottom: 6,
+            marginBottom: 8,
             cursor: "pointer",
           }}
         >
           <img
             src={logo}
-            alt="AI.Thlete Logo"
+            alt="Revo Sport Logo"
             style={{
               width: "80%",
               height: "auto",
               filter: "drop-shadow(0 0 10px rgba(255,121,0,0.35))",
-              transition: "transform 0.2s ease, filter 0.2s ease",
+              transition: "transform 0.3s ease, filter 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.05)";
+              e.currentTarget.style.filter =
+                "drop-shadow(0 0 14px rgba(255,121,0,0.6))";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.filter =
+                "drop-shadow(0 0 10px rgba(255,121,0,0.35))";
             }}
           />
+
+          {/* 🧑 Welkomsttekst */}
+          <p
+            style={{
+              marginTop: 10,
+              fontSize: 13,
+              color: "#FF7900",
+              fontWeight: 600,
+              letterSpacing: 0.4,
+            }}
+          >
+            Welkom, {userName || "Gebruiker"}
+          </p>
         </div>
 
         {/* === MENUZONE === */}
-        <nav style={{ flex: 1, overflowY: "auto" }}>
+        <nav style={{ flex: 1, overflowY: "auto", marginTop: 10 }}>
           {sections.map((section) => (
-            <div key={section.title} style={{ marginBottom: 10 }}>
+            <div key={section.title} style={{ marginBottom: 12 }}>
               <div
                 style={{
                   fontSize: 14,
@@ -116,21 +139,26 @@ export default function Sidebar({ currentPage, onNavigate }) {
                       }}
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = isActive
-                          ? "#727170"
+                          ? "#FF7900"
                           : "var(--text)")
                       }
                       style={{
                         appearance: "none",
                         border: 0,
-                        background: "transparent",
-                        color: isActive ? "#727170" : "var(--text)",
+                        background: isActive
+                          ? "rgba(255,121,0,0.08)"
+                          : "transparent",
+                        color: isActive ? "#FF7900" : "var(--text)",
                         textAlign: "left",
                         padding: "10px 14px",
                         borderRadius: 10,
                         fontSize: 12,
                         fontWeight: 500,
                         cursor: "pointer",
-                        transition: "color .2s ease",
+                        transition: "all .25s ease",
+                        borderLeft: isActive
+                          ? "3px solid #FF7900"
+                          : "3px solid transparent",
                       }}
                     >
                       {item}
@@ -142,27 +170,65 @@ export default function Sidebar({ currentPage, onNavigate }) {
           ))}
         </nav>
 
-        {/* === FOOTER === */}
+        {/* === LOGOUT & FOOTER === */}
         <div
           style={{
             marginTop: "auto",
-            fontSize: 12,
-            color: "var(--muted)",
             textAlign: "center",
             paddingTop: 10,
-            fontWeight: 400,
           }}
         >
-          <div style={{ opacity: 0.8, marginTop: 12 }}>
+          {/* 🔸 Logout-knop */}
+          <button
+            onClick={onLogout}
+            title="Uitloggen"
+            style={{
+              width: "100%",
+              background: "transparent",
+              border: "1px solid #FF7900",
+              color: "#FF7900",
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "8px 0",
+              borderRadius: 8,
+              cursor: "pointer",
+              transition: "all 0.25s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              marginBottom: 16,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#FF7900";
+              e.currentTarget.style.color = "#111111";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "#FF7900";
+            }}
+          >
+            <LogOut size={16} strokeWidth={2} />
+            Uitloggen
+          </button>
+
+          {/* Footer */}
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--muted)",
+              textAlign: "center",
+              fontWeight: 400,
+              opacity: 0.8,
+            }}
+          >
             Powered by{" "}
-            <span style={{ color: "var(--accent)", fontWeight: 700 }}>
-              REVO SPORT
-            </span>
+            <span style={{ color: "#FF7900", fontWeight: 700 }}>REVO SPORT</span>
           </div>
         </div>
       </aside>
 
-      {/* 🟢 Chevron-knop (openen links) */}
+      {/* 🟢 OPENKNOP */}
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
