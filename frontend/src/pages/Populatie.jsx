@@ -10,8 +10,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
-  Legend,
 } from "recharts";
+import { FaMars, FaVenus } from "react-icons/fa";
 
 const COLORS = ["#FF7900", "#555555"];
 
@@ -106,15 +106,30 @@ export default function Populatie({ data }) {
       });
     });
 
+    // 🔢 Percentages berekenen met afronding
     const toArray = (obj) => {
-      const total = Object.values(obj).reduce((a, b) => a + b, 0);
-      return Object.entries(obj)
-        .filter(([k, v]) => k && v)
-        .map(([k, v]) => ({
-          name: k,
-          value: v,
-          percent: total ? ((v / total) * 100).toFixed(1) : 0,
-        }));
+      const entries = Object.entries(obj).filter(([k, v]) => k && v);
+      const total = entries.reduce((a, [, v]) => a + v, 0);
+      if (total === 0) return [];
+
+      let raw = entries.map(([k, v]) => ({
+        name: k,
+        value: v,
+        percent: (v / total) * 100,
+      }));
+
+      let rounded = raw.map((r) => Math.round(r.percent * 10) / 10);
+      const diff = 100 - rounded.reduce((a, b) => a + b, 0);
+      if (Math.abs(diff) > 0.05) {
+        const maxIdx = rounded.indexOf(Math.max(...rounded));
+        rounded[maxIdx] = Math.round((rounded[maxIdx] + diff) * 10) / 10;
+      }
+
+      return raw.map((r, i) => ({
+        name: r.name,
+        value: r.value,
+        percent: rounded[i].toFixed(1),
+      }));
     };
 
     const avg = (arr) =>
@@ -157,6 +172,9 @@ export default function Populatie({ data }) {
     },
   ];
 
+  const man = stats.genderData.find((g) => g.name.toLowerCase().includes("man"))?.percent || 0;
+  const vrouw = stats.genderData.find((g) => g.name.toLowerCase().includes("vrouw"))?.percent || 0;
+
   return (
     <div
       style={{
@@ -181,11 +199,11 @@ export default function Populatie({ data }) {
         POPULATIE BESCHRIJVING
       </h2>
 
-      {/* === KPI === */}
+      {/* KPI + GESLACHT */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(4, 1fr)",
           gap: "20px",
           marginBottom: "35px",
         }}
@@ -198,9 +216,31 @@ export default function Populatie({ data }) {
             <div style={{ color: "#c9c9c9", fontSize: "12px" }}>{kpi.label}</div>
           </div>
         ))}
+
+        {/* Geslachtbalk */}
+        <div style={{ ...cardStyle, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <FaMars color="#555555" size={20} />
+              <span style={{ color: "#c9c9c9", fontSize: "13px", fontWeight: 600 }}>
+                {man}%
+              </span>
+            </div>
+            <div style={{ width: "1px", height: "25px", background: "#333" }}></div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <FaVenus color="#FF7900" size={20} />
+              <span style={{ color: "#FF7900", fontSize: "13px", fontWeight: 600 }}>
+                {vrouw}%
+              </span>
+            </div>
+          </div>
+          <div style={{ marginTop: "10px", color: "#fff", fontSize: "11px", textTransform: "uppercase" }}>
+            Geslacht
+          </div>
+        </div>
       </div>
 
-      {/* === POPULATIE GRAFIEKEN === */}
+      {/* POPULATIE GRAFIEKEN */}
       <div
         style={{
           display: "grid",
@@ -209,13 +249,13 @@ export default function Populatie({ data }) {
           marginBottom: "40px",
         }}
       >
-        <ChartCard title="Geslacht" data={stats.genderData} type="pie" />
         <ChartCard title="Sport" data={stats.sportData} type="bar" />
         <ChartCard title="Sportniveau" data={stats.sportniveauData} type="bar" />
         <ChartCard title="Etiologie" data={stats.etiologieData} type="pie" />
+        <ChartCard title="Arts" data={stats.artsData} type="bar" />
       </div>
 
-      {/* === MEDISCH === */}
+      {/* MEDISCH */}
       <h2
         style={{
           color: "#ffffff",
@@ -233,11 +273,10 @@ export default function Populatie({ data }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(3, 1fr)",
           gap: "24px",
         }}
       >
-        <ChartCard title="Arts" data={stats.artsData} type="bar" />
         <ChartCard title="Operatie Type" data={stats.operatieData} type="bar" />
         <ChartCard title="Bijkomende Letsels" data={stats.letselsData} type="bar" />
         <ChartCard title="Monoloop" data={stats.monoloopData} type="pie" />
@@ -248,7 +287,7 @@ export default function Populatie({ data }) {
 
 // 📊 Subcomponent voor grafieken
 function ChartCard({ title, data, type }) {
-  const cardStyle = {
+  const baseCard = {
     background: "#1a1a1a",
     borderRadius: "12px",
     padding: "25px 20px",
@@ -265,96 +304,129 @@ function ChartCard({ title, data, type }) {
     textTransform: "uppercase",
   };
 
+  // === PIE CHART ===
   if (type === "pie") {
     return (
-      <div style={cardStyle}>
+      <div style={baseCard}>
         <h4 style={titleStyle}>{title}</h4>
-        <div style={{ width: "100%", height: "100%", minHeight: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius="45%"
-                outerRadius="70%"
-                paddingAngle={3}
-                dataKey="value"
-                labelLine
-                label={({ cx, cy, midAngle, outerRadius, percent }) => {
-                  const RADIAN = Math.PI / 180;
-                  const radius = outerRadius + 16;
-                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                  return (
-                    <text
-                      x={x}
-                      y={y}
-                      fill="#ffffff"
-                      textAnchor={x > cx ? "start" : "end"}
-                      dominantBaseline="central"
-                      fontSize={12}
-                      fontWeight={700}
-                      style={{
-                        filter: "drop-shadow(0 0 2px rgba(0,0,0,0.4))",
-                      }}
-                    >
-                      {(percent * 100).toFixed(0)}%
-                    </text>
-                  );
-                }}
-              >
-                {data.map((_, i) => (
-                  <Cell
-                    key={i}
-                    fill={COLORS[i % COLORS.length]}
-                    stroke="#111"
-                    strokeWidth={1.5}
-                  />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                verticalAlign="middle"
-                align="right"
-                layout="vertical"
-                iconType="circle"
-                iconSize={10}
-                wrapperStyle={{
-                  color: "#c9c9c9",
-                  fontSize: 12,
-                  lineHeight: "20px",
-                  paddingLeft: "4px",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="55%"
+              innerRadius="55%"
+              outerRadius="82%"
+              paddingAngle={3}
+              dataKey="value"
+              labelLine={false}
+              label={({ cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+                const RADIAN = Math.PI / 180;
+                const radius = innerRadius + (outerRadius - innerRadius) * 1.25;
+                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                const value = data[index]?.percent || 0;
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    fill="#ffffff"
+                    textAnchor={x > cx ? "start" : "end"}
+                    dominantBaseline="central"
+                    fontSize={12}
+                    fontWeight={700}
+                    style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.4))" }}
+                  >
+                    {`${value}%`}
+                  </text>
+                );
+              }}
+            >
+              {data.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={COLORS[i % COLORS.length]}
+                  stroke="#111"
+                  strokeWidth={1.5}
+                  style={{
+                    transition: "all 0.25s ease-in-out",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.fill = "#ffffff";
+                    e.target.style.stroke = "#FF7900";
+                    e.target.style.strokeWidth = "2.5px";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.fill = COLORS[i % COLORS.length];
+                    e.target.style.stroke = "#111";
+                    e.target.style.strokeWidth = "1.5px";
+                  }}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #FF7900",
+                color: "#fff",
+                fontSize: 11,
+                borderRadius: "6px",
+                boxShadow: "0 0 6px rgba(0,0,0,0.25)",
+              }}
+              formatter={(value, name, entry) => [
+                `${value} (${entry.payload.percent}%)`,
+                `Aantal ${entry.payload.name}`,
+              ]}
+              labelFormatter={() => ""}
+            />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
     );
   }
 
-  // === BAR ===
+  // === BAR CHART ===
   return (
-    <div style={cardStyle}>
+    <div style={baseCard}>
       <h4 style={titleStyle}>{title}</h4>
-      <ResponsiveContainer width="100%" height={150}>
-        <BarChart data={data}>
-          <XAxis dataKey="name" stroke="#c9c9c9" fontSize={10} />
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 45 }}>
+          <XAxis
+            dataKey="name"
+            stroke="#c9c9c9"
+            fontSize={data.length > 6 ? 9 : 10}
+            interval={0}
+            angle={data.length > 3 ? -45 : 0}
+            textAnchor={data.length > 3 ? "end" : "middle"}
+            height={data.length > 3 ? 55 : 25}
+            dy={10}
+          />
           <YAxis hide />
           <Tooltip
+            cursor={{ fill: "rgba(255,255,255,0.08)" }}
             contentStyle={{
               backgroundColor: "#1a1a1a",
               border: "1px solid #FF7900",
               color: "#fff",
               fontSize: 11,
+              borderRadius: "6px",
+              boxShadow: "0 0 6px rgba(0,0,0,0.25)",
             }}
             formatter={(value, name, entry) => [
               `${value} (${entry.payload.percent}%)`,
-              name,
+              `Aantal ${entry.payload.name}`,
             ]}
+            labelFormatter={() => ""}
           />
-          <Bar dataKey="value" fill="#FF7900" radius={4}>
+          <Bar
+            dataKey="value"
+            fill="#FF7900"
+            radius={4}
+            style={{ transition: "all 0.25s ease-in-out", cursor: "pointer" }}
+            onMouseOver={(e) => (e.target.style.fill = "#ffffff")}
+            onMouseOut={(e) => (e.target.style.fill = "#FF7900")}
+          >
             <LabelList
               dataKey="percent"
               position="top"
