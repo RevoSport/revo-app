@@ -246,18 +246,18 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
         </nav>
 
         {/* === LOGOUT BUTTON === */}
-        <div
-          style={{
-            marginTop: "auto",
-            paddingTop: 16,
-            borderTop: "1px solid rgba(255,121,0,0.25)",
-          }}
-        >
-          <button onClick={onLogout} title="Uitloggen" className="logout-button">
-            <LogOut size={14} strokeWidth={2} />
-            <span>Uitloggen</span>
-          </button>
-        </div>
+      <div
+        style={{
+          marginTop: "auto",
+          textAlign: "center",
+          paddingTop: 20,
+        }}
+      >
+        <button onClick={onLogout} title="Uitloggen" className="logout-button">
+          <LogOut size={14} strokeWidth={2} />
+          <span>Uitloggen</span>
+        </button>
+      </div>
       </aside>
 
       {/* 🍔 HAMBURGER-KNOP (openen) */}
@@ -299,33 +299,36 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           to { opacity: 1; }
         }
 
-        .logout-button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          background: transparent;
-          border: 1px solid #ff7900;
-          color: #ff7900;
-          border-radius: 10px;
-          padding: 9px 0;
-          width: calc(100% - 28px);
-          margin: 0 14px 12px 14px;
-          font-size: 12px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          cursor: pointer;
-          transition: all 0.25s ease;
-          text-align: center;
-        }
+    .logout-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 6px 14px; /* ⬅ meer ruimte links/rechts */
+      width: fit-content;
+      margin: 12px auto 12px auto; /* ⬅ geen lijn, meer ademruimte */
+      font-size: 12.5px;
+      font-weight: 500; /* ⬅ iets minder vet */
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
 
-        .logout-button:hover {
-          background: transparent;
-          border-color: #fff;
-          color: #fff;
-          transform: translateY(-1px);
-        }
+    .logout-button:hover {
+      border-color: #fff;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 8px rgba(255,121,0,0.25);
+    }
+
+    .logout-button:active {
+      transform: translateY(0);
+      opacity: 0.85;
+    }
+
       `}</style>
     </>
   );

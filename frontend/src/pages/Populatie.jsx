@@ -267,19 +267,27 @@ function ChartCard({ title, data, type }) {
       from { transform: scaleY(0); opacity: 0; }
       to { transform: scaleY(1); opacity: 1; }
     }
+
+    /* === BAR ANIMATIES === */
     .bar-hover {
       transform-origin: bottom;
       animation: barGrow 0.7s ease-out forwards;
-      transition: fill 0.25s ease-in-out;
+      transition: transform 0.25s ease-in-out, fill 0.25s ease-in-out;
     }
     .bar-hover:hover {
       fill: #ffa64d;
+      transform: translateY(-2px) scaleY(1.03);
     }
+
+    /* === PIE ANIMATIES === */
     .slice-hover {
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: fill 0.25s ease-in-out;
     }
-    .slice-hover:hover {
-      transform: scale(1.03);
+    .slice-hover:nth-child(odd):hover {
+      fill: #FFA64D; /* lichtere oranje */
+    }
+    .slice-hover:nth-child(even):hover {
+      fill: #777777; /* lichtere grijs */
     }
   `;
 
@@ -405,6 +413,3 @@ function ChartCard({ title, data, type }) {
     </div>
   );
 }
-
-// ✅ Default export (vereist voor App.jsx)
-export default Populatie;
