@@ -35,10 +35,7 @@ def get_populatie_summary(db: Session = Depends(get_db)):
                 b.datum_operatie,
                 b.datum_intake,
                 m45.lopen_opstartdatum AS lopen_datum,
-                LEAST(
-                    COALESCE(w6.autorijden_datum, '9999-12-31'),
-                    COALESCE(m3.autorijden_datum, '9999-12-31')
-                ) AS autorijden_datum_norm
+                w6.autorijden_datum AS autorijden_datum_norm
             FROM blessures b
             LEFT JOIN maand45 m45 ON m45.blessure_id = b.blessure_id
             LEFT JOIN week6  w6  ON w6.blessure_id  = b.blessure_id
