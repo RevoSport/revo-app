@@ -239,7 +239,7 @@ function ChartCard({ title, data, type }) {
   const baseCard = {
     background: "#1a1a1a",
     borderRadius: 12,
-    padding: "18px 20px 10px 20px", // ⬇️ minder padding onderaan
+    padding: "18px 20px 0px 20px", // ⬇️ minder padding onderaan
     textAlign: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
     display: "flex",
