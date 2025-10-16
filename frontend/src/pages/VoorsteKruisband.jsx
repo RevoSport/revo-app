@@ -7,7 +7,7 @@ import React, { useState, useEffect } from "react";
 import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
 import { apiGet } from "../api"; // ✅ JWT-beveiligde helper
 import Populatie from "./Populatie";
-import { RingLoader } from "react-spinners"; // ✅ spinner voor laadstate
+import { PuffLoader } from "react-spinners"; // ✅ zelfde spinner als loader
 
 export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
   // 🔹 Tabs & data state
@@ -23,10 +23,7 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
       setLoading(true);
       setError("");
 
-      Promise.all([
-        apiGet("/patients/"),
-        apiGet("/populatie/summary")
-      ])
+      Promise.all([apiGet("/patients/"), apiGet("/populatie/summary")])
         .then(([patientsData, summaryData]) => {
           setPatients(patientsData);
           setPopulatieSummary(summaryData);
@@ -102,9 +99,7 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
                 style={{
                   backgroundColor: "#1a1a1a",
                   borderRadius: "10px",
-                  border: isActive
-                    ? "1.5px solid var(--accent)"
-                    : "1.5px solid transparent",
+                  border: isActive ? "1.5px solid var(--accent)" : "1.5px solid transparent",
                   cursor: "pointer",
                   transition: "all 0.25s ease",
                   boxShadow: "0 0 8px rgba(0,0,0,0.3)",
@@ -149,10 +144,20 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
                 justifyContent: "center",
                 height: "60vh",
                 color: "#FF7900",
+                animation: "fadeIn 1s ease-in-out",
               }}
             >
-              <RingLoader color="#FF7900" size={90} />
-              <p style={{ marginTop: "20px", fontSize: "14px", letterSpacing: "0.5px" }}>
+              <PuffLoader
+                color="#FF7900"
+                size={Math.min(window.innerWidth * 0.15, 100)}
+              />
+              <p
+                style={{
+                  marginTop: "20px",
+                  fontSize: "14px",
+                  letterSpacing: "0.5px",
+                }}
+              >
                 Data wordt geladen...
               </p>
             </div>
@@ -177,6 +182,13 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
       {activeSection === "functioneel" && (
         <p style={{ color: "var(--muted)" }}>Functionele testing in ontwikkeling…</p>
       )}
+
+      <style>{`
+        @keyframes fadeIn {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
