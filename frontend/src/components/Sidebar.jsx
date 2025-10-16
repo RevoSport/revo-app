@@ -186,7 +186,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
               textTransform: "uppercase",
             }}
           >
-            Welkom, {userName ? userName.toUpperCase() : "GEBRUIKER"}
+            WELKOM, {userName ? userName.toUpperCase() : "GEBRUIKER"}
           </p>
         </div>
 
@@ -254,38 +254,20 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             paddingTop: 10,
           }}
         >
-          <button
-            onClick={onLogout}
-            title="Uitloggen"
-            style={{
-              width: "100%",
-              background: "transparent",
-              border: "1px solid #FF7900",
-              color: "#FF7900",
-              fontSize: 13,
-              fontWeight: 600,
-              padding: "8px 0",
-              borderRadius: 8,
-              cursor: "pointer",
-              transition: "all 0.25s ease",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              marginBottom: 16,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#FF7900";
-              e.currentTarget.style.color = "#111111";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#FF7900";
-            }}
-          >
-            <LogOut size={16} strokeWidth={2} />
+          <button onClick={onLogout} title="Uitloggen" className="logout-button">
+            <LogOut size={14} strokeWidth={2} />
             Uitloggen
           </button>
+          <p
+            style={{
+              fontSize: 11,
+              color: "#727170",
+              marginTop: 4,
+              opacity: 0.8,
+            }}
+          >
+            Powered by <span style={{ color: "#FF7900" }}>Revo Sport</span>
+          </p>
         </div>
       </aside>
 
@@ -313,7 +295,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
         </button>
       )}
 
-      {/* ✨ Animaties */}
+      {/* ✨ Animaties & Logout-button styling */}
       <style>{`
         @keyframes slideIn {
           0% { transform: translateX(-110%); opacity: 0.6; }
@@ -326,6 +308,30 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
         @keyframes fadeInOverlay {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+
+        .logout-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          background: transparent;
+          border: 1px solid var(--accent);
+          color: var(--accent);
+          border-radius: 8px;
+          padding: 6px 0;
+          width: 80%;
+          margin: 0 auto 10px auto;
+          font-size: 12px;
+          font-weight: 400;
+          transition: all 0.25s ease;
+          cursor: pointer;
+        }
+
+        .logout-button:hover {
+          border-color: #fff;
+          color: #fff;
+          transform: translateY(-1px);
         }
       `}</style>
     </>
