@@ -19,6 +19,7 @@ from routers import (
     maand6,
     timeline,
     onedrive_routes,
+    populatie,
 )
 from security import get_current_user
 
@@ -73,15 +74,16 @@ app.include_router(maand45.router, dependencies=protected)
 app.include_router(maand6.router, dependencies=protected)
 app.include_router(timeline.router, dependencies=protected)
 app.include_router(onedrive_routes.router, dependencies=protected)
+app.include_router(populatie.router,dependencies=protected)
 
 # =====================================================
 #   ROOT ENDPOINT
 # =====================================================
 @app.get("/")
 def home():
-    print(Fore.CYAN + "🚀 Revo Sport API v2 gestart" + Style.RESET_ALL)
+    print(Fore.CYAN + "AI.THLETE" + Style.RESET_ALL)
     return {
-        "status": "✅ Revo Sport API v2 running",
+        "status": "WELKOM TERUG.",
         "version": "2.0",
         "routers": [
             "/patients",
@@ -93,6 +95,7 @@ def home():
             "/maand6",
             "/timeline",
             "/upload_dynamic",
+            "/populatie",
         ],
     }
 
@@ -101,7 +104,7 @@ def home():
 # =====================================================
 @app.on_event("startup")
 def startup_event():
-    print(Fore.GREEN + "✅ FastAPI app gestart - Revo Sport API v2 actief" + Style.RESET_ALL)
+    print(Fore.GREEN + "WELKOM TERUG." + Style.RESET_ALL)
     print(
         Fore.YELLOW
         + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes"
