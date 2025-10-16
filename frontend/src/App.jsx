@@ -11,8 +11,8 @@ export default function App() {
   const [userName, setUserName] = useState(localStorage.getItem("user_name") || "Gebruiker");
   const [currentPage, setCurrentPage] = useState("Home");
   const [isLoading, setIsLoading] = useState(true);
-  const [status, setStatus] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
+  const [fadeMain, setFadeMain] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
   const logoutTimer = useRef(null);
@@ -22,11 +22,9 @@ export default function App() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const res = await fetch(`${API_URL}/`);
-        const data = await res.json();
-        if (data.status) setStatus(data.status);
+        await fetch(`${API_URL}/`);
       } catch {
-        setStatus("❌ Backend niet bereikbaar");
+        console.warn("❌ AI.THLETE NIET BEREIKBAAR");
       } finally {
         setTimeout(() => {
           setFadeOut(true);
@@ -46,11 +44,16 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    clearTimeout(logoutTimer.current);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user_name");
-    setToken(null);
-    setUserName("Gebruiker");
+    // fade-out effect voor uitloggen
+    setFadeMain(true);
+    setTimeout(() => {
+      clearTimeout(logoutTimer.current);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user_name");
+      setToken(null);
+      setUserName("Gebruiker");
+      setFadeMain(false);
+    }, 500);
   };
 
   // ⏱️ Sessie-timer starten of resetten
@@ -116,7 +119,6 @@ export default function App() {
             justifyContent: "center",
             alignItems: "center",
             width: "100%",
-            marginBottom: "4vh",
             animation: "fadeIn 1.6s ease-in-out",
           }}
         >
@@ -125,19 +127,6 @@ export default function App() {
             size={Math.min(window.innerWidth * 0.15, 100)} // 15% van breedte, max 100px
           />
         </div>
-
-        {/* Status-tekst */}
-        <p
-          style={{
-            marginTop: "1vh",
-            fontSize: "clamp(14px, 2vw, 18px)",
-            letterSpacing: 0.5,
-            opacity: 0.85,
-            animation: "fadeIn 1.8s ease-in-out",
-          }}
-        >
-          {status || "Verbinden..."}
-        </p>
 
         <style>{`
           @keyframes fadeIn {
@@ -173,7 +162,12 @@ export default function App() {
 
   // 🎯 Layout
   return (
-    <div>
+    <div
+      style={{
+        opacity: fadeMain ? 0 : 1,
+        transition: "opacity 0.5s ease-in-out",
+      }}
+    >
       <Sidebar
         currentPage={currentPage}
         onNavigate={setCurrentPage}
@@ -189,12 +183,23 @@ export default function App() {
           color: "var(--text)",
           minHeight: "100vh",
           padding: "24px",
+          animation: "fadeInMain 0.8s ease-in-out",
         }}
       >
         {renderPage()}
       </main>
 
       <style>{`
+        @keyframes fadeInMain {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+
         body.sidebar-collapsed {
           --sidebar-offset: 0px;
         }

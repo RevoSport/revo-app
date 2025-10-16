@@ -15,6 +15,7 @@ import { FaMars, FaVenus } from "react-icons/fa";
 
 const COLORS = ["#FF7900", "#555555"];
 
+// 🔹 Flexibele key-opvrager
 function getField(obj, possibleKeys = []) {
   if (!obj) return null;
   for (const key of possibleKeys) {
@@ -24,6 +25,7 @@ function getField(obj, possibleKeys = []) {
   return null;
 }
 
+// 🔹 Dagenverschil berekening (veilig)
 function daysBetween(date1, date2) {
   const d1 = new Date(date1);
   const d2 = new Date(date2);
@@ -32,7 +34,8 @@ function daysBetween(date1, date2) {
   return diff > 0 && diff < 400 ? diff : null;
 }
 
-export default function Populatie({ data }) {
+export default function Populatie({ data, summary }) {
+  // 🔸 Lokale fallbackberekeningen (voor als backend nog niet geladen is)
   const stats = useMemo(() => {
     const counts = {
       geslacht: {},
@@ -72,11 +75,11 @@ export default function Populatie({ data }) {
         if (letsel) counts.letsel[letsel] = (counts.letsel[letsel] || 0) + 1;
         if (monoloop) counts.monoloop[monoloop] = (counts.monoloop[monoloop] || 0) + 1;
 
-        const dOngeval = getField(b, ["Datum_ongeval"]);
-        const dOperatie = getField(b, ["Datum_operatie"]);
-        const dIntake = getField(b, ["Datum_intake"]);
-        const dLopen = getField(b, ["Datum_start_lopen"]);
-        const dAutorijden = getField(b, ["Datum_start_autorijden"]);
+        const dOngeval = getField(b, ["Datum_ongeval", "Datum ongeval"]);
+        const dOperatie = getField(b, ["Datum_operatie", "Datum operatie"]);
+        const dIntake = getField(b, ["Datum_intake", "Datum intake"]);
+        const dLopen = getField(b, ["Datum_start_lopen", "Lopen - Opstartdatum"]);
+        const dAutorijden = getField(b, ["Datum_start_autorijden", "Autorijden - datum"]);
 
         const diff1 = daysBetween(dOngeval, dOperatie);
         const diff2 = daysBetween(dOperatie, dIntake);
@@ -94,11 +97,14 @@ export default function Populatie({ data }) {
       const entries = Object.entries(obj).filter(([k, v]) => k && v);
       const total = entries.reduce((a, [, v]) => a + v, 0);
       if (total === 0) return [];
-      return entries.map(([k, v]) => ({
-        name: k,
-        value: v,
-        percent: ((v / total) * 100).toFixed(1),
-      }));
+      // ✅ automatisch sorteren op hoogste waarde
+      return entries
+        .map(([k, v]) => ({
+          name: k,
+          value: v,
+          percent: ((v / total) * 100).toFixed(1),
+        }))
+        .sort((a, b) => b.value - a.value);
     };
 
     const avg = (arr) =>
@@ -123,20 +129,26 @@ export default function Populatie({ data }) {
     };
   }, [data]);
 
-  const cardStyle = {
-    background: "#1a1a1a",
-    borderRadius: 12,
-    padding: "25px 20px",
-    textAlign: "center",
-    boxShadow: "0 0 10px rgba(0,0,0,0.25)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-  };
+  // 🔸 Combineer lokale + backenddata (backend krijgt prioriteit)
+  const avgOngevalOperatie = summary?.avg?.accident_to_surgery ?? stats.avgOngevalOperatie;
+  const avgOperatieIntake = summary?.avg?.surgery_to_intake ?? stats.avgOperatieIntake;
+  const avgOperatieLopen = summary?.avg?.surgery_to_walk ?? stats.avgOperatieLopen;
+  const avgOperatieAutorijden = summary?.avg?.surgery_to_drive ?? stats.avgOperatieAutorijden;
 
-  const man = stats.genderData.find((g) => g.name.toLowerCase().includes("man"))?.percent || 0;
-  const vrouw = stats.genderData.find((g) => g.name.toLowerCase().includes("vrouw"))?.percent || 0;
+  const genderData = summary?.counts?.geslacht ?? stats.genderData;
+  const sportData = (summary?.counts?.sport ?? stats.sportData)?.sort((a, b) => b.value - a.value);
+  const sportniveauData = (summary?.counts?.sportniveau ?? stats.sportniveauData)?.sort((a, b) => b.value - a.value);
+  const etiologieData = summary?.counts?.etiologie ?? stats.etiologieData;
+  const artsData = (summary?.counts?.arts ?? stats.artsData)?.sort((a, b) => b.value - a.value);
+  const operatieData = (summary?.counts?.operatie ?? stats.operatieData)?.sort((a, b) => b.value - a.value);
+  const letselsData = (summary?.counts?.letsel ?? stats.letselsData)?.sort((a, b) => b.value - a.value);
+  const monoloopData = summary?.counts?.monoloop ?? stats.monoloopData;
+
+  const totalPatients = summary?.totalPatients ?? stats.totalPatients;
+
+  // 🔸 Geslacht-percentages
+  const man = genderData.find((g) => g.name?.toLowerCase().includes("man"))?.percent || 0;
+  const vrouw = genderData.find((g) => g.name?.toLowerCase().includes("vrouw"))?.percent || 0;
 
   return (
     <div style={{ width: "100%", maxWidth: "1400px", margin: "0 auto", padding: "20px 0 60px 0", color: "var(--text)" }}>
@@ -146,24 +158,24 @@ export default function Populatie({ data }) {
 
       {/* === RIJ 1 === */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "16px" }}>
-        <KpiCard label="Aantal patiënten" value={stats.totalPatients} />
-        <KpiCard label="Gem. tijd ongeval → operatie" value={stats.avgOngevalOperatie} eenheid="dagen" />
-        <KpiCard label="Gem. tijd operatie → autorijden" value={stats.avgOperatieAutorijden} eenheid="dagen" />
+        <KpiCard label="Aantal patiënten" value={totalPatients} />
+        <KpiCard label="Gem. tijd ongeval → operatie" value={avgOngevalOperatie} eenheid="dagen" />
+        <KpiCard label="Gem. tijd operatie → autorijden" value={avgOperatieAutorijden} eenheid="dagen" />
       </div>
 
       {/* === RIJ 2 === */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "35px" }}>
         <GeslachtCard man={man} vrouw={vrouw} />
-        <KpiCard label="Gem. tijd operatie → intake" value={stats.avgOperatieIntake} eenheid="dagen" />
-        <KpiCard label="Gem. tijd operatie → lopen" value={stats.avgOperatieLopen} eenheid="dagen" />
+        <KpiCard label="Gem. tijd operatie → intake" value={avgOperatieIntake} eenheid="dagen" />
+        <KpiCard label="Gem. tijd operatie → lopen" value={avgOperatieLopen} eenheid="dagen" />
       </div>
 
       {/* === CHARTS === */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "40px" }}>
-        <ChartCard title="Sport" data={stats.sportData} type="bar" />
-        <ChartCard title="Sportniveau" data={stats.sportniveauData} type="bar" />
-        <ChartCard title="Etiologie" data={stats.etiologieData} type="pie" />
-        <ChartCard title="Arts" data={stats.artsData} type="bar" />
+        <ChartCard title="Sport" data={sportData} type="bar" />
+        <ChartCard title="Sportniveau" data={sportniveauData} type="bar" />
+        <ChartCard title="Etiologie" data={etiologieData} type="pie" />
+        <ChartCard title="Arts" data={artsData} type="bar" />
       </div>
 
       <h2 style={{ color: "#ffffff", textTransform: "uppercase", letterSpacing: "1px", fontSize: "14px", fontWeight: 700, marginBottom: "30px", textAlign: "center" }}>
@@ -171,9 +183,9 @@ export default function Populatie({ data }) {
       </h2>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
-        <ChartCard title="Operatie Type" data={stats.operatieData} type="bar" />
-        <ChartCard title="Bijkomende Letsels" data={stats.letselsData} type="bar" />
-        <ChartCard title="Monoloop" data={stats.monoloopData} type="pie" />
+        <ChartCard title="Operatie Type" data={operatieData} type="bar" />
+        <ChartCard title="Bijkomende Letsels" data={letselsData} type="bar" />
+        <ChartCard title="Monoloop" data={monoloopData} type="pie" />
       </div>
     </div>
   );
@@ -234,7 +246,15 @@ function ChartCard({ title, data, type }) {
         <ResponsiveContainer width="100%" height={200}>
           {type === "pie" ? (
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius="55%" outerRadius="82%" paddingAngle={3} dataKey="value" labelLine={false}
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius="55%"
+                outerRadius="82%"
+                paddingAngle={3}
+                dataKey="value"
+                labelLine={false}
                 label={({ cx, cy, midAngle, innerRadius, outerRadius, index }) => {
                   const RADIAN = Math.PI / 180;
                   const radius = innerRadius + (outerRadius - innerRadius) * 1.25;
@@ -242,24 +262,67 @@ function ChartCard({ title, data, type }) {
                   const y = cy + radius * Math.sin(-midAngle * RADIAN);
                   const value = data[index]?.percent || 0;
                   return (
-                    <text x={x} y={y} fill="#fff" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={12}>
+                    <text
+                      x={x}
+                      y={y}
+                      fill="#fff"
+                      textAnchor={x > cx ? "start" : "end"}
+                      dominantBaseline="central"
+                      fontSize={12}
+                    >
                       {`${value}%`}
                     </text>
                   );
-                }}>
+                }}
+              >
                 {data.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="none" />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #FF7900", color: "#FF7900", fontSize: 11, borderRadius: 6 }} formatter={(v) => [`Aantal: ${v}`, ""]} labelFormatter={() => ""} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1a1a1a",
+                  border: "1px solid #FF7900",
+                  color: "#FF7900",
+                  fontSize: 11,
+                  borderRadius: 6,
+                }}
+                formatter={(v) => [`Aantal: ${v}`, ""]}
+                labelFormatter={() => ""}
+              />
             </PieChart>
           ) : (
             <BarChart data={data} margin={{ top: 0, right: 10, left: 0, bottom: 70 }}>
-              <XAxis dataKey="name" stroke="#c9c9c9" fontSize={data.length > 8 ? 8 : 10} interval={0} angle={data.length > 5 ? -90 : 0} textAnchor={data.length > 5 ? "end" : "middle"} height={data.length > 5 ? 85 : 30} dy={10} />
+              <XAxis
+                dataKey="name"
+                stroke="#c9c9c9"
+                fontSize={data.length > 8 ? 8 : 10}
+                interval={0}
+                angle={data.length > 5 ? -90 : 0}
+                textAnchor={data.length > 5 ? "end" : "middle"}
+                height={data.length > 5 ? 85 : 30}
+                dy={10}
+              />
               <YAxis hide />
-              <Tooltip contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #FF7900", color: "#FF7900", fontSize: 11, borderRadius: 6 }} formatter={(v) => [`Aantal: ${v}`, ""]} labelFormatter={() => ""} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1a1a1a",
+                  border: "1px solid #FF7900",
+                  color: "#FF7900",
+                  fontSize: 11,
+                  borderRadius: 6,
+                }}
+                formatter={(v) => [`Aantal: ${v}`, ""]}
+                labelFormatter={() => ""}
+              />
               <Bar dataKey="value" fill="#FF7900" radius={4}>
-                <LabelList dataKey="percent" position="top" formatter={(v) => `${v}%`} fill="#c9c9c9" fontSize={10} />
+                <LabelList
+                  dataKey="percent"
+                  position="top"
+                  formatter={(v) => `${v}%`}
+                  fill="#c9c9c9"
+                  fontSize={10}
+                />
               </Bar>
             </BarChart>
           )}

@@ -1,12 +1,19 @@
+// =====================================================
+// FILE: src/pages/VoorsteKruisband.jsx
+// AI.THLETE — Populatie + Metrics Controller
+// =====================================================
+
 import React, { useState, useEffect } from "react";
 import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
 import { apiGet } from "../api"; // ✅ JWT-beveiligde helper
 import Populatie from "./Populatie";
+import { RingLoader } from "react-spinners"; // ✅ spinner voor laadstate
 
 export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
   // 🔹 Tabs & data state
   const [activeSection, setActiveSection] = useState(defaultTab.toLowerCase());
   const [patients, setPatients] = useState([]);
+  const [populatieSummary, setPopulatieSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -15,14 +22,21 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
     if (activeSection === "populatie") {
       setLoading(true);
       setError("");
-      apiGet("/patients/")
-        .then((data) => setPatients(data))
+
+      Promise.all([
+        apiGet("/patients/"),
+        apiGet("/populatie/summary")
+      ])
+        .then(([patientsData, summaryData]) => {
+          setPatients(patientsData);
+          setPopulatieSummary(summaryData);
+        })
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
     }
   }, [activeSection]);
 
-  // 🔸 Kaartdefinitie
+  // 🔸 Kaartdefinitie (navigatie)
   const cards = [
     { title: "POPULATIE", key: "populatie", icon: <User size={24} color="var(--accent)" /> },
     { title: "METRICS", key: "metrics", icon: <Ruler size={24} color="var(--accent)" /> },
@@ -127,13 +141,27 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
       {activeSection === "populatie" && (
         <div style={{ width: "100%" }}>
           {loading ? (
-            <p style={{ color: "#FF7900" }}>Gegevens laden...</p>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "60vh",
+                color: "#FF7900",
+              }}
+            >
+              <RingLoader color="#FF7900" size={90} />
+              <p style={{ marginTop: "20px", fontSize: "14px", letterSpacing: "0.5px" }}>
+                Data wordt geladen...
+              </p>
+            </div>
           ) : error ? (
             <p style={{ color: "red" }}>{error}</p>
           ) : patients.length === 0 ? (
             <p style={{ color: "#888" }}>Nog geen patiënten gevonden.</p>
           ) : (
-            <Populatie data={patients} />
+            <Populatie data={patients} summary={populatieSummary} />
           )}
         </div>
       )}
