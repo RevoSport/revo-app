@@ -338,14 +338,21 @@ function ChartCard({ title, data, type }) {
                   );
                 }}
               >
-                {data.map((_, i) => (
+              {data.map((_, i) => {
+                const baseColor = COLORS[i % COLORS.length];
+                const hoverColor = baseColor === "#FF7900" ? "#FFA64D" : "#888888";
+                return (
                   <Cell
                     key={i}
-                    className="slice-hover"
-                    fill={COLORS[i % COLORS.length]}
+                    fill={baseColor}
                     stroke="none"
+                    className="slice-hover"
+                    onMouseEnter={(e) => (e.target.style.fill = hoverColor)}
+                    onMouseLeave={(e) => (e.target.style.fill = baseColor)}
                   />
-                ))}
+                );
+              })}
+
               </Pie>
               <Tooltip
                 contentStyle={{
