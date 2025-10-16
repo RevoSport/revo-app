@@ -7,6 +7,7 @@ from routers.utils import ok
 
 router = APIRouter(prefix="/populatie", tags=["Populatie"])
 
+# 🔹 Database session
 def get_db():
     db = SessionLocal()
     try:
@@ -65,25 +66,41 @@ def get_populatie_summary(db: Session = Depends(get_db)):
     # 2️⃣ Tellingen per categorie
     # ----------------------------
     def count_query(table, field):
+        """
+        Telt waarden in een kolom en berekent het percentage binnen de geldige rijen.
+        NULL- en lege waarden worden uitgesloten.
+        """
         q = text(f"""
-            SELECT {field} AS name, COUNT(*) AS value
+            SELECT 
+                {field} AS name,
+                COUNT(*) AS value,
+                ROUND(
+                    COUNT(*) * 100.0 /
+                    (SELECT COUNT(*) FROM {table} WHERE {field} IS NOT NULL AND {field} <> ''),
+                    1
+                ) AS percent
             FROM {table}
             WHERE {field} IS NOT NULL AND {field} <> ''
-            GROUP BY {field};
+            GROUP BY {field}
+            ORDER BY value DESC;
         """)
         return [dict(r) for r in db.execute(q).mappings().all()]
 
-    geslacht   = count_query("patienten", "geslacht")
-    sport      = count_query("blessures", "sport")
-    sportniveau= count_query("blessures", "sportniveau")
-    etiologie  = count_query("blessures", "etiologie")
-    operatie   = count_query("blessures", "operatie")
-    arts       = count_query("blessures", "arts")
-    letsel     = count_query("blessures", "bijkomende_letsels")
-    monoloop   = count_query("blessures", "monoloop")
+    # 🔸 Categorieën ophalen
+    geslacht    = count_query("patienten", "geslacht")
+    sport       = count_query("blessures", "sport")
+    sportniveau = count_query("blessures", "sportniveau")
+    etiologie   = count_query("blessures", "etiologie")
+    operatie    = count_query("blessures", "operatie")
+    arts        = count_query("blessures", "arts")
+    letsel      = count_query("blessures", "bijkomende_letsels")
+    monoloop    = count_query("blessures", "monoloop")
 
     ok("[POPULATIE] Summary samengesteld")
 
+    # ----------------------------
+    # 3️⃣ Response
+    # ----------------------------
     return {
         "totalPatients": kpi.get("total_patients"),
         "avg": {
@@ -93,13 +110,13 @@ def get_populatie_summary(db: Session = Depends(get_db)):
             "surgery_to_drive":    kpi.get("avg_days_surgery_to_drive"),
         },
         "counts": {
-            "geslacht": geslacht,
-            "sport": sport,
+            "geslacht":    geslacht,
+            "sport":       sport,
             "sportniveau": sportniveau,
-            "etiologie": etiologie,
-            "operatie": operatie,
-            "arts": arts,
-            "letsel": letsel,
-            "monoloop": monoloop,
+            "etiologie":   etiologie,
+            "operatie":    operatie,
+            "arts":        arts,
+            "letsel":      letsel,
+            "monoloop":    monoloop,
         }
     }
