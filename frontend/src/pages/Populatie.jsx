@@ -97,7 +97,6 @@ export default function Populatie({ data, summary }) {
       const entries = Object.entries(obj).filter(([k, v]) => k && v);
       const total = entries.reduce((a, [, v]) => a + v, 0);
       if (total === 0) return [];
-      // ✅ automatisch sorteren op hoogste waarde
       return entries
         .map(([k, v]) => ({
           name: k,
@@ -146,12 +145,33 @@ export default function Populatie({ data, summary }) {
 
   const totalPatients = summary?.totalPatients ?? stats.totalPatients;
 
-  // 🔸 Geslacht-percentages
-  const man = genderData.find((g) => g.name?.toLowerCase().includes("man"))?.percent || 0;
-  const vrouw = genderData.find((g) => g.name?.toLowerCase().includes("vrouw"))?.percent || 0;
+  // ✅ Verbeterde genderherkenning
+  const man = genderData.find(
+    (g) => ["man", "m", "male"].includes(g.name?.toLowerCase().trim())
+  )?.percent || 0;
+
+  const vrouw = genderData.find(
+    (g) => ["vrouw", "v", "female"].includes(g.name?.toLowerCase().trim())
+  )?.percent || 0;
 
   return (
-    <div style={{ width: "100%", maxWidth: "1400px", margin: "0 auto", padding: "20px 0 60px 0", color: "var(--text)" }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "1400px",
+        margin: "0 auto",
+        padding: "20px 0 60px 0",
+        color: "var(--text)",
+        animation: "fadeIn 1s ease-in-out",
+      }}
+    >
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
       <h2 style={{ color: "#ffffff", textTransform: "uppercase", letterSpacing: "1px", fontSize: "14px", fontWeight: 700, marginBottom: "24px", textAlign: "center" }}>
         POPULATIE BESCHRIJVING
       </h2>
