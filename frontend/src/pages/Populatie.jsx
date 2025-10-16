@@ -242,13 +242,13 @@ function ChartCard({ title, data, type }) {
   const baseCard = {
     background: "#1a1a1a",
     borderRadius: 12,
-    padding: "20px 20px 25px 20px",
+    padding: "18px 20px 18px 20px",
     textAlign: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "flex-start",
     alignItems: "center",
+    justifyContent: "flex-start",
     animation: "fadeIn 0.6s ease-in-out",
   };
 
@@ -257,7 +257,7 @@ function ChartCard({ title, data, type }) {
     color: "#FFFFFF",
     textTransform: "uppercase",
     fontWeight: 700,
-    marginBottom: 10,
+    marginBottom: 14,
     letterSpacing: "0.5px",
   };
 
@@ -266,11 +266,23 @@ function ChartCard({ title, data, type }) {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes barGrow {
+      from { transform: scaleY(0); opacity: 0; }
+      to { transform: scaleY(1); opacity: 1; }
+    }
+    .bar-hover {
+      transform-origin: bottom;
+      animation: barGrow 0.7s ease-out forwards;
+      transition: fill 0.25s ease-in-out;
+    }
+    .bar-hover:hover {
+      fill: #ffa64d;
+    }
     .slice-hover {
       transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .slice-hover:hover {
-      transform: scale(1.02);
+      transform: scale(1.03);
     }
   `;
 
@@ -283,12 +295,13 @@ function ChartCard({ title, data, type }) {
         style={{
           flexGrow: 1,
           width: "100%",
+          minHeight: 200,
           display: "flex",
-          alignItems: "flex-end", // onderaan uitgelijnd
+          alignItems: type === "pie" ? "center" : "flex-end",
           justifyContent: "center",
         }}
       >
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height="100%">
           {type === "pie" ? (
             <PieChart>
               <Pie
@@ -336,7 +349,7 @@ function ChartCard({ title, data, type }) {
                   fontSize: 11,
                   borderRadius: 6,
                 }}
-                itemStyle={{ color: "#fff" }} // witte tekst
+                itemStyle={{ color: "#fff" }}
                 formatter={(v) => [`Aantal: ${v}`, ""]}
                 labelFormatter={() => ""}
               />
@@ -344,7 +357,7 @@ function ChartCard({ title, data, type }) {
           ) : (
             <BarChart
               data={data}
-              margin={{ top: 0, right: 10, left: 0, bottom: 70 }}
+              margin={{ top: 0, right: 10, left: 0, bottom: 50 }}
               barCategoryGap="25%"
             >
               <XAxis
@@ -365,19 +378,19 @@ function ChartCard({ title, data, type }) {
                   fontSize: 11,
                   borderRadius: 6,
                 }}
-                itemStyle={{ color: "#fff" }} // witte tekst
+                itemStyle={{ color: "#fff" }}
                 formatter={(v) => [`Aantal: ${v}`, ""]}
                 labelFormatter={() => ""}
               />
               <Bar
                 dataKey="value"
-                fill="#FF7900"
                 radius={4}
                 isAnimationActive={false}
-                stroke="none"
-                activeIndex={-1} // geen highlight
-                activeShape={null} // geen overlay
+                activeBar={false}
               >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} className="bar-hover" fill="#FF7900" />
+                ))}
                 <LabelList
                   dataKey="percent"
                   position="top"

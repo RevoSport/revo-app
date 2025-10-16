@@ -258,16 +258,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             <LogOut size={14} strokeWidth={2} />
             Uitloggen
           </button>
-          <p
-            style={{
-              fontSize: 11,
-              color: "#727170",
-              marginTop: 4,
-              opacity: 0.8,
-            }}
-          >
-            Powered by <span style={{ color: "#FF7900" }}>Revo Sport</span>
-          </p>
         </div>
       </aside>
 
@@ -323,7 +313,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           width: 80%;
           margin: 0 auto 10px auto;
           font-size: 12px;
-          font-weight: 400;
+          font-weight: 500;
           transition: all 0.25s ease;
           cursor: pointer;
         }
