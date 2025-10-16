@@ -175,7 +175,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             }}
           />
 
-          {/* 🧑 Welkomsttekst (uppercase) */}
           <p
             style={{
               marginTop: 0,
@@ -190,7 +189,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           </p>
         </div>
 
-        {/* === MENUZONE === */}
+        {/* === MENU === */}
         <nav style={{ flex: 1, overflowY: "auto", marginTop: 10 }}>
           {sections.map((section) => (
             <div key={section.title} style={{ marginBottom: 12 }}>
@@ -246,17 +245,17 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           ))}
         </nav>
 
-        {/* === LOGOUT & FOOTER === */}
+        {/* === LOGOUT BUTTON === */}
         <div
           style={{
             marginTop: "auto",
-            textAlign: "center",
-            paddingTop: 10,
+            paddingTop: 16,
+            borderTop: "1px solid rgba(255,121,0,0.25)",
           }}
         >
           <button onClick={onLogout} title="Uitloggen" className="logout-button">
             <LogOut size={14} strokeWidth={2} />
-            Uitloggen
+            <span>Uitloggen</span>
           </button>
         </div>
       </aside>
@@ -304,21 +303,25 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 8px;
           background: transparent;
-          border: 1px solid var(--accent);
-          color: var(--accent);
-          border-radius: 8px;
-          padding: 6px 0;
-          width: 80%;
-          margin: 0 auto 10px auto;
+          border: 1px solid #ff7900;
+          color: #ff7900;
+          border-radius: 10px;
+          padding: 9px 0;
+          width: calc(100% - 28px);
+          margin: 0 14px 12px 14px;
           font-size: 12px;
-          font-weight: 500;
-          transition: all 0.25s ease;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
           cursor: pointer;
+          transition: all 0.25s ease;
+          text-align: center;
         }
 
         .logout-button:hover {
+          background: transparent;
           border-color: #fff;
           color: #fff;
           transform: translateY(-1px);
