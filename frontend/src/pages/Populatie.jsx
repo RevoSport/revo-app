@@ -247,7 +247,9 @@ function ChartCard({ title, data, type }) {
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    animation: "fadeIn 0.6s ease-in-out",
   };
 
   const titleStyle = {
@@ -259,16 +261,16 @@ function ChartCard({ title, data, type }) {
     letterSpacing: "0.5px",
   };
 
-  // 🔹 Alleen donut heeft subtiel lift-effect (geen bars)
   const liftStyle = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .slice-hover {
       transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .slice-hover:hover {
       transform: scale(1.02);
-    }
-    .bar-hover:hover {
-      transform: none !important;
     }
   `;
 
@@ -280,8 +282,9 @@ function ChartCard({ title, data, type }) {
       <div
         style={{
           flexGrow: 1,
+          width: "100%",
           display: "flex",
-          alignItems: "flex-end",
+          alignItems: "flex-end", // 🟢 Altijd onderaan
           justifyContent: "center",
         }}
       >
@@ -322,7 +325,7 @@ function ChartCard({ title, data, type }) {
                     key={i}
                     className="slice-hover"
                     fill={COLORS[i % COLORS.length]}
-                    stroke="none" // 🟢 Geen rand/stroke
+                    stroke="none"
                   />
                 ))}
               </Pie>
@@ -333,7 +336,7 @@ function ChartCard({ title, data, type }) {
                   fontSize: 11,
                   borderRadius: 6,
                 }}
-                itemStyle={{ color: "#fff" }} // 🟢 Tekst wit
+                itemStyle={{ color: "#fff" }}
                 formatter={(v) => [`Aantal: ${v}`, ""]}
                 labelFormatter={() => ""}
               />
@@ -362,7 +365,7 @@ function ChartCard({ title, data, type }) {
                   fontSize: 11,
                   borderRadius: 6,
                 }}
-                itemStyle={{ color: "#fff" }} // 🟢 Tekst wit
+                itemStyle={{ color: "#fff" }}
                 formatter={(v) => [`Aantal: ${v}`, ""]}
                 labelFormatter={() => ""}
               />
@@ -371,9 +374,9 @@ function ChartCard({ title, data, type }) {
                 fill="#FF7900"
                 radius={4}
                 isAnimationActive={false}
-                className="bar-hover"
-                stroke="none" // 🟢 Verwijdert witte rand op hover
-                activeBar={false} // 🟢 voorkomt highlight-overlay van recharts
+                stroke="none"
+                activeIndex={-1} // ⛔️ geen highlight
+                activeShape={null} // ⛔️ geen overlay
               >
                 <LabelList
                   dataKey="percent"
