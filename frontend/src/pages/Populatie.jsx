@@ -284,7 +284,7 @@ function ChartCard({ title, data, type }) {
           flexGrow: 1,
           width: "100%",
           display: "flex",
-          alignItems: "flex-end", // 🟢 Altijd onderaan
+          alignItems: "flex-end", // onderaan uitgelijnd
           justifyContent: "center",
         }}
       >
@@ -336,7 +336,7 @@ function ChartCard({ title, data, type }) {
                   fontSize: 11,
                   borderRadius: 6,
                 }}
-                itemStyle={{ color: "#fff" }}
+                itemStyle={{ color: "#fff" }} // witte tekst
                 formatter={(v) => [`Aantal: ${v}`, ""]}
                 labelFormatter={() => ""}
               />
@@ -365,7 +365,7 @@ function ChartCard({ title, data, type }) {
                   fontSize: 11,
                   borderRadius: 6,
                 }}
-                itemStyle={{ color: "#fff" }}
+                itemStyle={{ color: "#fff" }} // witte tekst
                 formatter={(v) => [`Aantal: ${v}`, ""]}
                 labelFormatter={() => ""}
               />
@@ -375,8 +375,8 @@ function ChartCard({ title, data, type }) {
                 radius={4}
                 isAnimationActive={false}
                 stroke="none"
-                activeIndex={-1} // ⛔️ geen highlight
-                activeShape={null} // ⛔️ geen overlay
+                activeIndex={-1} // geen highlight
+                activeShape={null} // geen overlay
               >
                 <LabelList
                   dataKey="percent"
