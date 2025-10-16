@@ -307,7 +307,6 @@ function ChartCard({ title, data, type }) {
         paddingBottom: type === "pie" ? 15 : 10, // ⬅ subtiele ruimte onder grafiek
         marginTop: "auto", // ⬅ duwt de grafiek naar onder in de kaart
       }}
->
       >
         <ResponsiveContainer width="100%" height="100%">
           {type === "pie" ? (
