@@ -92,7 +92,6 @@ export default function Populatie({ data }) {
       });
     });
 
-    // 🔢 Percentages berekenen met afronding
     const toArray = (obj) => {
       const entries = Object.entries(obj).filter(([k, v]) => k && v);
       const total = entries.reduce((a, [, v]) => a + v, 0);
@@ -148,26 +147,6 @@ export default function Populatie({ data }) {
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
   };
 
-  const kpiData = [
-    { label: "Aantal patiënten", value: stats.totalPatients },
-    {
-      label: "Gem. tijd ongeval → operatie",
-      value: stats.avgOngevalOperatie ? `${stats.avgOngevalOperatie} dagen` : "–",
-    },
-    {
-      label: "Gem. tijd operatie → intake",
-      value: stats.avgOperatieIntake ? `${stats.avgOperatieIntake} dagen` : "–",
-    },
-    {
-      label: "Gem. tijd operatie → lopen",
-      value: stats.avgOperatieLopen ? `${stats.avgOperatieLopen} dagen` : "–",
-    },
-    {
-      label: "Gem. tijd operatie → autorijden",
-      value: stats.avgOperatieAutorijden ? `${stats.avgOperatieAutorijden} dagen` : "–",
-    },
-  ];
-
   const man = stats.genderData.find((g) => g.name.toLowerCase().includes("man"))?.percent || 0;
   const vrouw = stats.genderData.find((g) => g.name.toLowerCase().includes("vrouw"))?.percent || 0;
 
@@ -195,25 +174,50 @@ export default function Populatie({ data }) {
         POPULATIE BESCHRIJVING
       </h2>
 
-      {/* === KPI + GESLACHT === */}
+      {/* === RIJ 1 === */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(6, 1fr)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "20px",
+          marginBottom: "20px",
+        }}
+      >
+        <div style={cardStyle}>
+          <div style={{ color: "#FF7900", fontSize: 22, fontWeight: 700 }}>
+            {stats.totalPatients}
+          </div>
+          <div style={{ color: "#c9c9c9", fontSize: 12 }}>Aantal patiënten</div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ color: "#FF7900", fontSize: 22, fontWeight: 700 }}>
+            {stats.avgOngevalOperatie ? `${stats.avgOngevalOperatie} dagen` : "–"}
+          </div>
+          <div style={{ color: "#c9c9c9", fontSize: 12 }}>
+            Gem. tijd ongeval → operatie
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ color: "#FF7900", fontSize: 22, fontWeight: 700 }}>
+            {stats.avgOperatieAutorijden ? `${stats.avgOperatieAutorijden} dagen` : "–"}
+          </div>
+          <div style={{ color: "#c9c9c9", fontSize: 12 }}>
+            Gem. tijd operatie → autorijden
+          </div>
+        </div>
+      </div>
+
+      {/* === RIJ 2 === */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: "20px",
           marginBottom: "35px",
         }}
       >
-        {kpiData.map((kpi) => (
-          <div key={kpi.label} style={cardStyle}>
-            <div style={{ color: "#FF7900", fontSize: "22px", fontWeight: 700 }}>
-              {kpi.value}
-            </div>
-            <div style={{ color: "#c9c9c9", fontSize: "12px" }}>{kpi.label}</div>
-          </div>
-        ))}
-
-        {/* Geslachtkaart */}
         <div
           style={{
             ...cardStyle,
@@ -221,24 +225,44 @@ export default function Populatie({ data }) {
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
-            gap: "22px",
-            paddingTop: "30px",
-            paddingBottom: "30px",
+            gap: "18px",
+            padding: "28px 0",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-            <FaMars color="#555555" size={28} />
-            <div style={{ fontSize: "26px", fontWeight: 700, color: "#c9c9c9" }}>{man}%</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <FaMars color="#bbb" size={26} />
+            <span style={{ fontSize: 22, fontWeight: 700, color: "#bbb" }}>
+              {man}%
+            </span>
           </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <FaVenus color="#FF7900" size={26} />
+            <span style={{ fontSize: 22, fontWeight: 700, color: "#FF7900" }}>
+              {vrouw}%
+            </span>
+          </div>
+        </div>
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-            <FaVenus color="#FF7900" size={28} />
-            <div style={{ fontSize: "26px", fontWeight: 700, color: "#FF7900" }}>{vrouw}%</div>
+        <div style={cardStyle}>
+          <div style={{ color: "#FF7900", fontSize: 22, fontWeight: 700 }}>
+            {stats.avgOperatieIntake ? `${stats.avgOperatieIntake} dagen` : "–"}
+          </div>
+          <div style={{ color: "#c9c9c9", fontSize: 12 }}>
+            Gem. tijd operatie → intake
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ color: "#FF7900", fontSize: 22, fontWeight: 700 }}>
+            {stats.avgOperatieLopen ? `${stats.avgOperatieLopen} dagen` : "–"}
+          </div>
+          <div style={{ color: "#c9c9c9", fontSize: 12 }}>
+            Gem. tijd operatie → lopen
           </div>
         </div>
       </div>
 
-      {/* === Charts (rest identiek) === */}
+      {/* === Charts === */}
       <div
         style={{
           display: "grid",
@@ -282,7 +306,7 @@ export default function Populatie({ data }) {
   );
 }
 
-// === Subcomponent ChartCard (identiek aan vorige finale versie) ===
+// === Subcomponent ChartCard ===
 function ChartCard({ title, data, type }) {
   const baseCard = {
     background: "#1a1a1a",
