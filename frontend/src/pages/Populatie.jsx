@@ -239,7 +239,7 @@ function ChartCard({ title, data, type }) {
   const baseCard = {
     background: "#1a1a1a",
     borderRadius: 12,
-    padding: "18px 20px 10px 20px",
+    padding: "18px 20px 10px 20px", // ⬇️ minder padding onderaan
     textAlign: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
     display: "flex",
@@ -296,17 +296,15 @@ function ChartCard({ title, data, type }) {
       <style>{liftStyle}</style>
       <h4 style={titleStyle}>{title}</h4>
 
-    <div
-      style={{
-        flexGrow: 1,
-        width: "100%",
-        minHeight: 200,
-        display: "flex",
-        alignItems: "flex-end",   // ⬅ altijd onderaan uitlijnen
-        justifyContent: "center",
-        paddingBottom: type === "pie" ? 15 : 10, // ⬅ subtiele ruimte onder grafiek
-        marginTop: "auto", // ⬅ duwt de grafiek naar onder in de kaart
-      }}
+      <div
+        style={{
+          flexGrow: 1,
+          width: "100%",
+          minHeight: 200,
+          display: "flex",
+          alignItems: type === "pie" ? "center" : "flex-end",
+          justifyContent: "center",
+        }}
       >
         <ResponsiveContainer width="100%" height="100%">
           {type === "pie" ? (
@@ -357,7 +355,7 @@ function ChartCard({ title, data, type }) {
                   borderRadius: 6,
                 }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(v) => [`Aantal: ${v}`, ""]}
+                formatter={(v) => `Aantal: ${v}`} // ✅ geen dubbele punt
                 labelFormatter={() => ""}
               />
             </PieChart>
@@ -388,7 +386,7 @@ function ChartCard({ title, data, type }) {
                   borderRadius: 6,
                 }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(v) => [`Aantal: ${v}`, ""]}
+                formatter={(v) => `Aantal: ${v}`} // ✅ geen dubbele punt
                 labelFormatter={() => ""}
               />
               <Bar
@@ -415,6 +413,7 @@ function ChartCard({ title, data, type }) {
     </div>
   );
 }
+
 export default Populatie;
 
 
