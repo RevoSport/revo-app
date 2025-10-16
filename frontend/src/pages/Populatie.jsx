@@ -413,3 +413,6 @@ function ChartCard({ title, data, type }) {
     </div>
   );
 }
+export default Populatie;
+
+
