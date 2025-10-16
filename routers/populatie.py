@@ -82,7 +82,7 @@ def get_populatie_summary(db: Session = Depends(get_db)):
             FROM {table}
             WHERE {field} IS NOT NULL AND {field} <> ''
             GROUP BY {field}
-            ORDER BY value DESC;
+            ORDER BY percent DESC;  -- 🔹 aangepaste sortering
         """)
         return [dict(r) for r in db.execute(q).mappings().all()]
 

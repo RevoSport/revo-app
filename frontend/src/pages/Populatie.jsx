@@ -259,10 +259,32 @@ function ChartCard({ title, data, type }) {
     letterSpacing: "0.5px",
   };
 
+  // 🔹 Lift-effect met vloeiende cubic-bezier overgang (geen gloed)
+  const liftStyle = `
+    .bar-hover, .slice-hover {
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .bar-hover:hover {
+      transform: scaleY(1.05);
+    }
+    .slice-hover:hover {
+      transform: scale(1.05);
+    }
+  `;
+
   return (
     <div style={baseCard}>
+      <style>{liftStyle}</style>
       <h4 style={titleStyle}>{title}</h4>
-      <div style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+
+      <div
+        style={{
+          flexGrow: 1,
+          display: "flex",
+          alignItems: "flex-end", // onderaan uitgelijnd
+          justifyContent: "center",
+        }}
+      >
         <ResponsiveContainer width="100%" height={200}>
           {type === "pie" ? (
             <PieChart>
@@ -296,14 +318,19 @@ function ChartCard({ title, data, type }) {
                 }}
               >
                 {data.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="none" />
+                  <Cell
+                    key={i}
+                    className="slice-hover"
+                    fill={COLORS[i % COLORS.length]}
+                    stroke="none"
+                  />
                 ))}
               </Pie>
               <Tooltip
                 contentStyle={{
                   backgroundColor: "#1a1a1a",
                   border: "1px solid #FF7900",
-                  color: "#FF7900",
+                  color: "#fff",
                   fontSize: 11,
                   borderRadius: 6,
                 }}
@@ -312,7 +339,11 @@ function ChartCard({ title, data, type }) {
               />
             </PieChart>
           ) : (
-            <BarChart data={data} margin={{ top: 0, right: 10, left: 0, bottom: 70 }}>
+            <BarChart
+              data={data}
+              margin={{ top: 0, right: 10, left: 0, bottom: 70 }}
+              barCategoryGap="25%"
+            >
               <XAxis
                 dataKey="name"
                 stroke="#c9c9c9"
@@ -328,14 +359,20 @@ function ChartCard({ title, data, type }) {
                 contentStyle={{
                   backgroundColor: "#1a1a1a",
                   border: "1px solid #FF7900",
-                  color: "#FF7900",
+                  color: "#fff",
                   fontSize: 11,
                   borderRadius: 6,
                 }}
                 formatter={(v) => [`Aantal: ${v}`, ""]}
                 labelFormatter={() => ""}
               />
-              <Bar dataKey="value" fill="#FF7900" radius={4}>
+              <Bar
+                dataKey="value"
+                fill="#FF7900"
+                radius={4}
+                isAnimationActive={false}
+                className="bar-hover"
+              >
                 <LabelList
                   dataKey="percent"
                   position="top"
