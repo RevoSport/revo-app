@@ -296,15 +296,18 @@ function ChartCard({ title, data, type }) {
       <style>{liftStyle}</style>
       <h4 style={titleStyle}>{title}</h4>
 
-      <div
-        style={{
-          flexGrow: 1,
-          width: "100%",
-          minHeight: 200,
-          display: "flex",
-          alignItems: type === "pie" ? "center" : "flex-end",
-          justifyContent: "center",
-        }}
+    <div
+      style={{
+        flexGrow: 1,
+        width: "100%",
+        minHeight: 200,
+        display: "flex",
+        alignItems: "flex-end",   // ⬅ altijd onderaan uitlijnen
+        justifyContent: "center",
+        paddingBottom: type === "pie" ? 15 : 10, // ⬅ subtiele ruimte onder grafiek
+        marginTop: "auto", // ⬅ duwt de grafiek naar onder in de kaart
+      }}
+>
       >
         <ResponsiveContainer width="100%" height="100%">
           {type === "pie" ? (
