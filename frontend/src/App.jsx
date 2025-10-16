@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import VoorsteKruisband from "./pages/VoorsteKruisband";
 import { PuffLoader } from "react-spinners";
-import logo2 from "./assets/revo_icon.png"; // ✅ nieuw logo toegevoegd
+import logo2 from "./assets/logo2.png"; // ✅ nieuw logo toegevoegd
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
