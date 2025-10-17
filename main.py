@@ -20,7 +20,8 @@ from routers import (
     timeline,
     onedrive_routes,
     populatie,
-    metrics,  # ✅ nieuw toegevoegd
+    metrics,
+    kracht,  # ✅ nieuw toegevoegd
 )
 from security import get_current_user
 
@@ -46,7 +47,7 @@ origins = [
     "http://localhost:5173",          # lokaal (Vite)
     "https://aithlete.revosport.be",  # NIEUWE frontend
     "https://app.revosport.be",       # oude frontend
-    "https://*.vercel.app",           # eventuele preview builds
+    "https://*.vercel.app",           # preview builds
 ]
 
 app.add_middleware(
@@ -76,7 +77,8 @@ app.include_router(maand6.router, dependencies=protected)
 app.include_router(timeline.router, dependencies=protected)
 app.include_router(onedrive_routes.router, dependencies=protected)
 app.include_router(populatie.router, dependencies=protected)
-app.include_router(metrics.router, dependencies=protected)  # ✅ toegevoegd
+app.include_router(metrics.router, dependencies=protected)
+app.include_router(kracht.router, dependencies=protected)  # ✅ consistent beveiligd
 
 # =====================================================
 #   ROOT ENDPOINT
@@ -85,7 +87,7 @@ app.include_router(metrics.router, dependencies=protected)  # ✅ toegevoegd
 def home():
     print(Fore.CYAN + "AI.THLETE" + Style.RESET_ALL)
     return {
-        "status": "WELKOM TERUG.",
+        "status": "✅ Revo Sport API v2 running",
         "version": "2.0",
         "routers": [
             "/patients",
@@ -98,7 +100,8 @@ def home():
             "/timeline",
             "/upload_dynamic",
             "/populatie",
-            "/metrics",  # ✅ toegevoegd aan overzicht
+            "/metrics",
+            "/kracht",  # ✅ toegevoegd aan overzicht
         ],
     }
 
@@ -110,7 +113,7 @@ def startup_event():
     print(Fore.GREEN + "WELKOM TERUG." + Style.RESET_ALL)
     print(
         Fore.YELLOW
-        + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes, populatie, metrics"
+        + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes, populatie, metrics, kracht"
         + Style.RESET_ALL
     )
     print(Fore.CYAN + "🌐 Swagger Docs: https://revo-backend-5dji.onrender.com/docs" + Style.RESET_ALL)

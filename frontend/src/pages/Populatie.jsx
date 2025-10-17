@@ -1,3 +1,4 @@
+// 📁 src/pages/Populatie.jsx
 import React, { useMemo } from "react";
 import {
   PieChart,
@@ -15,6 +16,10 @@ import { FaMars, FaVenus } from "react-icons/fa";
 
 const COLORS = ["#FF7900", "#555555"];
 
+// ✅ Helpers
+const safeArray = (arr) => (Array.isArray(arr) ? [...arr] : []);
+const safeSort = (arr, fn) => (Array.isArray(arr) ? [...arr].sort(fn) : []);
+
 // 🔹 Flexibele key-opvrager
 function getField(obj, possibleKeys = []) {
   if (!obj) return null;
@@ -25,7 +30,7 @@ function getField(obj, possibleKeys = []) {
   return null;
 }
 
-// 🔹 Dagenverschil berekening (veilig)
+// 🔹 Dagenverschil
 function daysBetween(date1, date2) {
   const d1 = new Date(date1);
   const d2 = new Date(date2);
@@ -34,9 +39,12 @@ function daysBetween(date1, date2) {
   return diff > 0 && diff < 400 ? diff : null;
 }
 
-function Populatie({ data, summary }) {
-  // 🔸 Lokale fallback-berekeningen
+function Populatie({ data = [], summary = {} }) {
+  const cleanData = safeArray(data);
+
   const stats = useMemo(() => {
+    if (!Array.isArray(cleanData)) return {};
+
     const counts = {
       geslacht: {},
       sport: {},
@@ -48,38 +56,58 @@ function Populatie({ data, summary }) {
       monoloop: {},
     };
 
-    let ongevalOperatieDays = [];
-    let operatieIntakeDays = [];
-    let operatieLopenDays = [];
-    let operatieAutorijdenDays = [];
+    let ongevalOperatieDays = [],
+      operatieIntakeDays = [],
+      operatieLopenDays = [],
+      operatieAutorijdenDays = [];
 
-    data.forEach((p) => {
+    cleanData.forEach((p) => {
       const geslacht = getField(p, ["Geslacht", "geslacht"]);
       if (geslacht)
         counts.geslacht[geslacht] = (counts.geslacht[geslacht] || 0) + 1;
 
-      (p.blessures || []).forEach((b) => {
+      safeArray(p.blessures).forEach((b) => {
         const sport = getField(b, ["Sport", "sport"]);
         const sportniveau = getField(b, ["Sportniveau", "sportniveau"]);
         const etiologie = getField(b, ["Etiologie", "etiologie"]);
-        const operatie = getField(b, ["Operatie", "operatie", "Type_operatie", "type_operatie"]);
+        const operatie = getField(b, [
+          "Operatie",
+          "operatie",
+          "Type_operatie",
+          "type_operatie",
+        ]);
         const arts = getField(b, ["Arts", "arts"]);
-        const letsel = getField(b, ["Bijkomende_letsels", "Bijkomende letsels", "letsels"]);
+        const letsel = getField(b, [
+          "Bijkomende_letsels",
+          "Bijkomende letsels",
+          "letsels",
+        ]);
         const monoloop = getField(b, ["Monoloop", "monoloop"]);
 
         if (sport) counts.sport[sport] = (counts.sport[sport] || 0) + 1;
-        if (sportniveau) counts.sportniveau[sportniveau] = (counts.sportniveau[sportniveau] || 0) + 1;
-        if (etiologie) counts.etiologie[etiologie] = (counts.etiologie[etiologie] || 0) + 1;
-        if (operatie) counts.operatie[operatie] = (counts.operatie[operatie] || 0) + 1;
+        if (sportniveau)
+          counts.sportniveau[sportniveau] =
+            (counts.sportniveau[sportniveau] || 0) + 1;
+        if (etiologie)
+          counts.etiologie[etiologie] = (counts.etiologie[etiologie] || 0) + 1;
+        if (operatie)
+          counts.operatie[operatie] = (counts.operatie[operatie] || 0) + 1;
         if (arts) counts.arts[arts] = (counts.arts[arts] || 0) + 1;
         if (letsel) counts.letsel[letsel] = (counts.letsel[letsel] || 0) + 1;
-        if (monoloop) counts.monoloop[monoloop] = (counts.monoloop[monoloop] || 0) + 1;
+        if (monoloop)
+          counts.monoloop[monoloop] = (counts.monoloop[monoloop] || 0) + 1;
 
         const dOngeval = getField(b, ["Datum_ongeval", "Datum ongeval"]);
         const dOperatie = getField(b, ["Datum_operatie", "Datum operatie"]);
         const dIntake = getField(b, ["Datum_intake", "Datum intake"]);
-        const dLopen = getField(b, ["Datum_start_lopen", "Lopen - Opstartdatum"]);
-        const dAutorijden = getField(b, ["Datum_start_autorijden", "Autorijden - datum"]);
+        const dLopen = getField(b, [
+          "Datum_start_lopen",
+          "Lopen - Opstartdatum",
+        ]);
+        const dAutorijden = getField(b, [
+          "Datum_start_autorijden",
+          "Autorijden - datum",
+        ]);
 
         const diff1 = daysBetween(dOngeval, dOperatie);
         const diff2 = daysBetween(dOperatie, dIntake);
@@ -97,7 +125,7 @@ function Populatie({ data, summary }) {
       const entries = Object.entries(obj).filter(([k, v]) => k && v);
       const total = entries.reduce((a, [, v]) => a + v, 0);
       if (total === 0) return [];
-      return entries
+      return [...entries]
         .map(([k, v]) => ({
           name: k,
           value: v,
@@ -120,36 +148,58 @@ function Populatie({ data, summary }) {
       artsData: toArray(counts.arts),
       letselsData: toArray(counts.letsel),
       monoloopData: toArray(counts.monoloop),
-      totalPatients: data.length,
+      totalPatients: cleanData.length,
       avgOngevalOperatie: avg(ongevalOperatieDays),
       avgOperatieIntake: avg(operatieIntakeDays),
       avgOperatieLopen: avg(operatieLopenDays),
       avgOperatieAutorijden: avg(operatieAutorijdenDays),
     };
-  }, [data]);
+  }, [cleanData]);
 
   // 🔸 Combineer lokale + backenddata
-  const avgOngevalOperatie = summary?.avg?.accident_to_surgery ?? stats.avgOngevalOperatie;
-  const avgOperatieIntake = summary?.avg?.surgery_to_intake ?? stats.avgOperatieIntake;
-  const avgOperatieLopen = summary?.avg?.surgery_to_walk ?? stats.avgOperatieLopen;
-  const avgOperatieAutorijden = summary?.avg?.surgery_to_drive ?? stats.avgOperatieAutorijden;
+  const avgOngevalOperatie =
+    summary?.avg?.accident_to_surgery ?? stats.avgOngevalOperatie;
+  const avgOperatieIntake =
+    summary?.avg?.surgery_to_intake ?? stats.avgOperatieIntake;
+  const avgOperatieLopen =
+    summary?.avg?.surgery_to_walk ?? stats.avgOperatieLopen;
+  const avgOperatieAutorijden =
+    summary?.avg?.surgery_to_drive ?? stats.avgOperatieAutorijden;
 
-  const genderData = summary?.counts?.geslacht ?? stats.genderData;
-  const sportData = (summary?.counts?.sport ?? stats.sportData)?.sort((a, b) => b.value - a.value);
-  const sportniveauData = (summary?.counts?.sportniveau ?? stats.sportniveauData)?.sort((a, b) => b.value - a.value);
-  const etiologieData = summary?.counts?.etiologie ?? stats.etiologieData;
-  const artsData = (summary?.counts?.arts ?? stats.artsData)?.sort((a, b) => b.value - a.value);
-  const operatieData = (summary?.counts?.operatie ?? stats.operatieData)?.sort((a, b) => b.value - a.value);
-  const letselsData = (summary?.counts?.letsel ?? stats.letselsData)?.sort((a, b) => b.value - a.value);
-  const monoloopData = summary?.counts?.monoloop ?? stats.monoloopData;
+  const genderData = safeArray(summary?.counts?.geslacht ?? stats.genderData);
+  const sportData = safeSort(
+    summary?.counts?.sport ?? stats.sportData,
+    (a, b) => b.value - a.value
+  );
+  const sportniveauData = safeSort(
+    summary?.counts?.sportniveau ?? stats.sportniveauData,
+    (a, b) => b.value - a.value
+  );
+  const etiologieData = safeArray(summary?.counts?.etiologie ?? stats.etiologieData);
+  const artsData = safeSort(
+    summary?.counts?.arts ?? stats.artsData,
+    (a, b) => b.value - a.value
+  );
+  const operatieData = safeSort(
+    summary?.counts?.operatie ?? stats.operatieData,
+    (a, b) => b.value - a.value
+  );
+  const letselsData = safeSort(
+    summary?.counts?.letsel ?? stats.letselsData,
+    (a, b) => b.value - a.value
+  );
+  const monoloopData = safeArray(summary?.counts?.monoloop ?? stats.monoloopData);
 
   const totalPatients = summary?.totalPatients ?? stats.totalPatients;
 
-  // ✅ Verbeterde genderherkenning
   const man =
-    genderData.find((g) => ["man", "m", "male"].includes(g.name?.toLowerCase().trim()))?.percent || 0;
+    genderData.find((g) =>
+      ["man", "m", "male"].includes(g.name?.toLowerCase().trim())
+    )?.percent || 0;
   const vrouw =
-    genderData.find((g) => ["vrouw", "v", "female"].includes(g.name?.toLowerCase().trim()))?.percent || 0;
+    genderData.find((g) =>
+      ["vrouw", "v", "female"].includes(g.name?.toLowerCase().trim())
+    )?.percent || 0;
 
   return (
     <div
@@ -169,37 +219,100 @@ function Populatie({ data, summary }) {
         }
       `}</style>
 
-      <h2 style={{ color: "#ffffff", textTransform: "uppercase", letterSpacing: "1px", fontSize: "14px", fontWeight: 700, marginBottom: "24px", textAlign: "center" }}>
+      <h2
+        style={{
+          color: "#ffffff",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
+          fontSize: "14px",
+          fontWeight: 700,
+          marginBottom: "24px",
+          textAlign: "center",
+        }}
+      >
         POPULATIE BESCHRIJVING
       </h2>
 
       {/* === RIJ 1 === */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "16px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "16px",
+          marginBottom: "16px",
+        }}
+      >
         <KpiCard label="Aantal patiënten" value={totalPatients} />
-        <KpiCard label="Gem. tijd ongeval → operatie" value={avgOngevalOperatie} eenheid="dagen" />
-        <KpiCard label="Gem. tijd operatie → autorijden" value={avgOperatieAutorijden} eenheid="dagen" />
+        <KpiCard
+          label="Gem. tijd ongeval → operatie"
+          value={avgOngevalOperatie}
+          eenheid="dagen"
+        />
+        <KpiCard
+          label="Gem. tijd operatie → autorijden"
+          value={avgOperatieAutorijden}
+          eenheid="dagen"
+        />
       </div>
 
       {/* === RIJ 2 === */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "35px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "16px",
+          marginBottom: "35px",
+        }}
+      >
         <GeslachtCard man={man} vrouw={vrouw} />
-        <KpiCard label="Gem. tijd operatie → intake" value={avgOperatieIntake} eenheid="dagen" />
-        <KpiCard label="Gem. tijd operatie → lopen" value={avgOperatieLopen} eenheid="dagen" />
+        <KpiCard
+          label="Gem. tijd operatie → intake"
+          value={avgOperatieIntake}
+          eenheid="dagen"
+        />
+        <KpiCard
+          label="Gem. tijd operatie → lopen"
+          value={avgOperatieLopen}
+          eenheid="dagen"
+        />
       </div>
 
       {/* === CHARTS === */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "40px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "20px",
+          marginBottom: "40px",
+        }}
+      >
         <ChartCard title="Sport" data={sportData} type="bar" />
         <ChartCard title="Sportniveau" data={sportniveauData} type="bar" />
         <ChartCard title="Etiologie" data={etiologieData} type="pie" />
         <ChartCard title="Arts" data={artsData} type="bar" />
       </div>
 
-      <h2 style={{ color: "#ffffff", textTransform: "uppercase", letterSpacing: "1px", fontSize: "14px", fontWeight: 700, marginBottom: "30px", textAlign: "center" }}>
+      <h2
+        style={{
+          color: "#ffffff",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
+          fontSize: "14px",
+          fontWeight: 700,
+          marginBottom: "30px",
+          textAlign: "center",
+        }}
+      >
         MEDISCH
       </h2>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "24px",
+        }}
+      >
         <ChartCard title="Operatie Type" data={operatieData} type="bar" />
         <ChartCard title="Bijkomende Letsels" data={letselsData} type="bar" />
         <ChartCard title="Monoloop" data={monoloopData} type="pie" />
@@ -211,7 +324,19 @@ function Populatie({ data, summary }) {
 // === Subcomponenten ===
 function KpiCard({ label, value, eenheid }) {
   return (
-    <div style={{ background: "#1a1a1a", borderRadius: 12, padding: "25px 20px", textAlign: "center", boxShadow: "0 0 10px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+    <div
+      style={{
+        background: "#1a1a1a",
+        borderRadius: 12,
+        padding: "25px 20px",
+        textAlign: "center",
+        boxShadow: "0 0 10px rgba(0,0,0,0.25)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
       <div style={{ color: "#FF7900", fontSize: 22, fontWeight: 700 }}>
         {value ? `${value} ${eenheid || ""}` : "–"}
       </div>
@@ -222,14 +347,31 @@ function KpiCard({ label, value, eenheid }) {
 
 function GeslachtCard({ man, vrouw }) {
   return (
-    <div style={{ background: "#1a1a1a", borderRadius: 12, padding: "20px 0", textAlign: "center", boxShadow: "0 0 10px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 8 }}>
+    <div
+      style={{
+        background: "#1a1a1a",
+        borderRadius: 12,
+        padding: "20px 0",
+        textAlign: "center",
+        boxShadow: "0 0 10px rgba(0,0,0,0.25)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <FaMars color="#bbb" size={22} />
-        <span style={{ fontSize: 18, fontWeight: 700, color: "#bbb" }}>{man}%</span>
+        <span style={{ fontSize: 18, fontWeight: 700, color: "#bbb" }}>
+          {man}%
+        </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <FaVenus color="#FF7900" size={22} />
-        <span style={{ fontSize: 18, fontWeight: 700, color: "#FF7900" }}>{vrouw}%</span>
+        <span style={{ fontSize: 18, fontWeight: 700, color: "#FF7900" }}>
+          {vrouw}%
+        </span>
       </div>
     </div>
   );
@@ -263,14 +405,6 @@ function ChartCard({ title, data, type }) {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes barGrow {
-      from { transform: scaleY(0); opacity: 0; }
-      to { transform: scaleY(1); opacity: 1; }
-    }
-    .bar-hover {
-      transform-origin: bottom;
-      transition: transform 0.25s ease-in-out, fill 0.25s ease-in-out;
-    }
   `;
 
   const isArts = title?.toLowerCase() === "arts";
@@ -292,10 +426,9 @@ function ChartCard({ title, data, type }) {
       >
         <ResponsiveContainer width="100%" height="100%">
           {type === "pie" ? (
-            // 🥧 DONUT CHART met lift
             <PieChart>
               <Pie
-                data={data}
+                data={safeArray(data)}
                 cx="50%"
                 cy="50%"
                 innerRadius="55%"
@@ -324,7 +457,7 @@ function ChartCard({ title, data, type }) {
                   );
                 }}
               >
-                {data.map((_, i) => {
+                {safeArray(data).map((_, i) => {
                   const baseColor = COLORS[i % COLORS.length];
                   const hoverColor =
                     baseColor === "#FF7900" ? "#FFC266" : "#AAAAAA";
@@ -356,16 +489,16 @@ function ChartCard({ title, data, type }) {
                   borderRadius: 6,
                 }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(v, name, props) =>
-                  [`${props?.payload?.name}: ${v}`, null] // ✅ terug met dubbelepunt
-                }
+                formatter={(v, name, props) => [
+                  `${props?.payload?.name}: ${v}`,
+                  null,
+                ]}
                 labelFormatter={() => ""}
               />
             </PieChart>
           ) : (
-            // 📊 BAR CHART met hover-grow
             <BarChart
-              data={data}
+              data={safeArray(data)}
               margin={{ top: 18, right: 10, left: 0, bottom: 28 }}
               barCategoryGap="25%"
             >
@@ -379,8 +512,6 @@ function ChartCard({ title, data, type }) {
                 height={25}
                 dy={12}
                 tick={isArts ? { fill: "transparent", fontSize: 10 } : true}
-                axisLine={{ stroke: "#c9c9c9", strokeWidth: 1 }}
-                tickLine={{ stroke: "#c9c9c9", strokeWidth: 1 }}
               />
               <YAxis hide />
               <Tooltip
@@ -392,19 +523,19 @@ function ChartCard({ title, data, type }) {
                   borderRadius: 6,
                 }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(v, name, props) =>
-                  [`${props?.payload?.name}: ${v}`, null] // ✅ terug met dubbelepunt
-                }
+                formatter={(v, name, props) => [
+                  `${props?.payload?.name}: ${v}`,
+                  null,
+                ]}
                 labelFormatter={() => ""}
               />
               <Bar dataKey="value" radius={4} isAnimationActive={false}>
-                {data.map((_, i) => {
+                {safeArray(data).map((_, i) => {
                   const baseColor = "#FF7900";
                   const hoverColor = "#FFC266";
                   return (
                     <Cell
                       key={i}
-                      className="bar-hover"
                       fill={baseColor}
                       onMouseEnter={(e) => {
                         e.target.setAttribute("fill", hoverColor);
@@ -439,5 +570,3 @@ function ChartCard({ title, data, type }) {
 }
 
 export default Populatie;
-
-

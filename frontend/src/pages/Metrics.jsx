@@ -12,12 +12,24 @@ import {
 } from "recharts";
 
 export default function Metrics({ data }) {
-  // 🔸 Data uit backend (veilig fallback)
-  const circumData = data?.antropometrie || [];
-  const flexieData =
-    data?.mobiliteit?.map((f) => ({ fase: f.fase, waarde: f.flexie })) || [];
-  const extensieData =
-    data?.mobiliteit?.map((f) => ({ fase: f.fase, waarde: f.extensie })) || [];
+  // ✅ Defensieve kopieën om bevroren props te vermijden bij tab-switch
+  const circumData = Array.isArray(data?.antropometrie)
+    ? [...data.antropometrie]
+    : [];
+
+  const mobiliteit = Array.isArray(data?.mobiliteit)
+    ? [...data.mobiliteit]
+    : [];
+
+  const flexieData = mobiliteit.map((f) => ({
+    fase: f.fase,
+    waarde: f.flexie,
+  }));
+
+  const extensieData = mobiliteit.map((f) => ({
+    fase: f.fase,
+    waarde: f.extensie,
+  }));
 
   return (
     <div
@@ -62,7 +74,6 @@ export default function Metrics({ data }) {
         }
       `}</style>
 
-      {/* === TITEL === */}
       <h2
         style={{
           color: "#ffffff",
@@ -115,11 +126,18 @@ export default function Metrics({ data }) {
           <ResponsiveContainer width="100%" height={220}>
             <LineChart
               data={circumData}
-              margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
+              margin={{ top: 20, right: 80, left: 0, bottom: 10 }}
             >
-              <CartesianGrid stroke="#333" vertical={false} />
+              <CartesianGrid stroke="#2b2b2b" vertical={false} />
               <XAxis dataKey="fase" stroke="#c9c9c9" fontSize={10} />
-              <YAxis stroke="#c9c9c9" fontSize={10} />
+              <YAxis
+                stroke="#c9c9c9"
+                fontSize={10}
+                domain={[
+                  (dataMin) => Math.floor(dataMin * 0.9),
+                  (dataMax) => Math.ceil(dataMax * 1.1),
+                ]}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "#1a1a1a",
@@ -130,20 +148,26 @@ export default function Metrics({ data }) {
               />
               <Legend
                 verticalAlign="top"
-                align="center"
+                align="right"
+                layout="vertical"
                 wrapperStyle={{
+                  top: 0,
+                  right: 0,
                   color: "#c9c9c9",
                   fontSize: 11,
-                  marginBottom: 6,
+                  lineHeight: "20px",
+                  paddingRight: 10,
                 }}
+                iconType="circle"
               />
+              {/* volgorde = weergave in legende */}
               <Line
                 type="monotone"
                 dataKey="cm5"
                 name="Omtrek 5 cm"
                 stroke="#FF7900"
                 strokeWidth={3}
-                dot={false}
+                dot={{ r: 4, fill: "#FF7900", stroke: "#FF7900" }}
               />
               <Line
                 type="monotone"
@@ -151,7 +175,7 @@ export default function Metrics({ data }) {
                 name="Omtrek 10 cm"
                 stroke="#c9c9c9"
                 strokeWidth={2}
-                dot={false}
+                dot={{ r: 3, fill: "#c9c9c9", stroke: "#c9c9c9" }}
               />
               <Line
                 type="monotone"
@@ -159,13 +183,13 @@ export default function Metrics({ data }) {
                 name="Omtrek 20 cm"
                 stroke="#777"
                 strokeWidth={2}
-                dot={false}
+                dot={{ r: 3, fill: "#777", stroke: "#777" }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        {/* 🔸 Tabel % Verschil */}
+        {/* 🔸 % Verschil-tabel */}
         <div className="metric-card">
           <h4
             style={{
@@ -176,7 +200,8 @@ export default function Metrics({ data }) {
               marginBottom: "10px",
             }}
           >
-            % Verschil (geopereerde vs niet-geopereerde zijde)
+            % Verschil <br />
+            Geopereerde vs niet-geopereerde zijde
           </h4>
           <table>
             <thead>
@@ -240,9 +265,16 @@ export default function Metrics({ data }) {
               data={flexieData}
               margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
             >
-              <CartesianGrid stroke="#333" vertical={false} />
+              <CartesianGrid stroke="#2b2b2b" vertical={false} />
               <XAxis dataKey="fase" stroke="#c9c9c9" fontSize={10} />
-              <YAxis stroke="#c9c9c9" fontSize={10} />
+              <YAxis
+                stroke="#c9c9c9"
+                fontSize={10}
+                domain={[
+                  (dataMin) => Math.floor(dataMin * 0.9),
+                  (dataMax) => Math.ceil(dataMax * 1.1),
+                ]}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "#1a1a1a",
@@ -256,7 +288,7 @@ export default function Metrics({ data }) {
                 dataKey="waarde"
                 stroke="#FF7900"
                 strokeWidth={3}
-                dot={false}
+                dot={{ r: 4, fill: "#FF7900", stroke: "#FF7900" }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -280,9 +312,16 @@ export default function Metrics({ data }) {
               data={extensieData}
               margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
             >
-              <CartesianGrid stroke="#333" vertical={false} />
+              <CartesianGrid stroke="#2b2b2b" vertical={false} />
               <XAxis dataKey="fase" stroke="#c9c9c9" fontSize={10} />
-              <YAxis stroke="#c9c9c9" fontSize={10} />
+              <YAxis
+                stroke="#c9c9c9"
+                fontSize={10}
+                domain={[
+                  (dataMin) => Math.floor(dataMin * 0.9),
+                  (dataMax) => Math.ceil(dataMax * 1.1),
+                ]}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "#1a1a1a",
@@ -296,7 +335,7 @@ export default function Metrics({ data }) {
                 dataKey="waarde"
                 stroke="#FF7900"
                 strokeWidth={3}
-                dot={false}
+                dot={{ r: 4, fill: "#FF7900", stroke: "#FF7900" }}
               />
             </LineChart>
           </ResponsiveContainer>

@@ -1,58 +1,95 @@
 // =====================================================
 // FILE: src/pages/VoorsteKruisband.jsx
-// AI.THLETE — Populatie + Metrics Controller
 // =====================================================
 
 import React, { useState, useEffect } from "react";
-import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
-import { apiGet } from "../api"; // ✅ JWT-beveiligde helper
+import {
+  BicepsFlexed,
+  UsersRound,
+  RulerDimensionLine,
+  User,
+  Users,
+  Ruler,
+  Dumbbell,
+  ClipboardList,
+  Activity,
+  Gauge,
+} from "lucide-react";
+import { apiGet } from "../api";
 import Populatie from "./Populatie";
-import Metrics from "./Metrics"; // ✅ NIEUW
+import Metrics from "./Metrics";
+import Kracht from "./Kracht";
 import { PuffLoader } from "react-spinners";
 
-export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
-  const [activeSection, setActiveSection] = useState(defaultTab.toLowerCase());
+export default function VoorsteKruisband() {
+  // ✅ Start standaard in "group" + "populatie"
+  const [activeMode, setActiveMode] = useState("group");
+  const [activeSection, setActiveSection] = useState("populatie");
+
   const [patients, setPatients] = useState([]);
   const [populatieSummary, setPopulatieSummary] = useState(null);
-  const [metricsData, setMetricsData] = useState(null); // ✅ Metrics data
+  const [metricsData, setMetricsData] = useState(null);
+  const [krachtData, setKrachtData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🧠 Ophalen van Populatie-data
+  // 🧠 Data ophalen per sectie
   useEffect(() => {
+    setError("");
     if (activeSection === "populatie") {
       setLoading(true);
-      setError("");
       Promise.all([apiGet("/patients/"), apiGet("/populatie/summary")])
-        .then(([patientsData, summaryData]) => {
-          setPatients(patientsData);
-          setPopulatieSummary(summaryData);
+        .then(([p, s]) => {
+          setPatients(p);
+          setPopulatieSummary(s);
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    } else if (activeSection === "metrics") {
+      setLoading(true);
+      apiGet("/metrics/summary")
+        .then((data) => setMetricsData(data))
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    } else if (activeSection === "kracht") {
+      setLoading(true);
+      apiGet("/kracht/populatie")
+        .then((data) => {
+          setKrachtData(JSON.parse(JSON.stringify(data))); // ✅ deep clone
         })
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
     }
   }, [activeSection]);
 
-  // 🧠 Ophalen van Metrics-data
+  // ✅ Reset naar "populatie" wanneer je terugkeert naar Group-view
   useEffect(() => {
-    if (activeSection === "metrics") {
-      setLoading(true);
-      setError("");
+    if (activeMode === "group") setActiveSection("populatie");
+  }, [activeMode]);
 
-      apiGet("/metrics/summary")
-        .then((data) => setMetricsData(data))
-        .catch((err) => setError(err.message))
-        .finally(() => setLoading(false));
-    }
-  }, [activeSection]);
+  // 🔸 Bovenste rij (2 knoppen)
+  const topCards = [
+    { key: "group", icon: <Users size={26} color="var(--accent)" /> },
+    { key: "individual", icon: <User size={26} color="var(--accent)" /> },
+  ];
 
-  // 🔸 Navigatiecards
-  const cards = [
-    { title: "POPULATIE", key: "populatie", icon: <User size={24} color="var(--accent)" /> },
+  // 🔸 Onderste rij — set 1 (Groeps)
+  const groupCards = [
+    { title: "POPULATIE", key: "populatie", icon: <UsersRound size={24} color="var(--accent)" /> },
     { title: "METRICS", key: "metrics", icon: <Ruler size={24} color="var(--accent)" /> },
     { title: "KRACHT", key: "kracht", icon: <Dumbbell size={24} color="var(--accent)" /> },
+    { title: "FUNCTIONELE TESTING", key: "functioneel", icon: <Activity size={24} color="var(--accent)" /> },
+  ];
+
+  // 🔸 Onderste rij — set 2 (Individueel)
+  const individualCards = [
+    { title: "DASHBOARD", key: "dashboard", icon: <Gauge size={24} color="var(--accent)" /> },
+    { title: "METRICS", key: "metrics", icon: <RulerDimensionLine size={24} color="var(--accent)" /> },
+    { title: "KRACHT", key: "kracht", icon: <BicepsFlexed size={24} color="var(--accent)" /> },
     { title: "FUNCTIONELE TESTING", key: "functioneel", icon: <ClipboardList size={24} color="var(--accent)" /> },
   ];
+
+  const currentCards = activeMode === "group" ? groupCards : individualCards;
 
   return (
     <div
@@ -90,10 +127,47 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
         DATA-DRIVEN REHABILITATION INSIGHTS
       </p>
 
-      {/* === NAVIGATIECARDS === */}
       <div style={{ width: "100%", maxWidth: "950px" }}>
+        {/* === BOVENSTE 2 KNOPPEN === */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "24px",
+            marginBottom: "16px",
+          }}
+        >
+          {topCards.map((card) => {
+            const isActive = activeMode === card.key;
+            return (
+              <div
+                key={card.key}
+                onClick={() => setActiveMode(card.key)}
+                style={{
+                  width: "200px",
+                  backgroundColor: "#1a1a1a",
+                  borderRadius: "10px",
+                  border: isActive ? "1.5px solid var(--accent)" : "1.5px solid transparent",
+                  cursor: "pointer",
+                  transition: "all 0.25s ease",
+                  boxShadow: "0 0 8px rgba(0,0,0,0.3)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "56px",
+                  transform: isActive ? "translateY(-2px)" : "translateY(0)",
+                }}
+              >
+                {card.icon}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* === Oranje lijn === */}
         <div style={{ height: "1px", backgroundColor: "#FF7900", marginBottom: "20px" }}></div>
 
+        {/* === 4 ONDERSTE KNOPPEN === */}
         <div
           style={{
             display: "grid",
@@ -102,7 +176,7 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
             marginBottom: "20px",
           }}
         >
-          {cards.map((card) => {
+          {currentCards.map((card) => {
             const isActive = activeSection === card.key;
             return (
               <div
@@ -141,7 +215,7 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
           })}
         </div>
 
-        <div style={{ height: "0.8px", backgroundColor: "#FF7900", marginBottom: "30px" }}></div>
+        <div style={{ height: "1px", backgroundColor: "#FF7900", marginBottom: "30px" }}></div>
       </div>
 
       {/* === CONTENT === */}
@@ -170,18 +244,13 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
         ) : activeSection === "metrics" ? (
           <Metrics data={metricsData} />
         ) : activeSection === "kracht" ? (
-          <p style={{ color: "var(--muted)" }}>Kracht-module in ontwikkeling…</p>
+          <Kracht data={krachtData} />
         ) : (
-          <p style={{ color: "var(--muted)" }}>Functionele testing in ontwikkeling…</p>
+          <p style={{ color: "var(--muted)" }}>
+            Pagina <strong>{activeSection}</strong> in ontwikkeling…
+          </p>
         )}
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(10px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
