@@ -58,6 +58,7 @@ export default function Metrics({ data }) {
           border-collapse: collapse;
           color: #c9c9c9;
           font-size: 12px;
+          margin: 0 auto;
         }
         th, td {
           padding: 6px 8px;
@@ -123,6 +124,7 @@ export default function Metrics({ data }) {
           >
             Evolutie Omtrek Operatie
           </h4>
+
           <ResponsiveContainer width="100%" height={220}>
             <LineChart
               data={circumData}
@@ -145,6 +147,11 @@ export default function Metrics({ data }) {
                   fontSize: 11,
                   borderRadius: 6,
                 }}
+                formatter={(value, name) => [
+                  `${value?.toFixed?.(1) ?? value} cm`,
+                  name,
+                ]}
+                labelStyle={{ color: "#fff", fontWeight: 600 }}
               />
               <Legend
                 verticalAlign="top"
@@ -160,7 +167,7 @@ export default function Metrics({ data }) {
                 }}
                 iconType="circle"
               />
-              {/* volgorde = weergave in legende */}
+              {/* volgorde bepaalt tooltip + legenda */}
               <Line
                 type="monotone"
                 dataKey="cm5"
@@ -168,6 +175,7 @@ export default function Metrics({ data }) {
                 stroke="#FF7900"
                 strokeWidth={3}
                 dot={{ r: 4, fill: "#FF7900", stroke: "#FF7900" }}
+                activeDot={{ r: 6, stroke: "#FF9C33", strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
@@ -176,6 +184,7 @@ export default function Metrics({ data }) {
                 stroke="#c9c9c9"
                 strokeWidth={2}
                 dot={{ r: 3, fill: "#c9c9c9", stroke: "#c9c9c9" }}
+                activeDot={{ r: 5, stroke: "#e0e0e0", strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
@@ -184,6 +193,7 @@ export default function Metrics({ data }) {
                 stroke="#777"
                 strokeWidth={2}
                 dot={{ r: 3, fill: "#777", stroke: "#777" }}
+                activeDot={{ r: 5, stroke: "#999", strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -197,7 +207,7 @@ export default function Metrics({ data }) {
               fontSize: 12,
               fontWeight: 700,
               textAlign: "center",
-              marginBottom: "10px",
+              marginBottom: "30px",
             }}
           >
             % Verschil <br />
@@ -216,9 +226,22 @@ export default function Metrics({ data }) {
               {circumData.map((r, i) => (
                 <tr key={i}>
                   <td>{r.fase}</td>
-                  <td>{r.diff5 ?? "–"}</td>
-                  <td>{r.diff10 ?? "–"}</td>
-                  <td>{r.diff20 ?? "–"}</td>
+                  {[r.diff5, r.diff10, r.diff20].map((v, j) => (
+                    <td
+                      key={j}
+                      style={{
+                        color:
+                          v == null
+                            ? "#c9c9c9"
+                            : Math.abs(v) > 10
+                            ? "#FF3B3B" // 🔴 rood
+                            : "#ffffff", // ⚪ neutraal
+                        fontWeight: Math.abs(v) > 10 ? 700 : 400,
+                      }}
+                    >
+                      {v != null ? `${v.toFixed(1)} %` : "–"}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>

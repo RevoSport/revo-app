@@ -1,5 +1,5 @@
 // 📁 src/pages/Kracht.jsx
-import React from "react";
+import React, { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -11,51 +11,50 @@ import {
 } from "recharts";
 
 export default function Kracht({ data }) {
-  // === 🛡️ Defensieve helpers ===
-  const safeArray = (arr) => (Array.isArray(arr) ? [...arr] : []);
-  const safeValue = (obj, key, fallback = null) =>
-    obj && typeof obj === "object" && key in obj && obj[key] !== null
-      ? obj[key]
-      : fallback;
-  const deepClone = (val) => JSON.parse(JSON.stringify(val || {}));
+  // ✅ Defensive copy
+  const cleanData = Array.isArray(data) ? [...data] : [];
 
-  // ✅ Deep clone om "read-only mutation" te voorkomen bij tab-switch
-  const cleanData = deepClone(data || {});
-
+  // 🔹 fases in volgorde
   const fases = ["Week 6", "Maand 3", "Maand 4.5", "Maand 6"];
 
-  const buildData = (leftKey, rightKey) =>
-    fases.map((fase) => ({
-      fase,
-      geopereerd:
-        safeValue(cleanData?.[fase], leftKey) ??
-        Math.floor(Math.random() * 200 + 80),
-      niet_geopereerd:
-        safeValue(cleanData?.[fase], rightKey) ??
-        Math.floor(Math.random() * 200 + 80),
-    }));
+  // 🔹 Alle testnamen ophalen uit eerste fase
+  const allTests = useMemo(() => {
+    if (!cleanData.length) return [];
+    const keys = Object.keys(cleanData[0]?.tests || {});
+    return keys;
+  }, [cleanData]);
 
-  const ratioData = (values) =>
-    fases.map((fase, i) => ({
-      fase,
-      waarde: parseFloat(values?.[i] ?? (Math.random() * 0.8 + 0.6).toFixed(2)),
-    }));
+  // 🔹 Alle ratio’s
+  const allRatios = useMemo(() => {
+    if (!cleanData.length) return [];
+    return Object.keys(cleanData[0]?.ratios || {});
+  }, [cleanData]);
 
-  // === DATASETS ===
-  const quadriceps = buildData("kracht_quadriceps_60_l", "kracht_quadriceps_60_r");
-  const hamstrings30 = buildData("kracht_hamstrings_30_l", "kracht_hamstrings_30_r");
-  const hamstrings90 = buildData("kracht_hamstrings_90_90_l", "kracht_hamstrings_90_90_r");
-  const nordics = buildData("kracht_nordics_l", "kracht_nordics_r");
-  const soleus = buildData("kracht_soleus_l", "kracht_soleus_r");
-  const exo = buildData("kracht_exorotatoren_heup_l", "kracht_exorotatoren_heup_r");
-  const abdKort = buildData("kracht_abductoren_kort_l", "kracht_abductoren_kort_r");
-  const addKort = buildData("kracht_adductoren_kort_l", "kracht_adductoren_kort_r");
-  const abdLang = buildData("kracht_abductoren_lang_l", "kracht_abductoren_lang_r");
-  const addLang = buildData("kracht_adductoren_lang_l", "kracht_adductoren_lang_r");
+  // 🔹 Functie om dataset per test op te bouwen
+  const buildTestData = (testKey) =>
+    fases.map((fase) => {
+      const faseObj = cleanData.find((f) => f.fase === fase);
+      const t = faseObj?.tests?.[testKey] || {};
+      return {
+        fase,
+        geopereerd: t.operated_avg ?? null,
+        niet_geopereerd: t.healthy_avg ?? null,
+        diff_pct: t.diff_pct ?? null,
+      };
+    });
 
-  const h30q60 = ratioData([0.45, 0.62, 0.68, 0.74]);
-  const addAbdKort = ratioData([1.05, 1.10, 1.12, 1.18]);
-  const addAbdLang = ratioData([1.02, 1.08, 1.15, 1.20]);
+  // 🔹 Dataset voor ratio’s
+  const buildRatioData = (ratioKey) =>
+    fases.map((fase) => {
+      const faseObj = cleanData.find((f) => f.fase === fase);
+      const r = faseObj?.ratios?.[ratioKey] || {};
+      return {
+        fase,
+        geopereerd: r.operated_avg ?? null,
+        niet_geopereerd: r.healthy_avg ?? null,
+        diff_pct: r.diff_pct ?? null,
+      };
+    });
 
   return (
     <div
@@ -120,68 +119,43 @@ export default function Kracht({ data }) {
         KRACHT
       </h2>
 
-      {/* === QUADRICEPS & HAMSTRINGS === */}
-      <SectionTitle title="Quadriceps & Hamstrings" />
-      <div className="grid-two">
-        <ChartCard title="Quadriceps 60°" data={quadriceps} />
-        <ChartCard title="Hamstrings 30°" data={hamstrings30} />
-      </div>
-      <div className="grid-two">
-        <ChartCard title="Hamstrings 90/90" data={hamstrings90} />
-        <ChartCard title="Nordics" data={nordics} />
-      </div>
-      <RatioCard title="H30/Q60 Ratio" data={h30q60} threshold={0.6} />
+      {/* === SPIERTESTEN === */}
+      {allTests.map((tKey, i) => (
+        <ChartCard key={i} title={tKey.replace("kracht_", "").toUpperCase()} data={buildTestData(tKey)} />
+      ))}
 
-      {/* === KUIT & HEUP === */}
-      <SectionTitle title="Kuit & Heup" />
-      <div className="grid-two">
-        <ChartCard title="Soleus" data={soleus} />
-        <ChartCard title="Heup Exorotatie" data={exo} />
-      </div>
+      {/* === RATIO'S === */}
+      <h3
+        style={{
+          color: "#ffffff",
+          fontSize: 13,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          margin: "26px 0 14px 0",
+        }}
+      >
+        Ratio’s
+      </h3>
 
-      {/* === HEUP ABD/ADD KORT === */}
-      <SectionTitle title="Heup Abductie / Adductie (Kort)" />
-      <div className="grid-two">
-        <ChartCard title="AB-Ductie Kort" data={abdKort} />
-        <ChartCard title="AD-Ductie Kort" data={addKort} />
-      </div>
-      <RatioCard title="ADD/ABD Ratio Kort" data={addAbdKort} threshold={1.1} />
-
-      {/* === HEUP ABD/ADD LANG === */}
-      <SectionTitle title="Heup Abductie / Adductie (Lang)" />
-      <div className="grid-two">
-        <ChartCard title="AB-Ductie Lang" data={abdLang} />
-        <ChartCard title="AD-Ductie Lang" data={addLang} />
-      </div>
-      <RatioCard title="ADD/ABD Ratio Lang" data={addAbdLang} threshold={1.1} />
+      {allRatios.map((rKey, i) => (
+        <RatioCard
+          key={i}
+          title={rKey}
+          data={buildRatioData(rKey)}
+          threshold={rKey.startsWith("H30") ? 0.6 : 1.1}
+        />
+      ))}
     </div>
   );
 }
 
 // === Subcomponenten ===
 
-function SectionTitle({ title }) {
-  return (
-    <h3
-      style={{
-        color: "#ffffff",
-        fontSize: 13,
-        fontWeight: 700,
-        textTransform: "uppercase",
-        letterSpacing: "0.5px",
-        margin: "26px 0 14px 0",
-      }}
-    >
-      {title}
-    </h3>
-  );
-}
-
 function ChartCard({ title, data }) {
   const safeData = Array.isArray(data) ? [...data] : [];
-
   return (
-    <div className="metric-card">
+    <div className="metric-card" style={{ marginBottom: 20 }}>
       <h4
         style={{
           color: "#fff",
@@ -193,6 +167,7 @@ function ChartCard({ title, data }) {
       >
         {title}
       </h4>
+
       <ResponsiveContainer width="100%" height={220}>
         <BarChart
           data={safeData}
@@ -213,11 +188,13 @@ function ChartCard({ title, data }) {
               fontSize: 11,
               borderRadius: 6,
             }}
+            formatter={(v) => (v != null ? v.toFixed(1) : "–")}
           />
           <Bar dataKey="geopereerd" fill="#FF7900" radius={3} />
           <Bar dataKey="niet_geopereerd" fill="#777" radius={3} />
         </BarChart>
       </ResponsiveContainer>
+
       <table style={{ marginTop: 10 }}>
         <thead>
           <tr>
@@ -227,20 +204,17 @@ function ChartCard({ title, data }) {
         </thead>
         <tbody>
           {safeData.map((r, i) => {
-            const diff =
-              r.niet_geopereerd && r.niet_geopereerd !== 0
-                ? (((r.geopereerd - r.niet_geopereerd) / r.niet_geopereerd) * 100).toFixed(1)
-                : "–";
+            const diff = r.diff_pct ?? "–";
             const color =
-              diff !== "–" && diff < -10
+              diff !== "–" && Math.abs(diff) > 10
                 ? "#FF3B3B"
-                : diff !== "–" && diff < -5
-                ? "#FFB347"
                 : "#c9c9c9";
             return (
               <tr key={i}>
                 <td>{r.fase}</td>
-                <td style={{ color }}>{diff}%</td>
+                <td style={{ color }}>
+                  {diff !== "–" ? `${diff.toFixed(1)}%` : "–"}
+                </td>
               </tr>
             );
           })}
@@ -253,7 +227,7 @@ function ChartCard({ title, data }) {
 function RatioCard({ title, data, threshold }) {
   const safeData = Array.isArray(data) ? [...data] : [];
   return (
-    <div className="metric-card" style={{ marginTop: 20 }}>
+    <div className="metric-card" style={{ marginBottom: 20 }}>
       <h4
         style={{
           color: "#fff",
@@ -269,17 +243,23 @@ function RatioCard({ title, data, threshold }) {
         <thead>
           <tr>
             <th>Fase</th>
-            <th>Waarde</th>
+            <th>Operatie</th>
+            <th>Gezond</th>
+            <th>% Verschil</th>
           </tr>
         </thead>
         <tbody>
           {safeData.map((r, i) => {
-            const val = parseFloat(r.waarde);
-            const color = val < threshold ? "#FF3B3B" : "#c9c9c9";
+            const kleur =
+              r.diff_pct && Math.abs(r.diff_pct) > 10 ? "#FF3B3B" : "#c9c9c9";
             return (
               <tr key={i}>
                 <td>{r.fase}</td>
-                <td style={{ color }}>{!isNaN(val) ? val.toFixed(2) : "–"}</td>
+                <td>{r.geopereerd?.toFixed?.(2) ?? "–"}</td>
+                <td>{r.niet_geopereerd?.toFixed?.(2) ?? "–"}</td>
+                <td style={{ color: kleur }}>
+                  {r.diff_pct != null ? `${r.diff_pct.toFixed(1)}%` : "–"}
+                </td>
               </tr>
             );
           })}

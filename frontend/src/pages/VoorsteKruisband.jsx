@@ -36,6 +36,7 @@ export default function VoorsteKruisband() {
   // 🧠 Data ophalen per sectie
   useEffect(() => {
     setError("");
+
     if (activeSection === "populatie") {
       setLoading(true);
       Promise.all([apiGet("/patients/"), apiGet("/populatie/summary")])
@@ -45,21 +46,26 @@ export default function VoorsteKruisband() {
         })
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
-    } else if (activeSection === "metrics") {
+    }
+
+    else if (activeSection === "metrics") {
       setLoading(true);
       apiGet("/metrics/summary")
         .then((data) => setMetricsData(data))
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
-    } else if (activeSection === "kracht") {
+    }
+
+    else if (activeSection === "kracht") {
       setLoading(true);
-      apiGet("/kracht/populatie")
+      apiGet("/kracht/summary")
         .then((data) => {
-          setKrachtData(JSON.parse(JSON.stringify(data))); // ✅ deep clone
+          setKrachtData(JSON.parse(JSON.stringify(data))); // deep clone
         })
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
     }
+
   }, [activeSection]);
 
   // ✅ Reset naar "populatie" wanneer je terugkeert naar Group-view
