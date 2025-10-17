@@ -239,7 +239,7 @@ function ChartCard({ title, data, type }) {
   const baseCard = {
     background: "#1a1a1a",
     borderRadius: 12,
-    padding: "18px 20px 0px 20px", // ⬇️ minder padding onderaan
+    padding: "18px 20px 0px 20px",
     textAlign: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.25)",
     display: "flex",
@@ -267,29 +267,13 @@ function ChartCard({ title, data, type }) {
       from { transform: scaleY(0); opacity: 0; }
       to { transform: scaleY(1); opacity: 1; }
     }
-
-    /* === BAR ANIMATIES === */
     .bar-hover {
       transform-origin: bottom;
-      animation: barGrow 0.7s ease-out forwards;
       transition: transform 0.25s ease-in-out, fill 0.25s ease-in-out;
     }
-    .bar-hover:hover {
-      fill: #ffa64d;
-      transform: translateY(-2px) scaleY(1.03);
-    }
-
-    /* === PIE ANIMATIES === */
-    .slice-hover {
-      transition: fill 0.25s ease-in-out;
-    }
-    .slice-hover:nth-child(odd):hover {
-      fill: #FFA64D; /* lichtere oranje */
-    }
-    .slice-hover:nth-child(even):hover {
-      fill: #777777; /* lichtere grijs */
-    }
   `;
+
+  const isArts = title?.toLowerCase() === "arts";
 
   return (
     <div style={baseCard}>
@@ -302,12 +286,13 @@ function ChartCard({ title, data, type }) {
           width: "100%",
           minHeight: 200,
           display: "flex",
-          alignItems: type === "pie" ? "center" : "flex-end",
+          alignItems: "center",
           justifyContent: "center",
         }}
       >
         <ResponsiveContainer width="100%" height="100%">
           {type === "pie" ? (
+            // 🥧 DONUT CHART met lift
             <PieChart>
               <Pie
                 data={data}
@@ -320,7 +305,8 @@ function ChartCard({ title, data, type }) {
                 labelLine={false}
                 label={({ cx, cy, midAngle, innerRadius, outerRadius, index }) => {
                   const RADIAN = Math.PI / 180;
-                  const radius = innerRadius + (outerRadius - innerRadius) * 1.25;
+                  const radius =
+                    innerRadius + (outerRadius - innerRadius) * 1.25;
                   const x = cx + radius * Math.cos(-midAngle * RADIAN);
                   const y = cy + radius * Math.sin(-midAngle * RADIAN);
                   const value = data[index]?.percent || 0;
@@ -338,21 +324,29 @@ function ChartCard({ title, data, type }) {
                   );
                 }}
               >
-              {data.map((_, i) => {
-                const baseColor = COLORS[i % COLORS.length];
-                const hoverColor = baseColor === "#FF7900" ? "#FFA64D" : "#888888";
-                return (
-                  <Cell
-                    key={i}
-                    fill={baseColor}
-                    stroke="none"
-                    className="slice-hover"
-                    onMouseEnter={(e) => (e.target.style.fill = hoverColor)}
-                    onMouseLeave={(e) => (e.target.style.fill = baseColor)}
-                  />
-                );
-              })}
-
+                {data.map((_, i) => {
+                  const baseColor = COLORS[i % COLORS.length];
+                  const hoverColor =
+                    baseColor === "#FF7900" ? "#FFC266" : "#AAAAAA";
+                  return (
+                    <Cell
+                      key={i}
+                      fill={baseColor}
+                      stroke="none"
+                      onMouseEnter={(e) => {
+                        e.target.style.fill = hoverColor;
+                        e.target.style.transform = "scale(1.05)";
+                        e.target.style.transition =
+                          "transform 0.25s ease, fill 0.25s ease";
+                        e.target.style.transformOrigin = "center";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.fill = baseColor;
+                        e.target.style.transform = "scale(1)";
+                      }}
+                    />
+                  );
+                })}
               </Pie>
               <Tooltip
                 contentStyle={{
@@ -362,16 +356,18 @@ function ChartCard({ title, data, type }) {
                   borderRadius: 6,
                 }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(v) => `Aantal: ${v}`} // ✅ geen dubbele punt
+                formatter={(v, name, props) =>
+                  [`${props?.payload?.name}: ${v}`, null] // ✅ terug met dubbelepunt
+                }
                 labelFormatter={() => ""}
               />
             </PieChart>
           ) : (
+            // 📊 BAR CHART met hover-grow
             <BarChart
               data={data}
-              margin={{ top: 0, right: 10, left: 0, bottom: 50 }}
+              margin={{ top: 18, right: 10, left: 0, bottom: 28 }}
               barCategoryGap="25%"
-              onMouseMove={() => {}} // blokkeert interne hover state
             >
               <XAxis
                 dataKey="name"
@@ -380,12 +376,15 @@ function ChartCard({ title, data, type }) {
                 interval={0}
                 angle={data.length > 5 ? -90 : 0}
                 textAnchor={data.length > 5 ? "end" : "middle"}
-                height={data.length > 5 ? 85 : 30}
-                dy={10}
+                height={25}
+                dy={12}
+                tick={isArts ? { fill: "transparent", fontSize: 10 } : true}
+                axisLine={{ stroke: "#c9c9c9", strokeWidth: 1 }}
+                tickLine={{ stroke: "#c9c9c9", strokeWidth: 1 }}
               />
               <YAxis hide />
               <Tooltip
-                cursor={{ fill: "transparent" }} // geen grijze hoverbalk
+                cursor={{ fill: "transparent" }}
                 contentStyle={{
                   backgroundColor: "#1a1a1a",
                   border: "1px solid #FF7900",
@@ -393,24 +392,42 @@ function ChartCard({ title, data, type }) {
                   borderRadius: 6,
                 }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(v) => `Aantal: ${v}`} // ✅ geen dubbele punt
+                formatter={(v, name, props) =>
+                  [`${props?.payload?.name}: ${v}`, null] // ✅ terug met dubbelepunt
+                }
                 labelFormatter={() => ""}
               />
-              <Bar
-                dataKey="value"
-                radius={4}
-                isAnimationActive={false}
-                activeBar={false}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} className="bar-hover" fill="#FF7900" />
-                ))}
+              <Bar dataKey="value" radius={4} isAnimationActive={false}>
+                {data.map((_, i) => {
+                  const baseColor = "#FF7900";
+                  const hoverColor = "#FFC266";
+                  return (
+                    <Cell
+                      key={i}
+                      className="bar-hover"
+                      fill={baseColor}
+                      onMouseEnter={(e) => {
+                        e.target.setAttribute("fill", hoverColor);
+                        e.target.style.transform = "scaleY(1.05)";
+                        e.target.style.transition =
+                          "transform 0.25s ease, fill 0.25s ease";
+                        e.target.style.transformOrigin = "bottom";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.setAttribute("fill", baseColor);
+                        e.target.style.transform = "scaleY(1)";
+                      }}
+                    />
+                  );
+                })}
                 <LabelList
                   dataKey="percent"
                   position="top"
                   formatter={(v) => `${v}%`}
                   fill="#c9c9c9"
                   fontSize={10}
+                  offset={10}
+                  clip={false}
                 />
               </Bar>
             </BarChart>

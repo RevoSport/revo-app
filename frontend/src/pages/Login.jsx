@@ -32,14 +32,11 @@ export default function Login({ onLogin }) {
       }
 
       const data = await res.json();
-
-      // ✅ Bewaar zowel token als gebruikersnaam
       localStorage.setItem("token", data.access_token);
-      if (data.user_name) {
-        localStorage.setItem("user_name", data.user_name);
-      } else {
-        localStorage.setItem("user_name", email.split("@")[0]);
-      }
+      localStorage.setItem(
+        "user_name",
+        data.user_name || email.split("@")[0]
+      );
 
       onLogin && onLogin(data.access_token);
     } catch (err) {
@@ -58,6 +55,7 @@ export default function Login({ onLogin }) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        padding: "40px 20px",
       }}
     >
       <div style={{ animation: "fadeIn 0.9s ease-out" }}>
@@ -65,35 +63,56 @@ export default function Login({ onLogin }) {
           onSubmit={handleSubmit}
           style={{
             backgroundColor: "#1b1b1b",
-            padding: "2rem",
-            borderRadius: 16,
-            width: 320,
+            padding: "3rem 2.5rem",
+            borderRadius: 18,
+            width: 380,
             textAlign: "center",
             border: "1px solid rgba(255,121,0,0.4)",
-            boxShadow: "0 0 25px rgba(0,0,0,0.3)",
+            boxShadow: "0 0 25px rgba(0,0,0,0.4)",
           }}
         >
+          {/* Logo + Slogan */}
           <div
             style={{
               display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
               flexDirection: "column",
-              marginBottom: 25,
+              alignItems: "center",
+              marginBottom: 30,
+              animation: "fadeLogo 1.2s ease-out",
             }}
           >
             <img
               src={logo}
               alt="Revo Sport Logo"
               style={{
-                width: 160,
-                marginBottom: 10,
-                filter: "drop-shadow(0 0 8px rgba(255,121,0,0.5))",
-                opacity: 0.95,
+                width: 200,
+                marginBottom: 8,
+                transition: "transform 0.3s ease",
               }}
+              onMouseEnter={(e) => (e.target.style.transform = "scale(1.03)")}
+              onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
             />
+            <span
+              style={{
+                fontSize: 14,
+                color: "#c9c9c9",
+                letterSpacing: "1px",
+                fontWeight: 600,
+                marginTop: 4,
+                textAlign: "center",
+                lineHeight: 1.6,
+                textTransform: "uppercase",
+                animation: "fadeText 1.5s ease-out",
+              }}
+            >
+              Criteria-Based Rehab{" "}
+              <span style={{ color: "#FF7900", fontWeight: 700 }}>
+                & Performance&nbsp;Tracking
+              </span>
+            </span>
           </div>
 
+          {/* Inputs */}
           <input
             type="email"
             placeholder="E-mail"
@@ -102,15 +121,15 @@ export default function Login({ onLogin }) {
             required
             style={{
               width: "100%",
-              padding: 10,
-              marginBottom: 10,
+              padding: 12,
+              marginBottom: 12,
               borderRadius: 8,
               border: "1px solid #555",
               backgroundColor: "#222",
               color: "white",
+              fontSize: 14,
             }}
           />
-
           <input
             type="password"
             placeholder="Wachtwoord"
@@ -119,26 +138,29 @@ export default function Login({ onLogin }) {
             required
             style={{
               width: "100%",
-              padding: 10,
-              marginBottom: 20,
+              padding: 12,
+              marginBottom: 22,
               borderRadius: 8,
               border: "1px solid #555",
               backgroundColor: "#222",
               color: "white",
+              fontSize: 14,
             }}
           />
 
+          {/* Login button */}
           <button
             type="submit"
             disabled={loading}
             style={{
               width: "100%",
-              padding: 10,
+              padding: 12,
               borderRadius: 8,
               border: "1px solid #FF7900",
               backgroundColor: "transparent",
               color: "#FF7900",
               fontWeight: 500,
+              fontSize: 12,
               cursor: "pointer",
               transition: "all 0.3s ease",
             }}
@@ -151,7 +173,7 @@ export default function Login({ onLogin }) {
               e.target.style.borderColor = "#FF7900";
             }}
           >
-            {loading ? "Aan het inloggen..." : "Login"}
+            {loading ? "AAN HET INLOGGEN" : "LOGIN"}
           </button>
 
           {error && (
@@ -165,6 +187,16 @@ export default function Login({ onLogin }) {
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeLogo {
+          from { opacity: 0; transform: scale(0.95) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes fadeText {
+          from { opacity: 0; transform: translateY(5px); }
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>

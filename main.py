@@ -20,6 +20,7 @@ from routers import (
     timeline,
     onedrive_routes,
     populatie,
+    metrics,  # ✅ nieuw toegevoegd
 )
 from security import get_current_user
 
@@ -74,7 +75,8 @@ app.include_router(maand45.router, dependencies=protected)
 app.include_router(maand6.router, dependencies=protected)
 app.include_router(timeline.router, dependencies=protected)
 app.include_router(onedrive_routes.router, dependencies=protected)
-app.include_router(populatie.router,dependencies=protected)
+app.include_router(populatie.router, dependencies=protected)
+app.include_router(metrics.router, dependencies=protected)  # ✅ toegevoegd
 
 # =====================================================
 #   ROOT ENDPOINT
@@ -96,6 +98,7 @@ def home():
             "/timeline",
             "/upload_dynamic",
             "/populatie",
+            "/metrics",  # ✅ toegevoegd aan overzicht
         ],
     }
 
@@ -107,7 +110,7 @@ def startup_event():
     print(Fore.GREEN + "WELKOM TERUG." + Style.RESET_ALL)
     print(
         Fore.YELLOW
-        + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes"
+        + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes, populatie, metrics"
         + Style.RESET_ALL
     )
     print(Fore.CYAN + "🌐 Swagger Docs: https://revo-backend-5dji.onrender.com/docs" + Style.RESET_ALL)

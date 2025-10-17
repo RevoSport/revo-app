@@ -7,22 +7,22 @@ import React, { useState, useEffect } from "react";
 import { User, Ruler, Dumbbell, ClipboardList } from "lucide-react";
 import { apiGet } from "../api"; // ✅ JWT-beveiligde helper
 import Populatie from "./Populatie";
-import { PuffLoader } from "react-spinners"; // ✅ zelfde spinner als loader
+import Metrics from "./Metrics"; // ✅ NIEUW
+import { PuffLoader } from "react-spinners";
 
 export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
-  // 🔹 Tabs & data state
   const [activeSection, setActiveSection] = useState(defaultTab.toLowerCase());
   const [patients, setPatients] = useState([]);
   const [populatieSummary, setPopulatieSummary] = useState(null);
+  const [metricsData, setMetricsData] = useState(null); // ✅ Metrics data
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🧠 Ophalen van data bij Populatie
+  // 🧠 Ophalen van Populatie-data
   useEffect(() => {
     if (activeSection === "populatie") {
       setLoading(true);
       setError("");
-
       Promise.all([apiGet("/patients/"), apiGet("/populatie/summary")])
         .then(([patientsData, summaryData]) => {
           setPatients(patientsData);
@@ -33,7 +33,20 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
     }
   }, [activeSection]);
 
-  // 🔸 Kaartdefinitie (navigatie)
+  // 🧠 Ophalen van Metrics-data
+  useEffect(() => {
+    if (activeSection === "metrics") {
+      setLoading(true);
+      setError("");
+
+      apiGet("/metrics/summary")
+        .then((data) => setMetricsData(data))
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    }
+  }, [activeSection]);
+
+  // 🔸 Navigatiecards
   const cards = [
     { title: "POPULATIE", key: "populatie", icon: <User size={24} color="var(--accent)" /> },
     { title: "METRICS", key: "metrics", icon: <Ruler size={24} color="var(--accent)" /> },
@@ -41,7 +54,6 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
     { title: "FUNCTIONELE TESTING", key: "functioneel", icon: <ClipboardList size={24} color="var(--accent)" /> },
   ];
 
-  // === UI ===
   return (
     <div
       style={{
@@ -133,55 +145,36 @@ export default function VoorsteKruisband({ defaultTab = "Populatie" }) {
       </div>
 
       {/* === CONTENT === */}
-      {activeSection === "populatie" && (
-        <div style={{ width: "100%" }}>
-          {loading ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "60vh",
-                color: "#FF7900",
-                animation: "fadeIn 1s ease-in-out",
-              }}
-            >
-              <PuffLoader
-                color="#FF7900"
-                size={Math.min(window.innerWidth * 0.15, 100)}
-              />
-              <p
-                style={{
-                  marginTop: "20px",
-                  fontSize: "14px",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Data wordt geladen...
-              </p>
-            </div>
-          ) : error ? (
-            <p style={{ color: "red" }}>{error}</p>
-          ) : patients.length === 0 ? (
-            <p style={{ color: "#888" }}>Nog geen patiënten gevonden.</p>
-          ) : (
-            <Populatie data={patients} summary={populatieSummary} />
-          )}
-        </div>
-      )}
-
-      {activeSection === "metrics" && (
-        <p style={{ color: "var(--muted)" }}>Metrics-module in ontwikkeling…</p>
-      )}
-
-      {activeSection === "kracht" && (
-        <p style={{ color: "var(--muted)" }}>Kracht-module in ontwikkeling…</p>
-      )}
-
-      {activeSection === "functioneel" && (
-        <p style={{ color: "var(--muted)" }}>Functionele testing in ontwikkeling…</p>
-      )}
+      <div style={{ width: "100%" }}>
+        {loading ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "60vh",
+              color: "#FF7900",
+              animation: "fadeIn 1s ease-in-out",
+            }}
+          >
+            <PuffLoader color="#FF7900" size={Math.min(window.innerWidth * 0.15, 100)} />
+            <p style={{ marginTop: "20px", fontSize: "14px", letterSpacing: "0.5px" }}>
+              Data wordt geladen...
+            </p>
+          </div>
+        ) : error ? (
+          <p style={{ color: "red" }}>{error}</p>
+        ) : activeSection === "populatie" ? (
+          <Populatie data={patients} summary={populatieSummary} />
+        ) : activeSection === "metrics" ? (
+          <Metrics data={metricsData} />
+        ) : activeSection === "kracht" ? (
+          <p style={{ color: "var(--muted)" }}>Kracht-module in ontwikkeling…</p>
+        ) : (
+          <p style={{ color: "var(--muted)" }}>Functionele testing in ontwikkeling…</p>
+        )}
+      </div>
 
       <style>{`
         @keyframes fadeIn {
