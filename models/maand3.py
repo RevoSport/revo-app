@@ -63,7 +63,7 @@ class Maand3(Base):
     # === Rijvaardigheid ===
     autorijden = Column(Enum("Ja", "Nee", "Nvt"), nullable=True)
     autorijden_schakelen = Column(Enum("Manueel", "Automaat", "Nvt"), nullable=True)
-    autorijden_datum = Column(Date, nullable=True)
+
 
     # === Sessies ===
     aantal_sessies = Column(Integer, nullable=True)
