@@ -1,135 +1,224 @@
 # =====================================================
 # FILE: routers/kracht.py
-# Revo Sport — Dynamische krachtanalyse
+# Revo Sport API — Groepsanalyse Kracht + Ratio’s (gecombineerd)
 # =====================================================
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from typing import List, Dict, Any, Tuple
 from db import get_db
-from models import week6, maand3, maand45, maand6
+
+# Models
 from models.blessure import Blessure
-import statistics
+from models.week6 import Week6
+from models.maand3 import Maand3
+from models.maand45 import Maand45
+from models.maand6 import Maand6
 
 router = APIRouter(prefix="/kracht", tags=["Kracht"])
 
 # -----------------------------------------------------
-# Helper functies
+# Helpers
 # -----------------------------------------------------
 
-def avg_safe(values):
-    vals = [v for v in values if v not in (None, 0)]
-    return round(statistics.mean(vals), 1) if vals else None
+def _safe(val):
+    """Converteer DECIMAL/Integer → float, filtert None en 0 (0 = ongeldig)."""
+    if val is None:
+        return None
+    try:
+        f = float(val)
+    except Exception:
+        return None
+    return None if f == 0 else f
 
-def perc_diff(op, he):
-    vals = []
-    for o, h in zip(op, he):
-        if o and h and h != 0:
-            vals.append((o - h) / h * 100)
-    return round(statistics.mean(vals), 1) if vals else None
 
-def get_side_values(row, base_name, operated_is_left: bool):
-    left = getattr(row, f"{base_name}_l", None)
-    right = getattr(row, f"{base_name}_r", None)
-    operated = left if operated_is_left else right
-    healthy = right if operated_is_left else left
-    return operated, healthy
+def _avg(values: List[float], ndigits: int = 2):
+    vals = [v for v in values if v is not None]
+    if not vals:
+        return None
+    return round(sum(vals) / len(vals), ndigits)
 
-# -----------------------------------------------------
-# Dynamische detectie van krachtvelden
-# -----------------------------------------------------
-def get_common_strength_tests():
-    fases = [week6.Week6, maand3.Maand3, maand45.Maand45, maand6.Maand6]
-    sets = []
-    for model in fases:
-        fields = [c.name for c in model.__table__.columns if c.name.startswith("kracht_")]
-        # verwijder _l/_r om basisnamen te vinden
-        bases = set(f[:-2] for f in fields if f.endswith("_l") or f.endswith("_r"))
-        sets.append(bases)
-    # enkel testen die in ALLE fases voorkomen
-    common = set.intersection(*sets)
-    return sorted(list(common))
+
+def _oper_gezond_sides(zijde: str) -> Tuple[str, str]:
+    """Bepaal geopereerde en gezonde zijde."""
+    if zijde == "Links":
+        return "l", "r"
+    if zijde == "Rechts":
+        return "r", "l"
+    return None, None
 
 # -----------------------------------------------------
-# Hoofdfunctie
+# Config per fase
 # -----------------------------------------------------
-@router.get("/summary")
-def get_kracht_summary(db: Session = Depends(get_db)):
-    fases = {
-        "Week 6": week6.Week6,
-        "Maand 3": maand3.Maand3,
-        "Maand 4.5": maand45.Maand45,
-        "Maand 6": maand6.Maand6,
-    }
 
-    blessure_zijde = {b.blessure_id: b.zijde for b in db.query(Blessure).all()}
-    common_tests = get_common_strength_tests()
+COMMON_FIELDS = [
+    ("Quadriceps 60", "quadriceps_60"),
+    ("Hamstrings 30", "hamstrings_30"),
+    ("Soleus", "soleus"),
+    ("Abductoren kort", "abductoren_kort"),
+    ("Abductoren lang", "abductoren_lang"),
+    ("Adductoren kort", "adductoren_kort"),
+    ("Adductoren lang", "adductoren_lang"),
+]
 
-    result = []
+EXTRA_MAAND3 = [
+    ("Hamstrings 90/90", "hamstrings_90_90"),
+    ("Exorotatoren heup", "exorotatoren_heup"),
+]
 
-    for fase_label, model in fases.items():
-        rows = db.query(model).all()
-        fase_data = {"fase": fase_label, "tests": {}, "ratios": {}}
+EXTRA_MAAND45 = [
+    ("Nordics", "nordics"),
+]
 
-        # ========== SPIERTESTEN ==========
-        for base in common_tests:
-            operated_vals, healthy_vals = [], []
+FASES = [
+    ("Week 6", Week6, COMMON_FIELDS),
+    ("Maand 3", Maand3, COMMON_FIELDS + EXTRA_MAAND3),
+    ("Maand 4.5", Maand45, COMMON_FIELDS + EXTRA_MAAND3 + EXTRA_MAAND45),
+    ("Maand 6", Maand6, COMMON_FIELDS + EXTRA_MAAND3 + EXTRA_MAAND45),
+]
 
-            for r in rows:
-                side = blessure_zijde.get(r.blessure_id)
-                if side not in ("Links", "Rechts"):
-                    continue
-                operated_is_left = (side == "Links")
-                op, he = get_side_values(r, base, operated_is_left)
-                operated_vals.append(op)
-                healthy_vals.append(he)
+COMMON_RATIOS = [
+    ("H/Q", "hamstrings_30", "quadriceps_60"),
+    ("ADD/ABD", "adductoren", "abductoren"),
+]
 
-            op_avg = avg_safe(operated_vals)
-            he_avg = avg_safe(healthy_vals)
-            diff = perc_diff(operated_vals, healthy_vals)
+# -----------------------------------------------------
+# Krachtanalyse per fase
+# -----------------------------------------------------
 
-            fase_data["tests"][base] = {
-                "operated_avg": op_avg,
-                "healthy_avg": he_avg,
-                "diff_pct": diff,
-            }
+def _aggregate_phase(db: Session, fase_label: str, Model, fields: List[Tuple[str, str]]) -> Dict[str, Any]:
+    rows = (
+        db.query(Model, Blessure)
+        .join(Blessure, Model.blessure_id == Blessure.blessure_id)
+        .all()
+    )
 
-        # ========== RATIO'S ==========
-        def ratio_pair(base_a, base_b, name):
-            """Hulp: bereken ratio op operatie- en gezonde zijde"""
-            op_a = [get_side_values(r, base_a, blessure_zijde.get(r.blessure_id) == "Links")[0] for r in rows]
-            he_a = [get_side_values(r, base_a, blessure_zijde.get(r.blessure_id) == "Links")[1] for r in rows]
-            op_b = [get_side_values(r, base_b, blessure_zijde.get(r.blessure_id) == "Links")[0] for r in rows]
-            he_b = [get_side_values(r, base_b, blessure_zijde.get(r.blessure_id) == "Links")[1] for r in rows]
+    buckets: Dict[str, Dict[str, List[float]]] = {}
+    for label, base in fields:
+        buckets[label] = {"oper": [], "gezond": [], "pairs": []}
 
-            ratio_op = [
-                (a / b) if a and b and b != 0 else None for a, b in zip(op_a, op_b)
-            ]
-            ratio_he = [
-                (a / b) if a and b and b != 0 else None for a, b in zip(he_a, he_b)
-            ]
+    for rec, bl in rows:
+        oper_side, gezond_side = _oper_gezond_sides(bl.zijde)
+        if oper_side is None:
+            continue
 
-            op_avg = avg_safe(ratio_op)
-            he_avg = avg_safe(ratio_he)
-            diff = perc_diff(ratio_op, ratio_he)
+        for label, base in fields:
+            attr_oper = f"kracht_{base}_{oper_side}"
+            attr_gezond = f"kracht_{base}_{gezond_side}"
 
-            fase_data["ratios"][name] = {
-                "operated_avg": op_avg,
-                "healthy_avg": he_avg,
-                "diff_pct": diff,
-            }
+            if not hasattr(rec, attr_oper) or not hasattr(rec, attr_gezond):
+                continue
 
-        # H/Q
-        if {"kracht_hamstrings_30", "kracht_quadriceps_60"}.issubset(common_tests):
-            ratio_pair("kracht_hamstrings_30", "kracht_quadriceps_60", "H30_Q60")
+            v_oper = _safe(getattr(rec, attr_oper, None))
+            v_gez = _safe(getattr(rec, attr_gezond, None))
 
-        # ADD/ABD kort
-        if {"kracht_adductoren_kort", "kracht_abductoren_kort"}.issubset(common_tests):
-            ratio_pair("kracht_adductoren_kort", "kracht_abductoren_kort", "ADD_ABD_Kort")
+            if v_oper is not None:
+                buckets[label]["oper"].append(v_oper)
+            if v_gez is not None:
+                buckets[label]["gezond"].append(v_gez)
+            if v_oper is not None and v_gez is not None:
+                try:
+                    delta = ((v_oper - v_gez) / v_gez) * 100
+                    buckets[label]["pairs"].append(delta)
+                except ZeroDivisionError:
+                    pass
 
-        # ADD/ABD lang
-        if {"kracht_adductoren_lang", "kracht_abductoren_lang"}.issubset(common_tests):
-            ratio_pair("kracht_adductoren_lang", "kracht_abductoren_lang", "ADD_ABD_Lang")
+    out = []
+    for label, _ in fields:
+        b = buckets[label]
+        if not b["oper"] and not b["gezond"]:
+            continue
+        out.append({
+            "spiergroep": label,
+            "geopereerd_mean": _avg(b["oper"], 1),
+            "gezond_mean": _avg(b["gezond"], 1),
+            "verschil_pct": _avg(b["pairs"], 1),
+            "n_oper": len(b["oper"]),
+            "n_gezond": len(b["gezond"]),
+            "n_pairs": len(b["pairs"]),
+        })
+    return {"fase": fase_label, "spiergroepen": out}
 
-        result.append(fase_data)
+# -----------------------------------------------------
+# Ratioanalyse per fase
+# -----------------------------------------------------
 
-    return result
+def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tuple[str, str, str]]) -> Dict[str, Any]:
+    rows = (
+        db.query(Model, Blessure)
+        .join(Blessure, Model.blessure_id == Blessure.blessure_id)
+        .all()
+    )
+
+    buckets = {label: {"oper": [], "gezond": [], "diffs": []} for label, _, _ in ratios}
+
+    for rec, bl in rows:
+        oper_side, gezond_side = _oper_gezond_sides(bl.zijde)
+        if oper_side is None:
+            continue
+
+        for label, num_base, denom_base in ratios:
+            def _get_ratio(side: str):
+                if label == "H/Q":
+                    num = _safe(getattr(rec, f"kracht_{num_base}_{side}", None))
+                    denom = _safe(getattr(rec, f"kracht_{denom_base}_{side}", None))
+                elif label == "ADD/ABD":
+                    num = (
+                        (_safe(getattr(rec, f"kracht_{num_base}_kort_{side}", None)) or 0)
+                        + (_safe(getattr(rec, f"kracht_{num_base}_lang_{side}", None)) or 0)
+                    )
+                    denom = (
+                        (_safe(getattr(rec, f"kracht_{denom_base}_kort_{side}", None)) or 0)
+                        + (_safe(getattr(rec, f"kracht_{denom_base}_lang_{side}", None)) or 0)
+                    )
+                    if num == 0: num = None
+                    if denom == 0: denom = None
+                else:
+                    num, denom = None, None
+                if num is None or denom is None or denom == 0:
+                    return None
+                return num / denom
+
+            r_oper = _get_ratio(oper_side)
+            r_gez = _get_ratio(gezond_side)
+
+            if r_oper is not None:
+                buckets[label]["oper"].append(r_oper)
+            if r_gez is not None:
+                buckets[label]["gezond"].append(r_gez)
+            if r_oper is not None and r_gez is not None:
+                diff = ((r_oper - r_gez) / r_gez) * 100
+                buckets[label]["diffs"].append(diff)
+
+    out = []
+    for label, _, _ in ratios:
+        b = buckets[label]
+        out.append({
+            "ratio": label,
+            "geopereerd_mean": _avg(b["oper"], 2),
+            "gezond_mean": _avg(b["gezond"], 2),
+            "verschil_pct": _avg(b["diffs"], 1),
+            "n_oper": len(b["oper"]),
+            "n_gezond": len(b["gezond"]),
+            "n_pairs": len(b["diffs"]),
+        })
+    return {"fase": fase_label, "ratios": out}
+
+# -----------------------------------------------------
+# Gecombineerde endpoint
+# -----------------------------------------------------
+
+@router.get("/group")
+def get_group_kracht(db: Session = Depends(get_db)):
+    """
+    Retourneert per fase:
+      - krachtgegevens (spiergroepen)
+      - ratio’s (H/Q, ADD/ABD)
+    """
+    out = {"fases": []}
+    for fase_label, Model, fields in FASES:
+        fase_out = _aggregate_phase(db, fase_label, Model, fields)
+        ratio_out = _aggregate_phase_ratios(db, fase_label, Model, COMMON_RATIOS)
+        fase_out["ratios"] = ratio_out["ratios"]
+        out["fases"].append(fase_out)
+    return out

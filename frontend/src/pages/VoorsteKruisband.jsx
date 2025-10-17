@@ -58,7 +58,7 @@ export default function VoorsteKruisband() {
 
     else if (activeSection === "kracht") {
       setLoading(true);
-      apiGet("/kracht/summary")
+      apiGet("/kracht/group")
         .then((data) => {
           setKrachtData(JSON.parse(JSON.stringify(data))); // deep clone
         })
