@@ -105,9 +105,9 @@ export default function Login({ onLogin }) {
                 animation: "fadeText 1.5s ease-out",
               }}
             >
-              Criteria-Based Rehab{" "}
+              Criteria-Based Rehab & {" "}
               <span style={{ color: "#FF7900", fontWeight: 700 }}>
-                & Performance&nbsp;Tracking
+              Performance&nbsp;Tracking
               </span>
             </span>
           </div>

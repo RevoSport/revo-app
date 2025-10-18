@@ -47,6 +47,7 @@ def _oper_gezond_sides(zijde: str) -> Tuple[str, str]:
         return "r", "l"
     return None, None
 
+
 # -----------------------------------------------------
 # Config per fase
 # -----------------------------------------------------
@@ -77,9 +78,11 @@ FASES = [
     ("Maand 6", Maand6, COMMON_FIELDS + EXTRA_MAAND3 + EXTRA_MAAND45),
 ]
 
+# ✅ Nieuwe uitgebreide ratio’s (elk apart, per zijde)
 COMMON_RATIOS = [
     ("H/Q", "hamstrings_30", "quadriceps_60"),
-    ("ADD/ABD", "adductoren", "abductoren"),
+    ("ADD/ABD Kort", "adductoren_kort", "abductoren_kort"),
+    ("ADD/ABD Lang", "adductoren_lang", "abductoren_lang"),
 ]
 
 # -----------------------------------------------------
@@ -139,8 +142,9 @@ def _aggregate_phase(db: Session, fase_label: str, Model, fields: List[Tuple[str
         })
     return {"fase": fase_label, "spiergroepen": out}
 
+
 # -----------------------------------------------------
-# Ratioanalyse per fase
+# Ratioanalyse per fase (met kort/lang afzonderlijk)
 # -----------------------------------------------------
 
 def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tuple[str, str, str]]) -> Dict[str, Any]:
@@ -158,23 +162,11 @@ def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tu
             continue
 
         for label, num_base, denom_base in ratios:
+
+            # 🔹 Specifieke ratio logica per label
             def _get_ratio(side: str):
-                if label == "H/Q":
-                    num = _safe(getattr(rec, f"kracht_{num_base}_{side}", None))
-                    denom = _safe(getattr(rec, f"kracht_{denom_base}_{side}", None))
-                elif label == "ADD/ABD":
-                    num = (
-                        (_safe(getattr(rec, f"kracht_{num_base}_kort_{side}", None)) or 0)
-                        + (_safe(getattr(rec, f"kracht_{num_base}_lang_{side}", None)) or 0)
-                    )
-                    denom = (
-                        (_safe(getattr(rec, f"kracht_{denom_base}_kort_{side}", None)) or 0)
-                        + (_safe(getattr(rec, f"kracht_{denom_base}_lang_{side}", None)) or 0)
-                    )
-                    if num == 0: num = None
-                    if denom == 0: denom = None
-                else:
-                    num, denom = None, None
+                num = _safe(getattr(rec, f"kracht_{num_base}_{side}", None))
+                denom = _safe(getattr(rec, f"kracht_{denom_base}_{side}", None))
                 if num is None or denom is None or denom == 0:
                     return None
                 return num / denom
@@ -187,8 +179,11 @@ def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tu
             if r_gez is not None:
                 buckets[label]["gezond"].append(r_gez)
             if r_oper is not None and r_gez is not None:
-                diff = ((r_oper - r_gez) / r_gez) * 100
-                buckets[label]["diffs"].append(diff)
+                try:
+                    diff = ((r_oper - r_gez) / r_gez) * 100
+                    buckets[label]["diffs"].append(diff)
+                except ZeroDivisionError:
+                    pass
 
     out = []
     for label, _, _ in ratios:
@@ -204,6 +199,7 @@ def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tu
         })
     return {"fase": fase_label, "ratios": out}
 
+
 # -----------------------------------------------------
 # Gecombineerde endpoint
 # -----------------------------------------------------
@@ -213,7 +209,7 @@ def get_group_kracht(db: Session = Depends(get_db)):
     """
     Retourneert per fase:
       - krachtgegevens (spiergroepen)
-      - ratio’s (H/Q, ADD/ABD)
+      - ratio’s (H/Q, ADD/ABD Kort, ADD/ABD Lang)
     """
     out = {"fases": []}
     for fase_label, Model, fields in FASES:
