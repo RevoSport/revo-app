@@ -287,10 +287,33 @@ export default function Kracht({ data }) {
         color: "#fff",
       }}
     >
-      <h2 style={{ textAlign: "center", color: "#fff", textTransform: "uppercase" }}>Krachtanalyse</h2>
+      <h2
+        style={{
+          color: "#ffffff",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
+          fontSize: "14px",
+          fontWeight: 700,
+          marginBottom: "24px",
+          textAlign: "center",
+        }}
+      >
+        KRACHTANALYSE
+      </h2>
 
       {/* Sectie 1 */}
-      <h3 style={{ color: "#fff", marginBottom: 14 }}>Hamstrings & Quadriceps</h3>
+            <h3
+        style={{
+          color: "#ffffff",
+          fontSize: 13,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: "14px",
+        }}
+      >
+        Hamstrings & Quadriceps
+      </h3>
       <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: "24px", marginBottom: "24px" }}>
         <ChartCard spiergroep="Quadriceps 60" data={groupedData} />
         <ChartCard spiergroep="Hamstrings 30" data={groupedData} />
@@ -301,14 +324,25 @@ export default function Kracht({ data }) {
       </div>
 
       {/* Sectie 2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px", marginBottom: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px", marginBottom: "40px" }}>
         <ChartCard spiergroep="Nordics" data={groupedData} />
         <ChartCard spiergroep="Hamstrings 90/90" data={groupedData} />
       </div>
 
       {/* Sectie 3 */}
-      <h3 style={{ color: "#fff", marginBottom: 14 }}>Adductoren & Abductoren</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: "24px" }}>
+      <h3
+        style={{
+          color: "#ffffff",
+          fontSize: 13,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: "14px",
+        }}
+      >
+        Adductoren & Abductoren
+      </h3>
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: "24px", marginBottom: "40px" }}>
         <ChartCard spiergroep="Adductoren kort" data={groupedData} />
         <ChartCard spiergroep="Abductoren kort" data={groupedData} />
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -324,7 +358,18 @@ export default function Kracht({ data }) {
       </div>
 
       {/* Sectie 4 */}
-      <h3 style={{ color: "#fff", margin: "24px 0 14px" }}>Exorotatie Heup & Soleus</h3>
+      <h3
+        style={{
+          color: "#ffffff",
+          fontSize: 13,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: "14px",
+        }}
+      >
+        Exorotatie Heup & Soleus
+      </h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px" }}>
         {exoSoleus.map((spiergroep) => (
           <ChartCard key={spiergroep} spiergroep={spiergroep} data={groupedData} />
