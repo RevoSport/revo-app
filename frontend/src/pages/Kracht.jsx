@@ -13,6 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  Customized,
 } from "recharts";
 
 // 🎨 Kleuren
@@ -97,7 +98,7 @@ function LegendAbove() {
   );
 }
 
-// 🔹 RatioCard (tabel) – correct voor nieuwe backend
+// 🔹 RatioCard (tabel)
 function RatioCard({ data, label, zijde }) {
   if (!data?.length) return null;
 
@@ -189,9 +190,18 @@ function RatioCard({ data, label, zijde }) {
   );
 }
 
-// 🔹 ChartCard
+// 🔹 ChartCard (bar chart met % en pijltjes)
 function ChartCard({ spiergroep, data }) {
   const values = data?.[spiergroep] || [];
+
+  const dataWithDiff = values.map((d) => {
+    if (d.geopereerd != null && d.gezond != null && d.gezond !== 0) {
+      const diff = ((d.geopereerd - d.gezond) / d.gezond) * 100;
+      return { ...d, diff: diff.toFixed(1) };
+    }
+    return { ...d, diff: null };
+  });
+
   return (
     <div
       className="chart-card"
@@ -216,7 +226,9 @@ function ChartCard({ spiergroep, data }) {
             fontSize: 12,
             fontWeight: 700,
             textTransform: "uppercase",
+            textAlign: "center",
             color: "#fff",
+            letterSpacing: "0.5px",
             marginBottom: 4,
           }}
         >
@@ -226,22 +238,62 @@ function ChartCard({ spiergroep, data }) {
       </div>
 
       <div style={{ marginTop: "28px" }}>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={values} margin={{ top: 20, right: 20, left: 0, bottom: 0 }} barCategoryGap="25%">
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart
+            data={dataWithDiff}
+            margin={{ top: 20, right: 20, left: 0, bottom: 40 }}
+            barCategoryGap="25%"
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            <XAxis dataKey="fase" tick={{ fill: "#ccc", fontSize: 11 }} />
+            <XAxis dataKey="fase" tick={{ fill: "#ccc", fontSize: 11 }} interval={0} />
             <YAxis domain={[0, "dataMax"]} tick={{ fill: "#ccc", fontSize: 11 }} />
             <Tooltip cursor={{ fill: "transparent" }} content={<CustomTooltip />} />
+
             <Bar dataKey="geopereerd" radius={[4, 4, 0, 0]}>
-              {values.map((_, i) => (
+              {dataWithDiff.map((_, i) => (
                 <Cell key={`geo-${i}`} fill={COLOR_OPER} />
               ))}
             </Bar>
             <Bar dataKey="gezond" radius={[4, 4, 0, 0]}>
-              {values.map((_, i) => (
+              {dataWithDiff.map((_, i) => (
                 <Cell key={`gez-${i}`} fill={COLOR_GEZOND} />
               ))}
             </Bar>
+
+            {/* ✅ FIXED: content ipv component */}
+            <Customized
+              content={({ xAxisMap }) => {
+                if (!xAxisMap) return null;
+                const xAxis = Object.values(xAxisMap || {})[0];
+                return dataWithDiff.map((entry, index) => {
+                  if (entry.diff == null) return null;
+
+                  const x = xAxis?.scale(index) + xAxis.bandwidth / 2;
+                  const diffNum = parseFloat(entry.diff);
+                  const isPos = diffNum > 0;
+                  const color =
+                    Math.abs(diffNum) > 10
+                      ? COLOR_RED
+                      : isPos
+                      ? "#7CFC00"
+                      : "#bbb";
+                  const arrow = diffNum > 0 ? "↑" : diffNum < 0 ? "↓" : "";
+
+                  return (
+                    <text
+                      key={`diff-${index}`}
+                      x={x}
+                      y={310}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill={color}
+                    >
+                      {`${entry.diff}% ${arrow}`}
+                    </text>
+                  );
+                });
+              }}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -249,9 +301,6 @@ function ChartCard({ spiergroep, data }) {
   );
 }
 
-// =====================================================
-// 📊 MAIN COMPONENT
-// =====================================================
 export default function Kracht({ data }) {
   const cleanData = useMemo(() => safeArray(data?.fases), [data]);
   const groupedData = useMemo(() => {
@@ -272,9 +321,16 @@ export default function Kracht({ data }) {
 
   const spiergroepen = Object.keys(groupedData);
   if (!spiergroepen.length)
-    return <p style={{ color: "#999", textAlign: "center", marginTop: "60px" }}>Geen krachtdata beschikbaar.</p>;
+    return (
+      <p style={{ color: "#999", textAlign: "center", marginTop: "60px" }}>
+        Geen krachtdata beschikbaar.
+      </p>
+    );
 
-  const filterBy = (terms) => spiergroepen.filter((s) => terms.some((t) => s.toLowerCase().includes(t.toLowerCase())));
+  const filterBy = (terms) =>
+    spiergroepen.filter((s) =>
+      terms.some((t) => s.toLowerCase().includes(t.toLowerCase()))
+    );
   const exoSoleus = filterBy(["soleus", "exorot"]);
 
   return (
@@ -300,7 +356,6 @@ export default function Kracht({ data }) {
       >
         KRACHTANALYSE
       </h2>
-
       {/* Sectie 1 */}
             <h3
         style={{
