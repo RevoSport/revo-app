@@ -13,7 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  Customized,
+  LabelList, 
 } from "recharts";
 
 // 🎨 Kleuren
@@ -190,7 +190,7 @@ function RatioCard({ data, label, zijde }) {
   );
 }
 
-// 🔹 ChartCard (bar chart met % en pijltjes)
+// 🔹 ChartCard (bar chart met % verschil labels)
 function ChartCard({ spiergroep, data }) {
   const values = data?.[spiergroep] || [];
 
@@ -239,68 +239,74 @@ function ChartCard({ spiergroep, data }) {
 
       <div style={{ marginTop: "28px" }}>
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart
-            data={dataWithDiff}
-            margin={{ top: 20, right: 20, left: 0, bottom: 40 }}
-            barCategoryGap="25%"
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            <XAxis dataKey="fase" tick={{ fill: "#ccc", fontSize: 11 }} interval={0} />
-            <YAxis domain={[0, "dataMax"]} tick={{ fill: "#ccc", fontSize: 11 }} />
-            <Tooltip cursor={{ fill: "transparent" }} content={<CustomTooltip />} />
+        <BarChart
+          data={dataWithDiff}
+          margin={{ top: 40, right: 30, left: 0, bottom: 20 }}
+          barCategoryGap="25%"
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+          <XAxis dataKey="fase" tick={{ fill: "#ccc", fontSize: 11 }} interval={0} />
+          <YAxis domain={[0, "dataMax"]} tick={{ fill: "#ccc", fontSize: 11 }} />
+          <Tooltip cursor={{ fill: "transparent" }} content={<CustomTooltip />} />
 
-            <Bar dataKey="geopereerd" radius={[4, 4, 0, 0]}>
-              {dataWithDiff.map((_, i) => (
-                <Cell key={`geo-${i}`} fill={COLOR_OPER} />
-              ))}
-            </Bar>
-            <Bar dataKey="gezond" radius={[4, 4, 0, 0]}>
-              {dataWithDiff.map((_, i) => (
-                <Cell key={`gez-${i}`} fill={COLOR_GEZOND} />
-              ))}
-            </Bar>
+          {/* 🟠 Geopereerd */}
+{/* 🟠 Geopereerd met LabelList boven de grafiek */}
+<Bar dataKey="geopereerd" radius={[4, 4, 0, 0]}>
+  {dataWithDiff.map((_, i) => (
+    <Cell key={`geo-${i}`} fill={COLOR_OPER} />
+  ))}
 
-            {/* ✅ FIXED: content ipv component */}
-            <Customized
-              content={({ xAxisMap }) => {
-                if (!xAxisMap) return null;
-                const xAxis = Object.values(xAxisMap || {})[0];
-                return dataWithDiff.map((entry, index) => {
-                  if (entry.diff == null) return null;
+  <LabelList
+    dataKey="diff"
+    position="top"
+    content={({ x, width, value, index }) => {
+      if (value == null) return null;
+      const diffNum = parseFloat(value);
+      const arrow = diffNum > 0 ? "↑" : diffNum < 0 ? "↓" : "";
+      const color = Math.abs(diffNum) > 10 ? COLOR_RED : "#bbb";
 
-                  const x = xAxis?.scale(index) + xAxis.bandwidth / 2;
-                  const diffNum = parseFloat(entry.diff);
-                  const isPos = diffNum > 0;
-                  const color =
-                    Math.abs(diffNum) > 10
-                      ? COLOR_RED
-                      : isPos
-                      ? "#7CFC00"
-                      : "#bbb";
-                  const arrow = diffNum > 0 ? "↑" : diffNum < 0 ? "↓" : "";
+      // 🔹 x centreren boven de balk
+      const xPos = x + width / 2;
+      // 🔹 altijd boven de grafiek, zodat het niet overlapt met de grijze balk
+      const yPos = 20;
 
-                  return (
-                    <text
-                      key={`diff-${index}`}
-                      x={x}
-                      y={310}
-                      textAnchor="middle"
-                      fontSize="10"
-                      fill={color}
-                    >
-                      {`${entry.diff}% ${arrow}`}
-                    </text>
-                  );
-                });
-              }}
-            />
-          </BarChart>
+      return (
+        <text
+          key={`diff-label-${index}`}
+          x={xPos}
+          y={yPos}
+          textAnchor="middle"
+          fontSize="11px"
+          fontWeight="600"
+          fill={color}
+        >
+          {`${value}% ${arrow}`}
+        </text>
+      );
+    }}
+  />
+</Bar>
+
+          {/* ⚪ Gezond */}
+          <Bar dataKey="gezond" radius={[4, 4, 0, 0]}>
+            {dataWithDiff.map((_, i) => (
+              <Cell key={`gez-${i}`} fill={COLOR_GEZOND} />
+            ))}
+          </Bar>
+ 
+
+
+        </BarChart>
+
         </ResponsiveContainer>
       </div>
     </div>
   );
 }
 
+// =====================================================
+// 📊 MAIN COMPONENT
+// =====================================================
 export default function Kracht({ data }) {
   const cleanData = useMemo(() => safeArray(data?.fases), [data]);
   const groupedData = useMemo(() => {
@@ -339,7 +345,7 @@ export default function Kracht({ data }) {
         width: "100%",
         maxWidth: "1400px",
         margin: "0 auto",
-        padding: "20px 0 60px 0",
+        padding: "0px 0 60px 0",
         color: "#fff",
       }}
     >
@@ -348,16 +354,17 @@ export default function Kracht({ data }) {
           color: "#ffffff",
           textTransform: "uppercase",
           letterSpacing: "1px",
-          fontSize: "14px",
+          fontSize: "20px",
           fontWeight: 700,
-          marginBottom: "24px",
+          marginBottom: "40px",
           textAlign: "center",
         }}
       >
         KRACHTANALYSE
       </h2>
+
       {/* Sectie 1 */}
-            <h3
+      <h3
         style={{
           color: "#ffffff",
           fontSize: 13,
@@ -369,17 +376,35 @@ export default function Kracht({ data }) {
       >
         Hamstrings & Quadriceps
       </h3>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: "24px", marginBottom: "24px" }}>
-        <ChartCard spiergroep="Quadriceps 60" data={groupedData} />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 2fr 1fr",
+          gap: "24px",
+          marginBottom: "24px",
+        }}
+      >
+        <ChartCard spiergroep="Quadriceps 60" data={groupedData}  />
         <ChartCard spiergroep="Hamstrings 30" data={groupedData} />
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <RatioCard data={cleanData} label="H/Q Geopereerd" zijde="geopereerd" />
+          <RatioCard
+            data={cleanData}
+            label="H/Q Geopereerd"
+            zijde="geopereerd"
+          />
           <RatioCard data={cleanData} label="H/Q Gezond" zijde="gezond" />
         </div>
       </div>
 
       {/* Sectie 2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px", marginBottom: "40px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "24px",
+          marginBottom: "40px",
+        }}
+      >
         <ChartCard spiergroep="Nordics" data={groupedData} />
         <ChartCard spiergroep="Hamstrings 90/90" data={groupedData} />
       </div>
@@ -397,18 +422,41 @@ export default function Kracht({ data }) {
       >
         Adductoren & Abductoren
       </h3>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: "24px", marginBottom: "40px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 2fr 1fr",
+          gap: "24px",
+          marginBottom: "40px",
+        }}
+      >
         <ChartCard spiergroep="Adductoren kort" data={groupedData} />
         <ChartCard spiergroep="Abductoren kort" data={groupedData} />
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <RatioCard data={cleanData} label="ADD/ABD Kort Geopereerd" zijde="geopereerd" />
-          <RatioCard data={cleanData} label="ADD/ABD Kort Gezond" zijde="gezond" />
+          <RatioCard
+            data={cleanData}
+            label="ADD/ABD Kort Geopereerd"
+            zijde="geopereerd"
+          />
+          <RatioCard
+            data={cleanData}
+            label="ADD/ABD Kort Gezond"
+            zijde="gezond"
+          />
         </div>
         <ChartCard spiergroep="Adductoren lang" data={groupedData} />
         <ChartCard spiergroep="Abductoren lang" data={groupedData} />
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <RatioCard data={cleanData} label="ADD/ABD Lang Geopereerd" zijde="geopereerd" />
-          <RatioCard data={cleanData} label="ADD/ABD Lang Gezond" zijde="gezond" />
+          <RatioCard
+            data={cleanData}
+            label="ADD/ABD Lang Geopereerd"
+            zijde="geopereerd"
+          />
+          <RatioCard
+            data={cleanData}
+            label="ADD/ABD Lang Gezond"
+            zijde="gezond"
+          />
         </div>
       </div>
 
@@ -425,9 +473,19 @@ export default function Kracht({ data }) {
       >
         Exorotatie Heup & Soleus
       </h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "24px",
+        }}
+      >
         {exoSoleus.map((spiergroep) => (
-          <ChartCard key={spiergroep} spiergroep={spiergroep} data={groupedData} />
+          <ChartCard
+            key={spiergroep}
+            spiergroep={spiergroep}
+            data={groupedData}
+          />
         ))}
       </div>
     </div>

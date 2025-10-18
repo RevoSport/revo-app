@@ -19,6 +19,7 @@ import { apiGet } from "../api";
 import Populatie from "./Populatie";
 import Metrics from "./Metrics";
 import Kracht from "./Kracht";
+import Functioneel from "./Functioneel"; // ✅ toegevoegd
 import { PuffLoader } from "react-spinners";
 
 export default function VoorsteKruisband() {
@@ -30,6 +31,7 @@ export default function VoorsteKruisband() {
   const [populatieSummary, setPopulatieSummary] = useState(null);
   const [metricsData, setMetricsData] = useState(null);
   const [krachtData, setKrachtData] = useState(null);
+  const [functioneelData, setFunctioneelData] = useState(null); // ✅ toegevoegd
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -66,6 +68,17 @@ export default function VoorsteKruisband() {
         .finally(() => setLoading(false));
     }
 
+    else if (activeSection === "functioneel") {
+      // ✅ nieuw blok voor functioneel
+      setLoading(true);
+      apiGet("/functioneel/group")
+        .then((data) => {
+          setFunctioneelData(JSON.parse(JSON.stringify(data))); // deep clone
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    }
+
   }, [activeSection]);
 
   // ✅ Reset naar "populatie" wanneer je terugkeert naar Group-view
@@ -84,7 +97,7 @@ export default function VoorsteKruisband() {
     { title: "POPULATIE", key: "populatie", icon: <UsersRound size={24} color="var(--accent)" /> },
     { title: "METRICS", key: "metrics", icon: <Ruler size={24} color="var(--accent)" /> },
     { title: "KRACHT", key: "kracht", icon: <Dumbbell size={24} color="var(--accent)" /> },
-    { title: "FUNCTIONELE TESTING", key: "functioneel", icon: <Activity size={24} color="var(--accent)" /> },
+    { title: "FUNCTIONELE TESTING", key: "functioneel", icon: <Activity size={24} color="var(--accent)" /> }, // ✅ werkt nu
   ];
 
   // 🔸 Onderste rij — set 2 (Individueel)
@@ -108,7 +121,6 @@ export default function VoorsteKruisband() {
         minHeight: "100vh",
       }}
     >
-      {/* === TITEL === */}
       <h1
         style={{
           fontSize: "22px",
@@ -251,6 +263,8 @@ export default function VoorsteKruisband() {
           <Metrics data={metricsData} />
         ) : activeSection === "kracht" ? (
           <Kracht data={krachtData} />
+        ) : activeSection === "functioneel" ? (
+          <Functioneel data={functioneelData} /> 
         ) : (
           <p style={{ color: "var(--muted)" }}>
             Pagina <strong>{activeSection}</strong> in ontwikkeling…

@@ -21,7 +21,8 @@ from routers import (
     onedrive_routes,
     populatie,
     metrics,
-    kracht,  # ✅ nieuw toegevoegd
+    kracht, 
+    functioneel,
 )
 from security import get_current_user
 
@@ -78,7 +79,8 @@ app.include_router(timeline.router, dependencies=protected)
 app.include_router(onedrive_routes.router, dependencies=protected)
 app.include_router(populatie.router, dependencies=protected)
 app.include_router(metrics.router, dependencies=protected)
-app.include_router(kracht.router, dependencies=protected)  # ✅ consistent beveiligd
+app.include_router(kracht.router, dependencies=protected)  
+app.include_router(functioneel.router, dependencies=protected)
 
 # =====================================================
 #   ROOT ENDPOINT

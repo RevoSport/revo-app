@@ -207,7 +207,7 @@ function Populatie({ data = [], summary = {} }) {
         width: "100%",
         maxWidth: "1400px",
         margin: "0 auto",
-        padding: "20px 0 60px 0",
+        padding: "0px 0 60px 0",
         color: "var(--text)",
         animation: "fadeIn 1s ease-in-out",
       }}
@@ -224,9 +224,9 @@ function Populatie({ data = [], summary = {} }) {
           color: "#ffffff",
           textTransform: "uppercase",
           letterSpacing: "1px",
-          fontSize: "14px",
+          fontSize: "20px",
           fontWeight: 700,
-          marginBottom: "24px",
+          marginBottom: "40px",
           textAlign: "center",
         }}
       >
