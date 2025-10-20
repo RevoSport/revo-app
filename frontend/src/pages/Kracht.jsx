@@ -251,7 +251,7 @@ function ChartCard({ spiergroep, data }) {
 
           {/* 🟠 Geopereerd */}
 {/* 🟠 Geopereerd met LabelList boven de grafiek */}
-<Bar dataKey="geopereerd" radius={[4, 4, 0, 0]}>
+<Bar dataKey="geopereerd" radius={[4, 4, 4, 4]}>
   {dataWithDiff.map((_, i) => (
     <Cell key={`geo-${i}`} fill={COLOR_OPER} />
   ))}
@@ -288,7 +288,7 @@ function ChartCard({ spiergroep, data }) {
 </Bar>
 
           {/* ⚪ Gezond */}
-          <Bar dataKey="gezond" radius={[4, 4, 0, 0]}>
+          <Bar dataKey="gezond" radius={[4, 4, 4, 4]}>
             {dataWithDiff.map((_, i) => (
               <Cell key={`gez-${i}`} fill={COLOR_GEZOND} />
             ))}

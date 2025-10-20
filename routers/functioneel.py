@@ -62,7 +62,7 @@ FUNCTIONELE_TESTEN = [
 ]
 
 CMJ_TESTEN = [
-    ("CMJ 1-been Asymmetrie", "cmj_asymmetrie"),
+    ("CMJ 2-benig Steunname Landing", "cmj_asymmetrie"),
     ("CMJ 1-been Hoogte", "cmj_hoogte"),
     ("CMJ 2-benig Hoogte", "cmj_hoogte_2benig"),
 ]

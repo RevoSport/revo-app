@@ -23,6 +23,7 @@ from routers import (
     metrics,
     kracht, 
     functioneel,
+    individueel
 )
 from security import get_current_user
 
@@ -81,6 +82,7 @@ app.include_router(populatie.router, dependencies=protected)
 app.include_router(metrics.router, dependencies=protected)
 app.include_router(kracht.router, dependencies=protected)  
 app.include_router(functioneel.router, dependencies=protected)
+app.include_router(individueel.router, dependencies=protected)
 
 # =====================================================
 #   ROOT ENDPOINT
