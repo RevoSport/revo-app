@@ -128,4 +128,3 @@ def delete_patient(patient_id: int, db: Session = Depends(get_db)):
 
     ok(f"[PATIENT] Record verwijderd (patient_id={patient_id})")
     return {"status": "✅ Patiënt verwijderd"}
-q
