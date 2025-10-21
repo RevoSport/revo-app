@@ -120,3 +120,51 @@ def get_populatie_summary(db: Session = Depends(get_db)):
             "monoloop":    monoloop,
         }
     }
+
+# -----------------------------------------------------
+# INDIVIDUEEL PER ATLEET
+# -----------------------------------------------------
+@router.get("/{blessure_id}")
+def get_populatie_individueel(blessure_id: int, db: Session = Depends(get_db)):
+    """
+    Geeft samenvattende statistieken terug voor één blessure (i.p.v. populatie).
+    """
+    sql = text(f"""
+        SELECT 
+            b.blessure_id,
+            b.patient_id,
+            p.naam,
+            b.zijde,
+            b.sport,
+            b.sportniveau,
+            b.etiologie,
+            b.operatie,
+            b.arts,
+            b.monoloop,
+            b.datum_ongeval,
+            b.datum_operatie,
+            b.datum_intake
+        FROM blessures b
+        LEFT JOIN patienten p ON p.patient_id = b.patient_id
+        WHERE b.blessure_id = :bid;
+    """)
+    info = dict(db.execute(sql, {"bid": blessure_id}).mappings().first() or {})
+
+    if not info:
+        return {"error": "Blessure niet gevonden"}
+
+    return {
+        "blessure": blessure_id,
+        "patient_id": info.get("patient_id"),
+        "naam": info.get("naam"),
+        "sport": info.get("sport"),
+        "sportniveau": info.get("sportniveau"),
+        "etiologie": info.get("etiologie"),
+        "operatie": info.get("operatie"),
+        "arts": info.get("arts"),
+        "monoloop": info.get("monoloop"),
+        "datum_ongeval": info.get("datum_ongeval"),
+        "datum_operatie": info.get("datum_operatie"),
+        "datum_intake": info.get("datum_intake"),
+        "zijde": info.get("zijde"),
+    }

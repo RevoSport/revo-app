@@ -5,7 +5,7 @@
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from db import get_db
 
 # 🔹 Models
@@ -87,8 +87,12 @@ FASES = [
 # Baseline categorische analyse (Lag / VMO)
 # -----------------------------------------------------
 
-def _aggregate_baseline_categorical(db: Session) -> Dict[str, Any]:
-    rows = db.query(Baseline).all()
+def _aggregate_baseline_categorical(db: Session, blessure_id: Optional[int] = None) -> Dict[str, Any]:
+    q = db.query(Baseline)
+    if blessure_id:
+        q = q.filter(Baseline.blessure_id == blessure_id)
+    rows = q.all()
+
     result = {}
 
     def _percentages(field: str):
@@ -110,12 +114,11 @@ def _aggregate_baseline_categorical(db: Session) -> Dict[str, Any]:
 # Unilaterale testen (1-been) — geopereerd/gezond/%verschil
 # -----------------------------------------------------
 
-def _aggregate_unilateral_tests(db: Session, fase_label: str, Model, tests: List[Tuple[str, str]]) -> Dict[str, Any]:
-    rows = (
-        db.query(Model, Blessure)
-        .join(Blessure, Model.blessure_id == Blessure.blessure_id)
-        .all()
-    )
+def _aggregate_unilateral_tests(db: Session, fase_label: str, Model, tests: List[Tuple[str, str]], blessure_id: Optional[int] = None) -> Dict[str, Any]:
+    q = db.query(Model, Blessure).join(Blessure, Model.blessure_id == Blessure.blessure_id)
+    if blessure_id:
+        q = q.filter(Blessure.blessure_id == blessure_id)
+    rows = q.all()
 
     buckets = {label: {"oper": [], "gezond": [], "pairs": []} for label, _ in tests}
 
@@ -160,11 +163,14 @@ def _aggregate_unilateral_tests(db: Session, fase_label: str, Model, tests: List
 
 
 # -----------------------------------------------------
-# Bilaterale testen (2-benig) — enkel groepsgemiddelde
+# Bilaterale testen (2-benig)
 # -----------------------------------------------------
 
-def _aggregate_bilateral_tests(db: Session, fase_label: str, Model, tests: List[Tuple[str, str]]) -> Dict[str, Any]:
-    rows = db.query(Model).all()
+def _aggregate_bilateral_tests(db: Session, fase_label: str, Model, tests: List[Tuple[str, str]], blessure_id: Optional[int] = None) -> Dict[str, Any]:
+    q = db.query(Model)
+    if blessure_id:
+        q = q.filter(Model.blessure_id == blessure_id)
+    rows = q.all()
     out = []
     for label, base in tests:
         if not hasattr(Model, base):
@@ -182,12 +188,11 @@ def _aggregate_bilateral_tests(db: Session, fase_label: str, Model, tests: List[
 # Hop Test Cluster — gecombineerde LSI-index
 # -----------------------------------------------------
 
-def _aggregate_hop_cluster(db: Session, fase_label: str, Model) -> Dict[str, Any]:
-    rows = (
-        db.query(Model, Blessure)
-        .join(Blessure, Model.blessure_id == Blessure.blessure_id)
-        .all()
-    )
+def _aggregate_hop_cluster(db: Session, fase_label: str, Model, blessure_id: Optional[int] = None) -> Dict[str, Any]:
+    q = db.query(Model, Blessure).join(Blessure, Model.blessure_id == Blessure.blessure_id)
+    if blessure_id:
+        q = q.filter(Blessure.blessure_id == blessure_id)
+    rows = q.all()
 
     lsi_values = {"cmj_hoogte": [], "single_hop_distance": [], "sidehop": []}
 
@@ -223,9 +228,9 @@ def _aggregate_hop_cluster(db: Session, fase_label: str, Model) -> Dict[str, Any
     }
 
 
-# -----------------------------------------------------
-# Hoofdroutine per fase
-# -----------------------------------------------------
+# =====================================================
+# 🔹 GROEPSENDPOINT
+# =====================================================
 
 @router.get("/group")
 def get_group_functioneel(db: Session = Depends(get_db)):
@@ -265,6 +270,57 @@ def get_group_functioneel(db: Session = Depends(get_db)):
         # --- Hop Cluster ---
         if fase_label == "Maand 6":
             fase_data["hop_cluster"] = _aggregate_hop_cluster(db, fase_label, Model)["hop_cluster"]
+
+        out["fases"].append(fase_data)
+
+    return out
+
+
+# =====================================================
+# 🔹 INDIVIDUEEL PER ATLEET
+# =====================================================
+
+@router.get("/{blessure_id}")
+def get_individueel_functioneel(blessure_id: int, db: Session = Depends(get_db)):
+    """
+    Retourneert functionele & springtesten voor één specifieke blessure.
+    """
+    out = {"baseline": None, "fases": []}
+
+    blessure = db.query(Blessure).filter(Blessure.blessure_id == blessure_id).first()
+    if not blessure:
+        return {"error": "Blessure niet gevonden"}
+
+    # ✅ Baseline (Lag/VMO enkel deze blessure)
+    out["baseline"] = _aggregate_baseline_categorical(db, blessure_id)
+
+    # ✅ Andere fases
+    for fase_label, Model in FASES:
+        if fase_label == "Baseline":
+            continue
+
+        rows = db.query(Model).filter(Model.blessure_id == blessure_id).all()
+        if not rows:
+            continue
+
+        fase_data = {"fase": fase_label, "functioneel": [], "spring": [], "hop_cluster": None}
+
+        # --- Functionele testen ---
+        fase_func = _aggregate_unilateral_tests(db, fase_label, Model, FUNCTIONELE_TESTEN, blessure_id)
+        fase_data["functioneel"] = fase_func["testen"]
+
+        # --- Springtesten ---
+        cmj_unilat = [t for t in CMJ_TESTEN if "_2benig" not in t[1]]
+        cmj_bilat = [t for t in CMJ_TESTEN if "_2benig" in t[1]]
+        dj_unilat = [t for t in DROPJUMP_TESTEN if "_2benig" not in t[1]]
+        dj_bilat = [t for t in DROPJUMP_TESTEN if "_2benig" in t[1]]
+        spring_unilat = _aggregate_unilateral_tests(db, fase_label, Model, cmj_unilat + dj_unilat, blessure_id)
+        spring_bilat = _aggregate_bilateral_tests(db, fase_label, Model, cmj_bilat + dj_bilat, blessure_id)
+        fase_data["spring"] = spring_unilat["testen"] + spring_bilat["testen"]
+
+        # --- Hop Cluster ---
+        if fase_label == "Maand 6":
+            fase_data["hop_cluster"] = _aggregate_hop_cluster(db, fase_label, Model, blessure_id)["hop_cluster"]
 
         out["fases"].append(fase_data)
 

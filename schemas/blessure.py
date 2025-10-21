@@ -1,23 +1,28 @@
-from pydantic import BaseModel, ConfigDict, field_validator, Field
+# =====================================================
+# FILE: schemas/blessure.py
+# Revo Sport API — Pydantic Schema voor Blessure
+# =====================================================
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional
 from datetime import datetime, date
 
 
+# =====================================================
+# 🔹 Gemeenschappelijke basis (shared fields)
+# =====================================================
 class BlessureBase(BaseModel):
+    type: Optional[str] = Field(default=None, alias="Type")
     zijde: Optional[str] = Field(default=None, alias="Zijde")
-    datum_ongeval: Optional[date] = Field(default=None, alias="Datum ongeval")
-    datum_operatie: Optional[date] = Field(default=None, alias="Datum operatie")
-    datum_intake: Optional[date] = Field(default=None, alias="Datum intake")
-    arts: Optional[str] = Field(default=None, alias="Arts")
-    therapeut: Optional[str] = Field(default=None, alias="Therapeut")
+    operatiedatum: Optional[date] = Field(default=None, alias="Operatiedatum")
     etiologie: Optional[str] = Field(default=None, alias="Etiologie")
     operatie: Optional[str] = Field(default=None, alias="Operatie")
-    monoloop: Optional[str] = Field(default=None, alias="Monoloop")
     bijkomende_letsels: Optional[str] = Field(default=None, alias="Bijkomende letsels")
     sport: Optional[str] = Field(default=None, alias="Sport")
     sportniveau: Optional[str] = Field(default=None, alias="Sportniveau")
 
-    @field_validator("datum_ongeval", "datum_operatie", "datum_intake", mode="before")
+    # ✅ Datumvalidatie (flexibel voor DD/MM/YYYY of YYYY-MM-DD)
+    @field_validator("operatiedatum", mode="before")
     @classmethod
     def parse_date(cls, v):
         if isinstance(v, str):
@@ -32,11 +37,17 @@ class BlessureBase(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
+# =====================================================
+# 🔹 BlessureSchema (volledige representatie)
+# =====================================================
 class BlessureSchema(BlessureBase):
-    patient_id: int = Field(alias="patient_id")
     blessure_id: Optional[int] = Field(default=None, alias="blessure_id")
+    patient_id: Optional[int] = Field(default=None, alias="patient_id")
 
 
+# =====================================================
+# 🔹 BlessureUpdateSchema (voor updates)
+# =====================================================
 class BlessureUpdateSchema(BlessureBase):
-    patient_id: Optional[int] = None
     blessure_id: Optional[int] = None
+    patient_id: Optional[int] = None

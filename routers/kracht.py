@@ -1,11 +1,11 @@
 # =====================================================
 # FILE: routers/kracht.py
-# Revo Sport API — Groepsanalyse Kracht + Ratio’s (gecombineerd)
+# Revo Sport API — Groepsanalyse & Individuele Analyse Kracht + Ratio’s
 # =====================================================
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from db import get_db
 
 # Models
@@ -78,7 +78,6 @@ FASES = [
     ("Maand 6", Maand6, COMMON_FIELDS + EXTRA_MAAND3 + EXTRA_MAAND45),
 ]
 
-# ✅ Nieuwe uitgebreide ratio’s (elk apart, per zijde)
 COMMON_RATIOS = [
     ("H/Q", "hamstrings_30", "quadriceps_60"),
     ("ADD/ABD Kort", "adductoren_kort", "abductoren_kort"),
@@ -89,16 +88,13 @@ COMMON_RATIOS = [
 # Krachtanalyse per fase
 # -----------------------------------------------------
 
-def _aggregate_phase(db: Session, fase_label: str, Model, fields: List[Tuple[str, str]]) -> Dict[str, Any]:
-    rows = (
-        db.query(Model, Blessure)
-        .join(Blessure, Model.blessure_id == Blessure.blessure_id)
-        .all()
-    )
+def _aggregate_phase(db: Session, fase_label: str, Model, fields: List[Tuple[str, str]], blessure_id: Optional[int] = None) -> Dict[str, Any]:
+    q = db.query(Model, Blessure).join(Blessure, Model.blessure_id == Blessure.blessure_id)
+    if blessure_id:
+        q = q.filter(Blessure.blessure_id == blessure_id)
+    rows = q.all()
 
-    buckets: Dict[str, Dict[str, List[float]]] = {}
-    for label, base in fields:
-        buckets[label] = {"oper": [], "gezond": [], "pairs": []}
+    buckets: Dict[str, Dict[str, List[float]]] = {label: {"oper": [], "gezond": [], "pairs": []} for label, _ in fields}
 
     for rec, bl in rows:
         oper_side, gezond_side = _oper_gezond_sides(bl.zijde)
@@ -119,12 +115,9 @@ def _aggregate_phase(db: Session, fase_label: str, Model, fields: List[Tuple[str
                 buckets[label]["oper"].append(v_oper)
             if v_gez is not None:
                 buckets[label]["gezond"].append(v_gez)
-            if v_oper is not None and v_gez is not None:
-                try:
-                    delta = ((v_oper - v_gez) / v_gez) * 100
-                    buckets[label]["pairs"].append(delta)
-                except ZeroDivisionError:
-                    pass
+            if v_oper is not None and v_gez is not None and v_gez != 0:
+                delta = ((v_oper - v_gez) / v_gez) * 100
+                buckets[label]["pairs"].append(delta)
 
     out = []
     for label, _ in fields:
@@ -144,15 +137,14 @@ def _aggregate_phase(db: Session, fase_label: str, Model, fields: List[Tuple[str
 
 
 # -----------------------------------------------------
-# Ratioanalyse per fase (met kort/lang afzonderlijk)
+# Ratioanalyse per fase
 # -----------------------------------------------------
 
-def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tuple[str, str, str]]) -> Dict[str, Any]:
-    rows = (
-        db.query(Model, Blessure)
-        .join(Blessure, Model.blessure_id == Blessure.blessure_id)
-        .all()
-    )
+def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tuple[str, str, str]], blessure_id: Optional[int] = None) -> Dict[str, Any]:
+    q = db.query(Model, Blessure).join(Blessure, Model.blessure_id == Blessure.blessure_id)
+    if blessure_id:
+        q = q.filter(Blessure.blessure_id == blessure_id)
+    rows = q.all()
 
     buckets = {label: {"oper": [], "gezond": [], "diffs": []} for label, _, _ in ratios}
 
@@ -163,7 +155,6 @@ def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tu
 
         for label, num_base, denom_base in ratios:
 
-            # 🔹 Specifieke ratio logica per label
             def _get_ratio(side: str):
                 num = _safe(getattr(rec, f"kracht_{num_base}_{side}", None))
                 denom = _safe(getattr(rec, f"kracht_{denom_base}_{side}", None))
@@ -178,12 +169,9 @@ def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tu
                 buckets[label]["oper"].append(r_oper)
             if r_gez is not None:
                 buckets[label]["gezond"].append(r_gez)
-            if r_oper is not None and r_gez is not None:
-                try:
-                    diff = ((r_oper - r_gez) / r_gez) * 100
-                    buckets[label]["diffs"].append(diff)
-                except ZeroDivisionError:
-                    pass
+            if r_oper is not None and r_gez is not None and r_gez != 0:
+                diff = ((r_oper - r_gez) / r_gez) * 100
+                buckets[label]["diffs"].append(diff)
 
     out = []
     for label, _, _ in ratios:
@@ -201,20 +189,39 @@ def _aggregate_phase_ratios(db: Session, fase_label: str, Model, ratios: List[Tu
 
 
 # -----------------------------------------------------
-# Gecombineerde endpoint
+# GROEPSENDPOINT
 # -----------------------------------------------------
 
 @router.get("/group")
 def get_group_kracht(db: Session = Depends(get_db)):
-    """
-    Retourneert per fase:
-      - krachtgegevens (spiergroepen)
-      - ratio’s (H/Q, ADD/ABD Kort, ADD/ABD Lang)
-    """
+    """Krachtanalyse per fase (populatiegemiddelde)."""
     out = {"fases": []}
     for fase_label, Model, fields in FASES:
         fase_out = _aggregate_phase(db, fase_label, Model, fields)
         ratio_out = _aggregate_phase_ratios(db, fase_label, Model, COMMON_RATIOS)
         fase_out["ratios"] = ratio_out["ratios"]
         out["fases"].append(fase_out)
+    return out
+
+
+# -----------------------------------------------------
+# INDIVIDUEEL ENDPOINT
+# -----------------------------------------------------
+
+@router.get("/{blessure_id}")
+def get_individueel_kracht(blessure_id: int, db: Session = Depends(get_db)):
+    """Krachtanalyse voor één specifieke blessure_id."""
+    out = {"fases": []}
+
+    for fase_label, Model, fields in FASES:
+        fase_data = _aggregate_phase(db, fase_label, Model, fields, blessure_id)
+        ratio_data = _aggregate_phase_ratios(db, fase_label, Model, COMMON_RATIOS, blessure_id)
+
+        # Enkel relevante spiergroepen/ratios tonen
+        fase_data["spiergroepen"] = [d for d in fase_data["spiergroepen"] if d["n_oper"] > 0]
+        ratio_data["ratios"] = [r for r in ratio_data["ratios"] if r["n_oper"] > 0]
+
+        fase_data["ratios"] = ratio_data["ratios"]
+        out["fases"].append(fase_data)
+
     return out

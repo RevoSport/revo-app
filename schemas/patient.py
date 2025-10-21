@@ -1,16 +1,26 @@
-from pydantic import BaseModel, ConfigDict, field_validator, Field
+# =====================================================
+# FILE: schemas/patient.py
+# Revo Sport API — Pydantic Schema voor Patiënt
+# =====================================================
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime, date
 from schemas.blessure import BlessureSchema
 
 
+# =====================================================
+# 🔹 Patiënt Schema
+# =====================================================
 class PatientSchema(BaseModel):
     patient_id: Optional[int] = None
-    naam: str = Field(alias="Naam")
+    voornaam: Optional[str] = Field(default=None, alias="Voornaam")
+    achternaam: Optional[str] = Field(default=None, alias="Achternaam")
     geslacht: Optional[str] = Field(default=None, alias="Geslacht")
-    geboortedatum: Optional[date] = Field(default=None, alias="geboortedatum")
+    geboortedatum: Optional[date] = Field(default=None, alias="Geboortedatum")
     blessures: List[BlessureSchema] = Field(default_factory=list)
 
+    # ✅ Datumvalidatie (DD/MM/YYYY of YYYY-MM-DD)
     @field_validator("geboortedatum", mode="before")
     @classmethod
     def parse_date(cls, v):

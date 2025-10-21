@@ -133,3 +133,77 @@ def get_metrics_summary(db: Session = Depends(get_db)):
         })
 
     return result
+
+# -----------------------------------------------------
+# INDIVIDUEEL PER ATLEET
+# -----------------------------------------------------
+
+@router.get("/{blessure_id}")
+def get_individueel_metrics(blessure_id: int, db: Session = Depends(get_db)):
+    """
+    Retourneert metrics (omtrek + mobiliteit) voor één blessure_id.
+    """
+    fases = {
+        "Baseline": Baseline,
+        "Week 6": Week6,
+        "Maand 3": Maand3,
+        "Maand 4.5": Maand45,
+        "Maand 6": Maand6,
+    }
+
+    blessure = db.query(Blessure).filter(Blessure.blessure_id == blessure_id).first()
+    if not blessure:
+        return {"error": "Blessure niet gevonden"}
+
+    zijde = blessure.zijde
+    result = {"antropometrie": [], "mobiliteit": []}
+
+    for label, model in fases.items():
+        row = db.query(model).filter(model.blessure_id == blessure_id).first()
+        if not row:
+            continue
+
+        # ANTROPOMETRIE
+        if zijde == "Links":
+            op5 = getattr(row, "omtrek_5cm_boven_patella_l", None)
+            op10 = getattr(row, "omtrek_10cm_boven_patella_l", None)
+            op20 = getattr(row, "omtrek_20cm_boven_patella_l", None)
+            he5 = getattr(row, "omtrek_5cm_boven_patella_r", None)
+            he10 = getattr(row, "omtrek_10cm_boven_patella_r", None)
+            he20 = getattr(row, "omtrek_20cm_boven_patella_r", None)
+        else:
+            op5 = getattr(row, "omtrek_5cm_boven_patella_r", None)
+            op10 = getattr(row, "omtrek_10cm_boven_patella_r", None)
+            op20 = getattr(row, "omtrek_20cm_boven_patella_r", None)
+            he5 = getattr(row, "omtrek_5cm_boven_patella_l", None)
+            he10 = getattr(row, "omtrek_10cm_boven_patella_l", None)
+            he20 = getattr(row, "omtrek_20cm_boven_patella_l", None)
+
+        def _pctdiff(a, b): 
+            return round(((a - b) / b) * 100, 1) if a and b and b != 0 else None
+
+        result["antropometrie"].append({
+            "fase": label,
+            "cm5": op5,
+            "cm10": op10,
+            "cm20": op20,
+            "diff5": _pctdiff(op5, he5),
+            "diff10": _pctdiff(op10, he10),
+            "diff20": _pctdiff(op20, he20),
+        })
+
+        # MOBILITEIT
+        if label == "Baseline":
+            flexie = getattr(row, f"knie_flexie_{zijde[0].lower()}", None)
+            extensie = getattr(row, f"knie_extensie_{zijde[0].lower()}", None)
+        else:
+            flexie = getattr(row, "knie_flexie", None)
+            extensie = getattr(row, "knie_extensie", None)
+
+        result["mobiliteit"].append({
+            "fase": label,
+            "flexie": flexie,
+            "extensie": extensie,
+        })
+
+    return result
