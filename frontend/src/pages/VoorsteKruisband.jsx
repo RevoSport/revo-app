@@ -25,12 +25,10 @@ import Kracht from "./Kracht";
 import Functioneel from "./Functioneel";
 import { PuffLoader } from "react-spinners";
 
-// 🔹 Individuele weergaven
 import { IndividueelDashboard } from "./IndividueelDashboard";
 import { IndividueelMetrics } from "./IndividueelMetrics";
 import { IndividueelKracht } from "./IndividueelKracht";
 import { IndividueelFunctioneel } from "./IndividueelFunctioneel";
-
 
 export default function VoorsteKruisband() {
   const [activeMode, setActiveMode] = useState("group");
@@ -46,88 +44,79 @@ export default function VoorsteKruisband() {
 
   const [selectedBlessureId, setSelectedBlessureId] = useState(null);
 
-// =====================================================
-// 🧩 Blessures ophalen bij start + eerste automatisch selecteren
-// =====================================================
-useEffect(() => {
-  const loadPatients = async () => {
-    try {
-      const data = await apiGet("/blessure/");
-      setPatients(data);
+  // =====================================================
+  // 🧩 Blessures ophalen bij start + eerste automatisch selecteren
+  // =====================================================
+  useEffect(() => {
+    const loadPatients = async () => {
+      try {
+        const data = await apiGet("/blessure/");
+        setPatients(data);
 
-      // Automatisch eerste blessure selecteren
-      if (data.length > 0) {
-        const firstId = data[0].blessure_id;
-        setSelectedBlessureId(firstId);
-      }
-    } catch (err) {
-      console.error("Error loading blessures:", err);
-    }
-  };
-  loadPatients();
-}, []);
-
-
-// =====================================================
-// 🧠 Data ophalen afhankelijk van mode + sectie + blessure_id
-// =====================================================
-useEffect(() => {
-  const fetchData = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      // === GROEPSWEERGAVE ===
-      if (activeMode === "group") {
-        if (activeSection === "populatie") {
-          const [p, s] = await Promise.all([
-            apiGet("/patients/"),
-            apiGet("/populatie/summary"),
-          ]);
-          setPatients(p);
-          setPopulatieSummary(s);
-        } else if (activeSection === "metrics") {
-          setMetricsData(await apiGet("/metrics/summary"));
-        } else if (activeSection === "kracht") {
-          setKrachtData(await apiGet("/kracht/group"));
-        } else if (activeSection === "functioneel") {
-          setFunctioneelData(await apiGet("/functioneel/group"));
+        if (data.length > 0 && data[0].blessure_id) {
+          setSelectedBlessureId(Number(data[0].blessure_id));
         }
+      } catch (err) {
+        console.error("Error loading blessures:", err);
       }
-
-      // === INDIVIDUEEL ===
-      if (activeMode === "individual" && selectedBlessureId) {
-        if (activeSection === "dashboard") {
-          setPopulatieSummary(await apiGet(`/populatie/${selectedBlessureId}`));
-        } else if (activeSection === "metrics") {
-          setMetricsData(await apiGet(`/metrics/${selectedBlessureId}`));
-        } else if (activeSection === "kracht") {
-          setKrachtData(await apiGet(`/kracht/${selectedBlessureId}`));
-        } else if (activeSection === "functioneel") {
-          setFunctioneelData(await apiGet(`/functioneel/${selectedBlessureId}`));
-        }
-      }
-    } catch (err) {
-      setError(err.message || "Fout bij laden van data");
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchData();
-}, [activeMode, activeSection, selectedBlessureId]);
-
+    };
+    loadPatients();
+  }, []);
 
   // =====================================================
-  // 🔁 Automatische secties bij moduswissel
+  // 🧠 Data ophalen afhankelijk van mode + sectie + blessure_id
   // =====================================================
+  useEffect(() => {
+    const fetchData = async () => {
+      setError("");
+      setLoading(true);
+      try {
+        if (activeMode === "group") {
+          if (activeSection === "populatie") {
+            const [p, s] = await Promise.all([
+              apiGet("/patients/"),
+              apiGet("/populatie/summary"),
+            ]);
+            setPatients(p);
+            setPopulatieSummary(s);
+          } else if (activeSection === "metrics") {
+            setMetricsData(await apiGet("/metrics/summary"));
+          } else if (activeSection === "kracht") {
+            setKrachtData(await apiGet("/kracht/group"));
+          } else if (activeSection === "functioneel") {
+            setFunctioneelData(await apiGet("/functioneel/group"));
+          }
+        }
+
+        if (activeMode === "individual" && selectedBlessureId) {
+          const id = Number(selectedBlessureId);
+          if (!isNaN(id)) {
+            if (activeSection === "dashboard") {
+              setPopulatieSummary(await apiGet(`/populatie/${id}`));
+            } else if (activeSection === "metrics") {
+              setMetricsData(await apiGet(`/metrics/${id}`));
+            } else if (activeSection === "kracht") {
+              setKrachtData(await apiGet(`/kracht/${id}`));
+            } else if (activeSection === "functioneel") {
+              setFunctioneelData(await apiGet(`/functioneel/${id}`));
+            }
+          }
+        }
+      } catch (err) {
+        setError(err.message || "Fout bij laden van data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [activeMode, activeSection, selectedBlessureId]);
+
   useEffect(() => {
     if (activeMode === "group") setActiveSection("populatie");
     if (activeMode === "individual") setActiveSection("dashboard");
     if (activeMode === "add") setActiveSection("add_patient");
   }, [activeMode]);
 
-  // =====================================================
-  // 🔹 Kaartconfiguratie
-  // =====================================================
   const topCards = [
     { key: "group", icon: <Users size={26} color="var(--accent)" /> },
     { key: "individual", icon: <User size={26} color="var(--accent)" /> },
@@ -249,17 +238,24 @@ useEffect(() => {
                 }}
               >
                 <div style={{ marginBottom: "6px" }}>{card.icon}</div>
-                <h3 style={{ fontSize: "10px", fontWeight: 600, color: isActive ? "#727170" : "white", letterSpacing: "0.7px", textTransform: "uppercase" }}>
+                <h3
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    color: isActive ? "#727170" : "white",
+                    letterSpacing: "0.7px",
+                    textTransform: "uppercase",
+                  }}
+                >
                   {card.title}
                 </h3>
               </div>
             );
           })}
         </div>
-        
+
         {/* === ORANJE LIJN === */}
         <div style={{ height: "1px", backgroundColor: "#FF7900", marginBottom: "30px" }}></div>
-      </div>
 
         {/* === DROPDOWN (alleen in individuele modus) === */}
         {activeMode === "individual" && (
@@ -269,7 +265,10 @@ useEffect(() => {
             </p>
             <select
               value={selectedBlessureId || ""}
-              onChange={(e) => setSelectedBlessureId(e.target.value)}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setSelectedBlessureId(isNaN(value) ? null : value);
+              }}
               style={{
                 width: "280px",
                 padding: "8px 10px",
@@ -282,45 +281,29 @@ useEffect(() => {
                 cursor: "pointer",
                 transition: "border 0.2s ease",
               }}
-              onFocus={(e) => (e.target.style.border = "1px solid #ffa64d")}
-              onBlur={(e) => (e.target.style.border = "1px solid var(--accent)")}
             >
               <option value="">Selecteer patiënt</option>
               {patients.map((b) => (
-                <option key={b.blessure_id} value={b.blessure_id}>
-                  {`${b.voornaam || ""} ${b.achternaam || ""} — ${
-                    b.type || b.blessure_type || "onbekende blessure"
-                  } (${b.operatiedatum ? b.operatiedatum.slice(0, 10) : "?"})`}
+                <option key={b.blessure_id} value={b.blessure_id ? Number(b.blessure_id) : ""}>
+                  {`${b.voornaam || ""} ${b.achternaam || ""} — ${b.type || b.blessure_type || "onbekende blessure"} (${b.operatiedatum ? b.operatiedatum.slice(0, 10) : "?"})`}
                 </option>
               ))}
-
             </select>
           </div>
         )}
+      </div>
+
       {/* === CONTENT === */}
       <div style={{ width: "100%" }}>
         {loading ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "60vh",
-              color: "#FF7900",
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", color: "#FF7900" }}>
             <PuffLoader color="#FF7900" size={Math.min(window.innerWidth * 0.15, 100)} />
-            <p style={{ marginTop: "20px", fontSize: "14px", letterSpacing: "0.5px" }}>
-              Data wordt geladen...
-            </p>
+            <p style={{ marginTop: "20px", fontSize: "14px", letterSpacing: "0.5px" }}>Data wordt geladen...</p>
           </div>
         ) : error ? (
           <p style={{ color: "red" }}>{error}</p>
         ) : activeMode === "add" ? (
-          <p style={{ color: "var(--muted)", textAlign: "center" }}>
-            Formulieren om patiënten of testen toe te voegen volgen hier.
-          </p>
+          <p style={{ color: "var(--muted)", textAlign: "center" }}>Formulieren om patiënten of testen toe te voegen volgen hier.</p>
         ) : activeMode === "group" ? (
           <>
             {activeSection === "populatie" && <Populatie data={patients} summary={populatieSummary} />}
