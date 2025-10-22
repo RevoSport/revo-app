@@ -9,9 +9,10 @@ from datetime import datetime, date
 
 
 # =====================================================
-# 🔹 Gemeenschappelijke basis (shared fields)
+# 🔹 Gemeenschappelijke basis (gedeeld tussen POST/PUT)
 # =====================================================
 class BlessureBase(BaseModel):
+    # ⚙️ Originele velden (voor groepsresultaten)
     type: Optional[str] = Field(default=None, alias="Type")
     zijde: Optional[str] = Field(default=None, alias="Zijde")
     operatiedatum: Optional[date] = Field(default=None, alias="Operatiedatum")
@@ -21,8 +22,16 @@ class BlessureBase(BaseModel):
     sport: Optional[str] = Field(default=None, alias="Sport")
     sportniveau: Optional[str] = Field(default=None, alias="Sportniveau")
 
-    # ✅ Datumvalidatie (flexibel voor DD/MM/YYYY of YYYY-MM-DD)
-    @field_validator("operatiedatum", mode="before")
+    # ⚙️ Toegevoegde velden voor individuele selectie
+    datum_operatie: Optional[date] = Field(default=None, description="Datum van operatie (MySQL)")
+    naam: Optional[str] = Field(default=None, description="Volledige naam van patiënt")
+    voornaam: Optional[str] = None
+    achternaam: Optional[str] = None
+    geslacht: Optional[str] = None
+    geboortedatum: Optional[date] = None
+
+    # ✅ Datumvalidatie (ondersteunt DD/MM/YYYY of YYYY-MM-DD)
+    @field_validator("operatiedatum", "datum_operatie", mode="before")
     @classmethod
     def parse_date(cls, v):
         if isinstance(v, str):
@@ -38,15 +47,17 @@ class BlessureBase(BaseModel):
 
 
 # =====================================================
-# 🔹 BlessureSchema (volledige representatie)
+# 🔹 BlessureSchema (volledige representatie voor GET)
 # =====================================================
 class BlessureSchema(BlessureBase):
     blessure_id: Optional[int] = Field(default=None, alias="blessure_id")
     patient_id: Optional[int] = Field(default=None, alias="patient_id")
 
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
 
 # =====================================================
-# 🔹 BlessureUpdateSchema (voor updates)
+# 🔹 BlessureUpdateSchema (voor PUT-updates)
 # =====================================================
 class BlessureUpdateSchema(BlessureBase):
     blessure_id: Optional[int] = None

@@ -12,12 +12,16 @@ import {
 } from "recharts";
 
 export default function Metrics({ data }) {
-  // ✅ Defensieve kopieën om bevroren props te vermijden bij tab-switch
-  const circumData = Array.isArray(data?.antropometrie)
+  // ✅ Uniforme parsing: ondersteunt zowel groeps- als individuele mode
+  const circumData = Array.isArray(data)
+    ? [...data] // groepsresultaten komen als array
+    : Array.isArray(data?.antropometrie)
     ? [...data.antropometrie]
     : [];
 
-  const mobiliteit = Array.isArray(data?.mobiliteit)
+  const mobiliteit = Array.isArray(data)
+    ? [] // groepsdata heeft geen mobiliteit
+    : Array.isArray(data?.mobiliteit)
     ? [...data.mobiliteit]
     : [];
 
@@ -30,6 +34,7 @@ export default function Metrics({ data }) {
     fase: f.fase,
     waarde: f.extensie,
   }));
+
 
   return (
     <div

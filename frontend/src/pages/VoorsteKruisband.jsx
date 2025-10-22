@@ -25,18 +25,24 @@ import Kracht from "./Kracht";
 import Functioneel from "./Functioneel";
 import { PuffLoader } from "react-spinners";
 
-import { IndividueelDashboard } from "./IndividueelDashboard";
-import { IndividueelMetrics } from "./IndividueelMetrics";
-import { IndividueelKracht } from "./IndividueelKracht";
-import { IndividueelFunctioneel } from "./IndividueelFunctioneel";
+import IndividueelDashboard from "./IndividueelDashboard";
+import IndividueelMetrics from "./IndividueelMetrics";
+import IndividueelKracht from "./IndividueelKracht";
+import IndividueelFunctioneel from "./IndividueelFunctioneel";
 
 export default function VoorsteKruisband() {
+  // =====================================================
+  // 🧠 States
+  // =====================================================
   const [activeMode, setActiveMode] = useState("group");
   const [activeSection, setActiveSection] = useState("populatie");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [patients, setPatients] = useState([]);
+  // aparte states voor blessurelijst en groepsdata
+  const [blessureOptions, setBlessureOptions] = useState([]);
+  const [patientsGroup, setPatientsGroup] = useState([]);
+
   const [populatieSummary, setPopulatieSummary] = useState(null);
   const [metricsData, setMetricsData] = useState(null);
   const [krachtData, setKrachtData] = useState(null);
@@ -48,11 +54,10 @@ export default function VoorsteKruisband() {
   // 🧩 Blessures ophalen bij start + eerste automatisch selecteren
   // =====================================================
   useEffect(() => {
-    const loadPatients = async () => {
+    const loadBlessures = async () => {
       try {
         const data = await apiGet("/blessure/");
-        setPatients(data);
-
+        setBlessureOptions(data);
         if (data.length > 0 && data[0].blessure_id) {
           setSelectedBlessureId(Number(data[0].blessure_id));
         }
@@ -60,63 +65,85 @@ export default function VoorsteKruisband() {
         console.error("Error loading blessures:", err);
       }
     };
-    loadPatients();
+    loadBlessures();
   }, []);
+  
 
-  // =====================================================
-  // 🧠 Data ophalen afhankelijk van mode + sectie + blessure_id
-  // =====================================================
-  useEffect(() => {
-    const fetchData = async () => {
-      setError("");
-      setLoading(true);
-      try {
-        if (activeMode === "group") {
-          if (activeSection === "populatie") {
-            const [p, s] = await Promise.all([
-              apiGet("/patients/"),
-              apiGet("/populatie/summary"),
-            ]);
-            setPatients(p);
-            setPopulatieSummary(s);
-          } else if (activeSection === "metrics") {
-            setMetricsData(await apiGet("/metrics/summary"));
-          } else if (activeSection === "kracht") {
-            setKrachtData(await apiGet("/kracht/group"));
-          } else if (activeSection === "functioneel") {
-            setFunctioneelData(await apiGet("/functioneel/group"));
-          }
+// =====================================================
+// 🧠 Data ophalen afhankelijk van mode + sectie + blessure_id
+// =====================================================
+useEffect(() => {
+  const fetchData = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      // ======== GROUP MODE ========
+      if (activeMode === "group") {
+        if (activeSection === "populatie") {
+          const [p, s] = await Promise.all([
+            apiGet("/patients/"),
+            apiGet("/populatie/summary"),
+          ]);
+          setPatientsGroup(p);
+          setPopulatieSummary(s);
+        } else if (activeSection === "metrics") {
+          setMetricsData(await apiGet("/metrics/summary"));
+        } else if (activeSection === "kracht") {
+          setKrachtData(await apiGet("/kracht/group"));
+        } else if (activeSection === "functioneel") {
+          setFunctioneelData(await apiGet("/functioneel/group"));
         }
-
-        if (activeMode === "individual" && selectedBlessureId) {
-          const id = Number(selectedBlessureId);
-          if (!isNaN(id)) {
-            if (activeSection === "dashboard") {
-              setPopulatieSummary(await apiGet(`/populatie/${id}`));
-            } else if (activeSection === "metrics") {
-              setMetricsData(await apiGet(`/metrics/${id}`));
-            } else if (activeSection === "kracht") {
-              setKrachtData(await apiGet(`/kracht/${id}`));
-            } else if (activeSection === "functioneel") {
-              setFunctioneelData(await apiGet(`/functioneel/${id}`));
-            }
-          }
-        }
-      } catch (err) {
-        setError(err.message || "Fout bij laden van data");
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchData();
-  }, [activeMode, activeSection, selectedBlessureId]);
 
+      // ======== INDIVIDUAL MODE ========
+      if (activeMode === "individual" && selectedBlessureId) {
+        const id = Number(selectedBlessureId);
+        if (!isNaN(id)) {
+          if (activeSection === "dashboard") {
+            setPopulatieSummary(await apiGet(`/populatie/${id}`));
+          } else if (activeSection === "metrics") {
+            setMetricsData(await apiGet(`/metrics/${id}`));
+          } else if (activeSection === "kracht") {
+            setKrachtData(await apiGet(`/kracht/${id}`));
+          } else if (activeSection === "functioneel") {
+            setFunctioneelData(await apiGet(`/functioneel/${id}`));
+          }
+        }
+      }
+    } catch (err) {
+      setError(err.message || "Fout bij laden van data");
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, [activeMode, activeSection, selectedBlessureId]);
+
+// =====================================================
+// 🧩 DEBUG USEEFFECT — toont live React state
+// =====================================================
+useEffect(() => {
+  console.log("▶️ STATE UPDATE — metricsData:", metricsData);
+  console.log("▶️ STATE UPDATE — krachtData:", krachtData);
+  console.log("▶️ STATE UPDATE — functioneelData:", functioneelData);
+  console.log("▶️ STATE UPDATE — populatieSummary:", populatieSummary);
+}, [metricsData, krachtData, functioneelData, populatieSummary]);
+
+  // =====================================================
+  // 🧭 Sectie reset bij mode-switch
+  // =====================================================
   useEffect(() => {
     if (activeMode === "group") setActiveSection("populatie");
     if (activeMode === "individual") setActiveSection("dashboard");
     if (activeMode === "add") setActiveSection("add_patient");
   }, [activeMode]);
 
+  useEffect(() => {
+  console.log("🩺 BlessureOptions voorbeeld:", blessureOptions?.slice(0, 3));
+}, [blessureOptions]);
+  // =====================================================
+  // 🔹 Kaarten
+  // =====================================================
   const topCards = [
     { key: "group", icon: <Users size={26} color="var(--accent)" /> },
     { key: "individual", icon: <User size={26} color="var(--accent)" /> },
@@ -257,71 +284,107 @@ export default function VoorsteKruisband() {
         {/* === ORANJE LIJN === */}
         <div style={{ height: "1px", backgroundColor: "#FF7900", marginBottom: "30px" }}></div>
 
-        {/* === DROPDOWN (alleen in individuele modus) === */}
-        {activeMode === "individual" && (
-          <div style={{ marginBottom: "25px", textAlign: "center" }}>
-            <p style={{ color: "var(--muted)", marginBottom: "6px", fontSize: "12px" }}>
-              Selecteer patiënt:
-            </p>
-            <select
-              value={selectedBlessureId || ""}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                setSelectedBlessureId(isNaN(value) ? null : value);
-              }}
+
+{/* === DROPDOWN (alleen in individuele modus) === */}
+{activeMode === "individual" && (
+  <div style={{ marginBottom: "25px", textAlign: "center" }}>
+    <p
+      style={{
+        color: "var(--muted)",
+        marginBottom: "6px",
+        fontSize: "12px",
+      }}
+    >
+      Selecteer patiënt:
+    </p>
+
+    <select
+      value={selectedBlessureId || ""}
+      onChange={(e) => {
+        const value = Number(e.target.value);
+        setSelectedBlessureId(isNaN(value) ? null : value);
+      }}
+      style={{
+        width: "280px",
+        padding: "8px 10px",
+        borderRadius: "8px",
+        backgroundColor: "#1a1a1a",
+        color: "white",
+        border: "1px solid var(--accent)",
+        fontSize: "14px",
+        outline: "none",
+        cursor: "pointer",
+        transition: "border 0.2s ease",
+      }}
+    >
+      <option value="">Selecteer blessure</option>
+
+      {[...blessureOptions]
+        .sort((a, b) => (a.naam || "").localeCompare(b.naam || ""))
+        .map((b) => {
+          const naam = b.naam || `Patiënt #${b.patient_id}`;
+          const zijde = b.zijde || "Onbepaald";
+          const operatie = b.operatie || "ACL";
+          const datum = b.datum_operatie
+            ? new Date(b.datum_operatie).toLocaleDateString("nl-BE")
+            : "Geen datum";
+
+          return (
+            <option key={b.blessure_id} value={Number(b.blessure_id)}>
+              {`${naam} – ${operatie} (${zijde}) • ${datum}`}
+            </option>
+          );
+        })}
+    </select>
+  </div>
+)}
+
+
+        {/* === CONTENT === */}
+        <div style={{ width: "100%" }}>
+          {loading ? (
+            <div
               style={{
-                width: "280px",
-                padding: "8px 10px",
-                borderRadius: "8px",
-                backgroundColor: "#1a1a1a",
-                color: "white",
-                border: "1px solid var(--accent)",
-                fontSize: "14px",
-                outline: "none",
-                cursor: "pointer",
-                transition: "border 0.2s ease",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "60vh",
+                color: "#FF7900",
               }}
             >
-              <option value="">Selecteer patiënt</option>
-              {patients.map((b) => (
-                <option key={b.blessure_id} value={b.blessure_id ? Number(b.blessure_id) : ""}>
-                  {`${b.voornaam || ""} ${b.achternaam || ""} — ${b.type || b.blessure_type || "onbekende blessure"} (${b.operatiedatum ? b.operatiedatum.slice(0, 10) : "?"})`}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* === CONTENT === */}
-      <div style={{ width: "100%" }}>
-        {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", color: "#FF7900" }}>
-            <PuffLoader color="#FF7900" size={Math.min(window.innerWidth * 0.15, 100)} />
-            <p style={{ marginTop: "20px", fontSize: "14px", letterSpacing: "0.5px" }}>Data wordt geladen...</p>
-          </div>
-        ) : error ? (
-          <p style={{ color: "red" }}>{error}</p>
-        ) : activeMode === "add" ? (
-          <p style={{ color: "var(--muted)", textAlign: "center" }}>Formulieren om patiënten of testen toe te voegen volgen hier.</p>
-        ) : activeMode === "group" ? (
-          <>
-            {activeSection === "populatie" && <Populatie data={patients} summary={populatieSummary} />}
-            {activeSection === "metrics" && <Metrics data={metricsData} />}
-            {activeSection === "kracht" && <Kracht data={krachtData} />}
-            {activeSection === "functioneel" && <Functioneel data={functioneelData} />}
-          </>
-        ) : activeMode === "individual" ? (
-          <>
-            {activeSection === "dashboard" && <IndividueelDashboard data={populatieSummary} />}
-            {activeSection === "metrics" && <IndividueelMetrics data={metricsData} />}
-            {activeSection === "kracht" && <IndividueelKracht data={krachtData} />}
-            {activeSection === "functioneel" && <IndividueelFunctioneel data={functioneelData} />}
-          </>
-        ) : (
-          <p style={{ color: "var(--muted)" }}>Pagina {activeSection} in ontwikkeling…</p>
-        )}
-      </div>
-    </div>
+              <PuffLoader color="#FF7900" size={Math.min(window.innerWidth * 0.15, 100)} />
+              <p style={{ marginTop: "20px", fontSize: "14px", letterSpacing: "0.5px" }}>
+                Data wordt geladen...
+              </p>
+            </div>
+          ) : error ? (
+            <p style={{ color: "red" }}>{error}</p>
+          ) : activeMode === "add" ? (
+            <p style={{ color: "var(--muted)", textAlign: "center" }}>
+              Formulieren om patiënten of testen toe te voegen volgen hier.
+            </p>
+          ) : activeMode === "group" ? (
+            <>
+              {activeSection === "populatie" && <Populatie data={patientsGroup} summary={populatieSummary} />}
+              {activeSection === "metrics" && <Metrics data={metricsData} />}
+              {activeSection === "kracht" && <Kracht data={krachtData} />}
+              {activeSection === "functioneel" && <Functioneel data={functioneelData} />}
+            </>
+          ) : activeMode === "individual" ? (
+            <>
+              {activeSection === "dashboard" && <IndividueelDashboard data={populatieSummary} />}
+              {activeSection === "metrics" && <IndividueelMetrics data={metricsData} />}
+              {activeSection === "kracht" && <IndividueelKracht data={krachtData} />}
+              {activeSection === "functioneel" && <IndividueelFunctioneel data={functioneelData} />}
+            </>
+          ) : (
+            <p style={{ color: "var(--muted)" }}>
+              Pagina {activeSection} in ontwikkeling…
+            </p>
+          )}
+        </div> 
+      </div> 
+    </div>  
   );
 }

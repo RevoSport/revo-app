@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";  // ← useCallback toegevoegd
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
@@ -43,27 +43,30 @@ export default function App() {
     startSessionTimer();
   };
 
-  const handleLogout = () => {
-    // fade-out effect voor uitloggen
-    setFadeMain(true);
-    setTimeout(() => {
-      clearTimeout(logoutTimer.current);
-      localStorage.removeItem("token");
-      localStorage.removeItem("user_name");
-      setToken(null);
-      setUserName("Gebruiker");
-      setFadeMain(false);
-    }, 500);
-  };
+// ✅ Logout met fade en stabiele referentie
+const handleLogout = useCallback(() => {
+  setFadeMain(true);
+  setTimeout(() => {
+    clearTimeout(logoutTimer.current);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user_name");
+    setToken(null);
+    setUserName("Gebruiker");
+    setFadeMain(false);
+  }, 500);
+}, []);
 
-  // ⏱️ Sessie-timer starten of resetten
-  const startSessionTimer = () => {
+
+  // ⏱️ Sessie-timer starten of resetten (nu stabiel met useCallback)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const startSessionTimer = useCallback(() => {
     clearTimeout(logoutTimer.current);
     logoutTimer.current = setTimeout(() => {
       alert("Sessie verlopen — je wordt automatisch uitgelogd.");
       handleLogout();
     }, SESSION_TIMEOUT_MS);
-  };
+  }, [handleLogout, SESSION_TIMEOUT_MS]);
+
 
   // 🖱️ Reset timer bij activiteit
   useEffect(() => {
@@ -79,7 +82,7 @@ export default function App() {
       events.forEach((ev) => window.removeEventListener(ev, resetTimer));
       clearTimeout(logoutTimer.current);
     };
-  }, [token]);
+  }, [token, startSessionTimer]);
 
   // 🌀 Loader-scherm met fade-in animatie en responsieve verhoudingen
   if (isLoading) {
