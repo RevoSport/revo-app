@@ -7,8 +7,10 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_URL =
-    process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
+  const isLocal = window.location.hostname === "localhost";
+  const API_URL = isLocal
+    ? "http://localhost:8000"
+    : "https://revo-backend-5dji.onrender.com";
 
   const handleSubmit = async (e) => {
     e.preventDefault();

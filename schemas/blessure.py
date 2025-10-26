@@ -9,29 +9,45 @@ from datetime import datetime, date
 
 
 # =====================================================
-# 🔹 Gemeenschappelijke basis (gedeeld tussen POST/PUT)
+# 🔹 Geneste patiëntschema (voor gekoppelde info)
 # =====================================================
-class BlessureBase(BaseModel):
-    # ⚙️ Originele velden (voor groepsresultaten)
-    type: Optional[str] = Field(default=None, alias="Type")
-    zijde: Optional[str] = Field(default=None, alias="Zijde")
-    operatiedatum: Optional[date] = Field(default=None, alias="Operatiedatum")
-    etiologie: Optional[str] = Field(default=None, alias="Etiologie")
-    operatie: Optional[str] = Field(default=None, alias="Operatie")
-    bijkomende_letsels: Optional[str] = Field(default=None, alias="Bijkomende letsels")
-    sport: Optional[str] = Field(default=None, alias="Sport")
-    sportniveau: Optional[str] = Field(default=None, alias="Sportniveau")
-
-    # ⚙️ Toegevoegde velden voor individuele selectie
-    datum_operatie: Optional[date] = Field(default=None, description="Datum van operatie (MySQL)")
-    naam: Optional[str] = Field(default=None, description="Volledige naam van patiënt")
-    voornaam: Optional[str] = None
-    achternaam: Optional[str] = None
+class PatientNestedSchema(BaseModel):
+    patient_id: Optional[int] = None
+    naam: Optional[str] = None
     geslacht: Optional[str] = None
     geboortedatum: Optional[date] = None
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+# =====================================================
+# 🔹 Gemeenschappelijke basis (gedeeld tussen POST/PUT)
+# =====================================================
+class BlessureBase(BaseModel):
+    # 🔹 Basisvelden uit MySQL
+    zijde: Optional[str] = Field(default=None, description="Links of Rechts")
+    datum_ongeval: Optional[date] = Field(default=None, description="Datum van het ongeval")
+    datum_operatie: Optional[date] = Field(default=None, description="Datum van de operatie")
+    datum_intake: Optional[date] = Field(default=None, description="Datum van eerste intake")
+
+    # 🔹 Arts & therapeut
+    arts: Optional[str] = Field(default=None, description="Behandelende arts")
+    therapeut: Optional[str] = Field(default=None, description="Behandelende kinesitherapeut")
+
+    # 🔹 Operatie-informatie
+    etiologie: Optional[str] = Field(default=None, description="Contact of non-contact")
+    operatie: Optional[str] = Field(default=None, description="Type pees of donorstructuur")
+    monoloop: Optional[str] = Field(default=None, description="Ja of Nee")
+    bijkomende_letsels: Optional[str] = Field(default=None, description="Aanvullende letsels")
+
+    # 🔹 Sportinformatie
+    sport: Optional[str] = Field(default=None, description="Sporttak")
+    sportniveau: Optional[str] = Field(default=None, description="Recreatief, Competitief of Topsport")
+
     # ✅ Datumvalidatie (ondersteunt DD/MM/YYYY of YYYY-MM-DD)
-    @field_validator("operatiedatum", "datum_operatie", mode="before")
+    @field_validator(
+        "datum_ongeval", "datum_operatie", "datum_intake", mode="before"
+    )
     @classmethod
     def parse_date(cls, v):
         if isinstance(v, str):
@@ -47,11 +63,14 @@ class BlessureBase(BaseModel):
 
 
 # =====================================================
-# 🔹 BlessureSchema (volledige representatie voor GET)
+# 🔹 BlessureSchema (volledige representatie met patiënt)
 # =====================================================
 class BlessureSchema(BlessureBase):
-    blessure_id: Optional[int] = Field(default=None, alias="blessure_id")
-    patient_id: Optional[int] = Field(default=None, alias="patient_id")
+    blessure_id: Optional[int] = Field(default=None)
+    patient_id: Optional[int] = Field(default=None)
+
+    # ✅ Geneste patiënt (voor gekoppelde info)
+    patient: Optional[PatientNestedSchema] = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 

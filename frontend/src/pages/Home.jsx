@@ -100,10 +100,6 @@ export default function Home() {
         “INSIGHT FUELS INNOVATION”
       </p>
 
-      <h3 style={{ color: "#FF7900", marginBottom: 12 }}>
-        Geregistreerde patiënten
-      </h3>
-
       {patients.length === 0 ? (
         <p style={{ color: "#aaa" }}>Nog geen patiënten geregistreerd.</p>
       ) : (

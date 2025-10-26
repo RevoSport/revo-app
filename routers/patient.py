@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: routers/patient.py
-# Revo Sport API — Patiëntenbeheer
+# Revo Sport API — Patiëntenbeheer (v2 met 'naam')
 # =====================================================
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -44,6 +44,29 @@ def list_patients(db: Session = Depends(get_db)):
 
 
 # =====================================================
+# 🔹 GET /patients/names — Compacte lijst (id + naam)
+# =====================================================
+@router.get("/names")
+def list_patient_names(db: Session = Depends(get_db)):
+    """
+    Retourneert enkel ID + naam van alle patiënten.
+    Handig voor dropdowns (zoals in FormBlessure).
+    """
+    patients = db.query(Patient).all()
+    result = []
+
+    for p in patients:
+        naam = getattr(p, "naam", None)
+        result.append({
+            "patient_id": p.patient_id,
+            "naam": naam or f"Patiënt #{p.patient_id}",
+        })
+
+    ok(f"[PATIENT] Compacte lijst met {len(result)} namen verstuurd")
+    return result
+
+
+# =====================================================
 # 🔹 GET /patients/{id} — Specifieke patiënt
 # =====================================================
 @router.get("/{patient_id}", response_model=PatientSchema)
@@ -67,23 +90,35 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)):
 
 
 # =====================================================
-# 🔹 POST /patients — Nieuwe patiënt
+# 🔹 POST /patients — Nieuwe patiënt toevoegen
 # =====================================================
-@router.post("/", response_model=PatientSchema)
-def create_patient(data: PatientSchema, db: Session = Depends(get_db)):
+@router.post("/")
+def create_patient(payload: dict, db: Session = Depends(get_db)):
     """
-    Maakt een nieuwe patiënt aan in de database.
+    Voegt een nieuwe patiënt toe aan de database.
     """
-    allowed = {"voornaam", "achternaam", "geslacht", "geboortedatum"}
-    payload = {k: v for k, v in data.dict().items() if k in allowed}
+    try:
+        naam = payload.get("naam")
+        if not naam:
+            raise ValueError("Naam is verplicht")
 
-    obj = Patient(**payload)
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
+        obj = Patient(
+            naam=naam,
+            geslacht=payload.get("geslacht"),
+            geboortedatum=payload.get("geboortedatum"),
+        )
 
-    ok(f"[PATIENT] Nieuw record aangemaakt (patient_id={obj.patient_id})")
-    return obj
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+
+        ok(f"[PATIENT] Nieuwe patiënt toegevoegd (id={obj.patient_id}, naam={obj.naam})")
+        return {"message": "✅ Patiënt opgeslagen", "id": obj.patient_id}
+
+    except Exception as e:
+        db.rollback()
+        warn(f"[PATIENT] Fout bij aanmaken patiënt: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =====================================================
@@ -99,7 +134,7 @@ def update_patient(patient_id: int, data: PatientSchema, db: Session = Depends(g
         warn(f"[PATIENT] Niet gevonden voor update (patient_id={patient_id})")
         raise HTTPException(status_code=404, detail="Patiënt niet gevonden")
 
-    allowed = {"voornaam", "achternaam", "geslacht", "geboortedatum"}
+    allowed = {"naam", "geslacht", "geboortedatum"}
     for k, v in data.dict(exclude_unset=True).items():
         if k in allowed:
             setattr(obj, k, v)

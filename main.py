@@ -45,12 +45,15 @@ app = FastAPI(
 #   CORS MIDDLEWARE (Frontend-toegang)
 # =====================================================
 origins = [
-    "http://localhost:3000",          # lokaal (React)
-    "http://localhost:5173",          # lokaal (Vite)
-    "https://aithlete.revosport.be",  # NIEUWE frontend
-    "https://app.revosport.be",       # oude frontend
-    "https://*.vercel.app",           # preview builds
+    "http://localhost:3000",           # lokaal React
+    "http://127.0.0.1:3000",           # alternatief localhost
+    "http://localhost:5173",           # lokaal Vite
+    "https://aithlete.revosport.be",   # productie frontend
+    "https://app.revosport.be",        # oudere frontend
+    "https://revosport.vercel.app",    # vaste vercel build
+    "https://*.vercel.app",            # alle preview builds
 ]
+
 
 app.add_middleware(
     CORSMiddleware,

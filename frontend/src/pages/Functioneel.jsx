@@ -1,6 +1,6 @@
 // =====================================================
-// FILE: src/pages/Functioneel.jsx
-// Revo Sport — Functionele & Springtesten + Hop Cluster
+// FILE: src/pages/IndividueelFunctioneel.jsx
+// Revo Sport — Individuele Functionele & Springtesten + Hop Cluster
 // =====================================================
 
 import React, { useMemo } from "react";
@@ -15,6 +15,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Label,
 } from "recharts";
 
 // 🎨 Kleuren
@@ -45,7 +46,6 @@ const DonutCard = React.memo(function DonutCard({ label, data }) {
         padding: 20,
         textAlign: "center",
         boxShadow: "0 0 10px rgba(0,0,0,0.25)",
-        animation: "fadeIn 0.6s ease-in-out",
       }}
     >
       <h4 style={{ color: "#fff", fontSize: 12, fontWeight: 700, marginBottom: 10 }}>
@@ -151,10 +151,90 @@ const StepdownCard = React.memo(function StepdownCard({ label, data }) {
 });
 
 // =====================================================
+// 🔹 MultiTestCard
+// =====================================================
+const MultiTestCard = ({ label, tests, groupedData }) => {
+  const chartData = useMemo(() => {
+    const fases = new Set();
+    tests.forEach((test) => {
+      safeArray(groupedData[test]).forEach((d) => fases.add(d.fase));
+    });
+    const faseList = Array.from(fases);
+    return faseList.map((fase) => {
+      const entry = { fase };
+      tests.forEach((test) => {
+        const t = safeArray(groupedData[test]).find((x) => x.fase === fase);
+        entry[test] = t?.geopereerd ?? null;
+      });
+      return entry;
+    });
+  }, [tests, groupedData]);
+
+  return (
+    <div
+      style={{
+        background: COLOR_BG,
+        borderRadius: 12,
+        padding: 20,
+        boxShadow: "0 0 10px rgba(0,0,0,0.25)",
+      }}
+    >
+      <h4
+        style={{
+          color: "#fff",
+          fontSize: 12,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          textAlign: "center",
+          marginBottom: 10,
+        }}
+      >
+        {label}
+      </h4>
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+          <XAxis dataKey="fase" tick={{ fill: "#ccc", fontSize: 11 }} />
+          <YAxis tick={{ fill: "#ccc", fontSize: 11 }} domain={[0, "dataMax"]} />
+          <Tooltip
+            cursor={{ fill: "transparent" }}
+            content={({ active, payload }) =>
+              active && payload?.length ? (
+                <div
+                  style={{
+                    background: COLOR_BG,
+                    border: `1px solid ${COLOR_OPER}`,
+                    borderRadius: 6,
+                    padding: 6,
+                    color: "#fff",
+                    fontSize: 11,
+                  }}
+                >
+                  {payload.map((p, i) => (
+                    <div key={i}>
+                      {p.name}: {p.value != null ? p.value.toFixed(1) : "–"}
+                    </div>
+                  ))}
+                </div>
+              ) : null
+            }
+          />
+          {tests.map((t, i) => (
+            <Bar key={i} dataKey={t} fill={i === 0 ? COLOR_OPER : COLOR_GEZOND} />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+// =====================================================
 // 🔹 MeanSplitCard
 // =====================================================
-const MeanSplitCard = React.memo(function MeanSplitCard({ label, data }) {
+const MeanSplitCard = ({ label, data }) => {
   if (!data) return null;
+  const fases = safeArray(data);
+
   return (
     <div
       style={{
@@ -180,167 +260,29 @@ const MeanSplitCard = React.memo(function MeanSplitCard({ label, data }) {
         <thead>
           <tr style={{ color: COLOR_OPER }}>
             <th style={{ textAlign: "left" }}>Fase</th>
-            <th style={{ textAlign: "right" }}>Geopereerd</th>
-            <th style={{ textAlign: "right" }}>Gezond</th>
+            <th style={{ textAlign: "right" }}>% Links</th>
+            <th style={{ textAlign: "right" }}>% Rechts</th>
           </tr>
         </thead>
         <tbody>
-          {data.map((f, i) => (
+          {fases.map((f, i) => (
             <tr key={i}>
               <td>{f.fase}</td>
-              <td style={{ textAlign: "right" }}>
-                {f.geopereerd ? `${f.geopereerd.toFixed(1)}%` : "–"}
-              </td>
-              <td style={{ textAlign: "right" }}>
-                {f.gezond ? `${f.gezond.toFixed(1)}%` : "–"}
-              </td>
+              <td style={{ textAlign: "right" }}>{f.gezond ?? "–"}</td>
+              <td style={{ textAlign: "right" }}>{f.geopereerd ?? "–"}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
-});
-
-// =====================================================
-// 🔹 MultiTestCard
-// =====================================================
-const MultiTestCard = React.memo(function MultiTestCard({ label, tests, groupedData }) {
-  if (!tests?.length) return null;
-  const combined = tests
-    .map((test) => ({ test, data: groupedData?.[test] || [] }))
-    .filter((t) => t.data.length > 0);
-
-  const getUnit = (t) => (t.toLowerCase().includes("hoogte") ? "cm" : "%");
-
-  return (
-    <div
-      style={{
-        background: COLOR_BG,
-        borderRadius: 12,
-        padding: 20,
-        boxShadow: "0 0 10px rgba(0,0,0,0.25)",
-      }}
-    >
-      <h4 style={{ color: "#fff", fontSize: 12, fontWeight: 700, textAlign: "center" }}>
-        {label}
-      </h4>
-      {combined.map((block, idx) => (
-        <div key={idx} style={{ marginTop: 10 }}>
-          <div style={{ color: COLOR_OPER, fontWeight: 700, fontSize: 11 }}>
-            {block.test}
-          </div>
-          <table style={{ width: "100%", color: "#fff", fontSize: 12 }}>
-            <thead>
-              <tr style={{ color: COLOR_OPER }}>
-                <th style={{ textAlign: "left" }}>Fase</th>
-                <th style={{ textAlign: "right" }}>Geopereerd</th>
-                <th style={{ textAlign: "right" }}>Gezond</th>
-              </tr>
-            </thead>
-            <tbody>
-              {block.data.map((f, i) => (
-                <tr key={i}>
-                  <td>{f.fase}</td>
-                  <td style={{ textAlign: "right" }}>
-                    {f.geopereerd
-                      ? `${f.geopereerd.toFixed(1)} ${getUnit(block.test)}`
-                      : "–"}
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    {f.gezond
-                      ? `${f.gezond.toFixed(1)} ${getUnit(block.test)}`
-                      : "–"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
-    </div>
-  );
-});
+};
 
 // =====================================================
 // 🔹 MiniHopChart
 // =====================================================
-const MiniHopChart = React.memo(function MiniHopChart({ title, data }) {
-  if (!data) return null;
-  const chartData = data.map((d) => ({
-    fase: d.fase,
-    geopereerd: d.geopereerd ?? 0,
-    gezond: d.gezond ?? 0,
-  }));
-
-  const CustomTooltipMini = ({ active, payload, label }) => {
-    if (active && payload?.length) {
-      const geo = payload.find((p) => p.dataKey === "geopereerd")?.value;
-      const gez = payload.find((p) => p.dataKey === "gezond")?.value;
-      return (
-        <div
-          style={{
-            backgroundColor: COLOR_BG,
-            border: `1px solid ${COLOR_OPER}`,
-            borderRadius: 6,
-            padding: "6px 10px",
-            color: "#fff",
-            fontSize: 11,
-          }}
-        >
-          <div style={{ color: COLOR_OPER, marginBottom: 4 }}>{label}</div>
-          <div>Geopereerd: {geo ?? "–"}</div>
-          <div>Gezond: {gez ?? "–"}</div>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <div
-      style={{
-        background: COLOR_BG,
-        borderRadius: 12,
-        padding: "12px 18px",
-        boxShadow: "0 0 10px rgba(0,0,0,0.25)",
-      }}
-    >
-      <h4 style={{ color: "#fff", fontSize: 11, fontWeight: 700, textAlign: "center" }}>
-        {title}
-      </h4>
-      <ResponsiveContainer width="100%" height={160}>
-        <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-          <XAxis dataKey="fase" tick={{ fill: "#ccc", fontSize: 10 }} />
-          <YAxis domain={[0, "auto"]} tick={{ fill: "#ccc", fontSize: 10 }} />
-          <Tooltip content={<CustomTooltipMini />} />
-          <Bar dataKey="geopereerd" radius={[4, 4, 4, 4]}>
-            {chartData.map((_, i) => (
-              <Cell key={i} fill={COLOR_OPER} />
-            ))}
-          </Bar>
-          <Bar dataKey="gezond" radius={[4, 4, 4, 4]}>
-            {chartData.map((_, i) => (
-              <Cell key={i} fill={COLOR_GEZOND} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-});
-
-// =====================================================
-// 🔹 HopClusterOverviewCard
-// =====================================================
-const HopClusterOverviewCard = React.memo(function HopClusterOverviewCard({ data }) {
-  if (!data) return null;
-  const subtests = Object.entries(data.subtests || {}).map(([name, value]) => ({
-    name,
-    value,
-  }));
-  const getColor = (v) => (v >= 90 ? COLOR_GREEN : v >= 80 ? COLOR_OPER : "#FF4D4D");
+const MiniHopChart = ({ title, data }) => {
+  const chartData = safeArray(data);
 
   return (
     <div
@@ -351,50 +293,104 @@ const HopClusterOverviewCard = React.memo(function HopClusterOverviewCard({ data
         boxShadow: "0 0 10px rgba(0,0,0,0.25)",
       }}
     >
-      <h4 style={{ color: "#fff", textAlign: "center", marginBottom: 10 }}>
-        LSI-Overzicht
+      <h4
+        style={{
+          color: "#fff",
+          fontSize: 12,
+          fontWeight: 700,
+          textAlign: "center",
+          marginBottom: 8,
+        }}
+      >
+        {title}
       </h4>
-      {subtests.map((t, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 90, color: "#fff", fontSize: 11 }}>
-            {t.name.replaceAll("_", " ")}
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+          <XAxis dataKey="fase" tick={{ fill: "#ccc", fontSize: 11 }} />
+          <YAxis tick={{ fill: "#ccc", fontSize: 11 }} />
+          <Tooltip
+            cursor={{ fill: "transparent" }}
+            content={({ active, payload }) =>
+              active && payload?.length ? (
+                <div
+                  style={{
+                    background: COLOR_BG,
+                    border: `1px solid ${COLOR_OPER}`,
+                    borderRadius: 6,
+                    padding: 6,
+                    color: "#fff",
+                    fontSize: 11,
+                  }}
+                >
+                  {payload.map((p, i) => (
+                    <div key={i}>
+                      {p.dataKey}: {p.value != null ? p.value.toFixed(1) : "–"}
+                    </div>
+                  ))}
+                </div>
+              ) : null
+            }
+          />
+          <Bar dataKey="geopereerd" fill={COLOR_OPER} />
+          <Bar dataKey="gezond" fill={COLOR_GEZOND} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+// =====================================================
+// 🔹 HopClusterOverviewCard
+// =====================================================
+const HopClusterOverviewCard = ({ data }) => {
+  if (!data) return null;
+  const { mean_lsi, subtests } = data;
+
+  return (
+    <div
+      style={{
+        background: COLOR_BG,
+        borderRadius: 12,
+        padding: 20,
+        color: "#fff",
+        textAlign: "center",
+        boxShadow: "0 0 10px rgba(0,0,0,0.25)",
+      }}
+    >
+      <h4
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          marginBottom: 10,
+        }}
+      >
+        Hop Cluster
+      </h4>
+      <p style={{ fontSize: 30, color: COLOR_OPER, margin: "10px 0" }}>
+        {mean_lsi != null ? `${(mean_lsi * 100).toFixed(0)}%` : "–"}
+      </p>
+      <div style={{ fontSize: 12, marginTop: 6 }}>
+        {Object.entries(subtests || {}).map(([name, val]) => (
+          <div key={name}>
+            {name}: {val != null ? (val * 100).toFixed(0) + "%" : "–"}
           </div>
-          <div style={{ flex: 1, background: "#333", borderRadius: 4, height: 8 }}>
-            <div
-              style={{
-                width: `${t.value}%`,
-                background: getColor(t.value),
-                height: "100%",
-                borderRadius: 4,
-              }}
-            />
-          </div>
-          <div style={{ width: 40, textAlign: "right", color: "#fff", fontSize: 11 }}>
-            {t.value?.toFixed(1)}%
-          </div>
-        </div>
-      ))}
-      <div style={{ color: "#fff", fontSize: 12, textAlign: "center", marginTop: 8 }}>
-        Gemiddelde LSI:{" "}
-        <strong style={{ color: COLOR_OPER }}>{data.mean_lsi?.toFixed(1)}%</strong>{" "}
-        (n={data.n ?? 0})
+        ))}
       </div>
     </div>
   );
-});
+};
 
 // =====================================================
 // 📊 MAIN COMPONENT
 // =====================================================
-export default function Functioneel({ data }) {
-  // ✅ Veilig voor zowel groep als individueel
+export default function IndividueelFunctioneel({ data }) {
   const cleanData = useMemo(() => {
-    if (Array.isArray(data)) return [...data]; // groepsdata
-    if (Array.isArray(data?.fases)) return [...data.fases]; // individuele data
+    if (Array.isArray(data?.fases)) return [...data.fases];
     return [];
   }, [data]);
 
-  // ✅ Gegroepeerde mapping
   const groupedData = useMemo(() => {
     const map = {};
     cleanData.forEach((faseObj) => {
@@ -404,16 +400,15 @@ export default function Functioneel({ data }) {
         if (!map[t.test]) map[t.test] = [];
         map[t.test].push({
           fase: faseNaam,
-          geopereerd: t.geopereerd_mean ?? t.mean ?? null,
-          gezond: t.gezond_mean ?? null,
+          geopereerd: t.geopereerd ?? t.geopereerd_mean ?? null,
+          gezond: t.gezond ?? t.gezond_mean ?? null,
         });
       });
     });
     return map;
   }, [cleanData]);
 
-  // ✅ Donutcards enkel tonen bij individuele data
-  const baselineData = !Array.isArray(data) ? data?.baseline : null;
+  const baselineData = data?.baseline || null;
 
   return (
     <div
@@ -424,6 +419,7 @@ export default function Functioneel({ data }) {
         paddingBottom: "40px",
       }}
     >
+      {/* Sectie 1 */}
       <h3 style={{ color: "#fff", fontSize: 13, marginBottom: 14 }}>
         Neuromusculaire Activatie & Lateral Stepdown
       </h3>
@@ -449,6 +445,7 @@ export default function Functioneel({ data }) {
         </div>
       </div>
 
+      {/* Sectie 2 */}
       <h3 style={{ color: "#fff", fontSize: 13, marginBottom: 14 }}>
         CMJ & Drop Jump Overzicht
       </h3>
@@ -463,8 +460,7 @@ export default function Functioneel({ data }) {
         <MultiTestCard
           label="Drop Jump"
           tests={[
-            "Drop Jump 2-benig Steunname Landing",
-            "Drop Jump 2-benig Hoogte",
+            "Drop Jump 2-been Hoogte",
             "Drop Jump 1-been Hoogte",
             "Drop Jump 1-been RSI",
           ]}
@@ -473,11 +469,7 @@ export default function Functioneel({ data }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <MultiTestCard
             label="CMJ"
-            tests={[
-              "CMJ 2-benig Steunname Landing",
-              "CMJ 2-benig Hoogte",
-              "CMJ 1-been Hoogte",
-            ]}
+            tests={["CMJ 2-been Hoogte", "CMJ 1-been Hoogte"]}
             groupedData={groupedData}
           />
           <MeanSplitCard
@@ -487,6 +479,7 @@ export default function Functioneel({ data }) {
         </div>
       </div>
 
+      {/* Sectie 3 */}
       <h3 style={{ color: "#fff", fontSize: 13, marginBottom: 14 }}>
         Hop Test Cluster
       </h3>

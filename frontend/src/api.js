@@ -3,7 +3,11 @@
 // Centrale helper voor alle API-calls (met JWT-token)
 // =====================================================
 
-const API_BASE = "https://revo-backend-5dji.onrender.com";
+const isLocal = window.location.hostname === "localhost";
+const API_BASE = isLocal
+  ? "http://localhost:8000"
+  : "https://revo-backend-5dji.onrender.com";
+
 
 // 🔸 Algemene fetch wrapper
 export async function apiFetch(path, options = {}) {

@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: schemas/patient.py
-# Revo Sport API — Pydantic Schema voor Patiënt
+# Revo Sport API — Pydantic Schema voor Patiënt (v2)
 # =====================================================
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -14,8 +14,7 @@ from schemas.blessure import BlessureSchema
 # =====================================================
 class PatientSchema(BaseModel):
     patient_id: Optional[int] = None
-    voornaam: Optional[str] = Field(default=None, alias="Voornaam")
-    achternaam: Optional[str] = Field(default=None, alias="Achternaam")
+    naam: str = Field(..., alias="Naam")
     geslacht: Optional[str] = Field(default=None, alias="Geslacht")
     geboortedatum: Optional[date] = Field(default=None, alias="Geboortedatum")
     blessures: List[BlessureSchema] = Field(default_factory=list)
