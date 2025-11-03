@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: routers/baseline.py
-# Revo Sport API — Baseline testing (mobiliteit, omtrek, functionele observaties)
+# Revo Sport API — Baseline testing (Upsert versie)
 # =====================================================
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -27,101 +27,78 @@ def get_db():
 
 
 # =====================================================
-# 🔹 GET /baseline — Alle baseline records
+# 🔹 GET — Alle baseline records
 # =====================================================
 @router.get("/", response_model=List[BaselineSchema])
 def list_baseline(db: Session = Depends(get_db)):
-    """
-    Haalt alle baseline records op.
-    """
     items = db.query(Baseline).all()
     ok(f"[BASELINE] {len(items)} records opgehaald")
     return items
 
 
 # =====================================================
-# 🔹 GET /baseline/{blessure_id} — 1 baseline op blessure_id
+# 🔹 GET — 1 baseline op blessure_id
 # =====================================================
 @router.get("/{blessure_id}", response_model=BaselineSchema)
 def get_baseline(blessure_id: int, db: Session = Depends(get_db)):
-    """
-    Haalt het baseline-record op dat hoort bij een blessure.
-    """
     obj = db.query(Baseline).filter(Baseline.blessure_id == blessure_id).first()
     if not obj:
         warn(f"[BASELINE] Niet gevonden (blessure_id={blessure_id})")
         raise HTTPException(status_code=404, detail="Baseline niet gevonden")
-
     ok(f"[BASELINE] Record opgehaald (blessure_id={blessure_id})")
     return obj
 
 
 # =====================================================
-# 🔹 POST /baseline — Nieuw baseline-record aanmaken
+# 🔹 POST — Upsert logica
 # =====================================================
 @router.post("/", response_model=BaselineSchema)
-def create_baseline(data: BaselineSchema, db: Session = Depends(get_db)):
+def upsert_baseline(data: BaselineSchema, db: Session = Depends(get_db)):
     """
-    Maakt een nieuw baseline-record aan. Vereist een bestaand blessure_id.
+    Maakt een nieuw baseline-record aan als het nog niet bestaat.
+    Bestaat er al een record voor deze blessure? → dan wordt het geüpdatet.
     """
+    # ✅ Controleer gekoppelde blessure
+    blessure = db.query(Blessure).filter(Blessure.blessure_id == data.blessure_id).first()
+    if not blessure:
+        warn(f"[BASELINE] Geen gekoppelde blessure gevonden (id={data.blessure_id})")
+        raise HTTPException(status_code=404, detail="Gekoppelde blessure niet gevonden")
+
+    # ✅ Zoek bestaand record
+    obj = db.query(Baseline).filter(Baseline.blessure_id == data.blessure_id).first()
+
     try:
-        # ✅ Controleer blessure
-        blessure = db.query(Blessure).filter(Blessure.blessure_id == data.blessure_id).first()
-        if not blessure:
-            raise HTTPException(status_code=404, detail="Gekoppelde blessure niet gevonden")
+        if obj:
+            # 🟠 UPDATE
+            for k, v in data.dict(exclude_unset=True).items():
+                setattr(obj, k, v)
+            db.commit(); db.refresh(obj)
+            ok(f"[BASELINE] Record geüpdatet (blessure_id={obj.blessure_id})")
+            return obj
 
-        # ✅ Object maken
-        obj = Baseline(**data.dict(exclude_unset=True))
-        db.add(obj)
-        db.commit()
-        db.refresh(obj)
-
-        ok(f"[BASELINE] Nieuw record aangemaakt (baseline_id={obj.id if hasattr(obj,'id') else '?'} | blessure_id={obj.blessure_id})")
-        return obj
+        else:
+            # 🟢 INSERT
+            obj = Baseline(**data.dict(exclude_unset=True))
+            db.add(obj)
+            db.commit(); db.refresh(obj)
+            ok(f"[BASELINE] Nieuw record aangemaakt (blessure_id={obj.blessure_id})")
+            return obj
 
     except Exception as e:
         db.rollback()
-        warn(f"[BASELINE] Fout bij aanmaken baseline: {e}")
+        warn(f"[BASELINE] Fout bij upsert: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # =====================================================
-# 🔹 PUT /baseline/{blessure_id} — Baseline bijwerken
-# =====================================================
-@router.put("/{blessure_id}", response_model=BaselineSchema)
-def update_baseline(blessure_id: int, data: BaselineSchema, db: Session = Depends(get_db)):
-    """
-    Wijzigt een bestaand baseline-record.
-    """
-    obj = db.query(Baseline).filter(Baseline.blessure_id == blessure_id).first()
-    if not obj:
-        warn(f"[BASELINE] Niet gevonden voor update (blessure_id={blessure_id})")
-        raise HTTPException(status_code=404, detail="Baseline niet gevonden")
-
-    for k, v in data.dict(exclude_unset=True).items():
-        setattr(obj, k, v)
-
-    db.commit()
-    db.refresh(obj)
-    ok(f"[BASELINE] Record geüpdatet (blessure_id={blessure_id})")
-    return obj
-
-
-# =====================================================
-# 🔹 DELETE /baseline/{blessure_id} — Verwijderen
+# 🔹 DELETE — Verwijder Baseline
 # =====================================================
 @router.delete("/{blessure_id}")
 def delete_baseline(blessure_id: int, db: Session = Depends(get_db)):
-    """
-    Verwijdert een baseline op basis van blessure_id.
-    """
     obj = db.query(Baseline).filter(Baseline.blessure_id == blessure_id).first()
     if not obj:
         warn(f"[BASELINE] Niet gevonden voor delete (blessure_id={blessure_id})")
         raise HTTPException(status_code=404, detail="Baseline niet gevonden")
-
-    db.delete(obj)
-    db.commit()
-
+    db.delete(obj); db.commit()
     ok(f"[BASELINE] Record verwijderd (blessure_id={blessure_id})")
     return {"status": "✅ Baseline verwijderd"}

@@ -4,7 +4,7 @@
 // =====================================================
 
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPost } from "../api";
+import { apiGet, apiPost } from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 
 const COLOR_ACCENT = "#FF7900";
@@ -126,34 +126,18 @@ useEffect(() => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      style={{
-        background: COLOR_BG,
-        borderRadius: 12,
-        padding: "40px 60px",
-        maxWidth: "650px",
-        margin: "0 auto 80px",
-        boxShadow: "0 0 10px rgba(0,0,0,0.3)",
-        border: `1px solid rgba(255,255,255,0.08)`,
-        color: COLOR_TEXT,
-        textAlign: "left",
-        fontFamily:
-          "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-      }}
-    >
-      <h2
-        style={{
-          textAlign: "center",
-          color: COLOR_TEXT,
-          fontSize: 18,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          marginBottom: "25px",
-          letterSpacing: "1px",
-        }}
-      >
-         Autorijden / Lopen — {loadedData ? "Resultaten bewerken" : "toevoegen"}
-      </h2>
+style={{
+  background: "#111",
+  color: "#fff",
+  padding: "20px 30px 80px",
+  maxWidth: 500,
+  margin: "0 auto",
+  textAlign: "left",
+  fontFamily:
+    "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+}}
 
+    >
       <form onSubmit={handleSubmit}>
         <SelectField
           label="Blessure (Patiënt)"

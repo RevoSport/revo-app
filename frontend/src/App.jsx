@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";  // ← useCallback toegevoegd
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";  // ← Suspense, lazy
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import VoorsteKruisband from "./pages/VoorsteKruisband";
 import { PuffLoader } from "react-spinners";
-import logo2 from "./assets/logo2.png"; // ✅ nieuw logo toegevoegd
+import logo2 from "./assets/logo2.png";
+import { useDeviceMode } from "./hooks/useDeviceMode";
+import Oefenschema from "./pages/Oefenschema";
+
+const MobileApp = lazy(() => import("./mobile/MobileApp")); // ← nieuw
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -13,6 +17,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
   const [fadeMain, setFadeMain] = useState(false);
+
+  const { mode, setMode } = useDeviceMode(); // ← nieuw
 
   const API_URL = process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
   const logoutTimer = useRef(null);
@@ -43,21 +49,20 @@ export default function App() {
     startSessionTimer();
   };
 
-// ✅ Logout met fade en stabiele referentie
-const handleLogout = useCallback(() => {
-  setFadeMain(true);
-  setTimeout(() => {
-    clearTimeout(logoutTimer.current);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user_name");
-    setToken(null);
-    setUserName("Gebruiker");
-    setFadeMain(false);
-  }, 500);
-}, []);
+  // ✅ Logout met fade en stabiele referentie
+  const handleLogout = useCallback(() => {
+    setFadeMain(true);
+    setTimeout(() => {
+      clearTimeout(logoutTimer.current);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user_name");
+      setToken(null);
+      setUserName("Gebruiker");
+      setFadeMain(false);
+    }, 500);
+  }, []);
 
-
-  // ⏱️ Sessie-timer starten of resetten (nu stabiel met useCallback)
+  // ⏱️ Sessie-timer starten of resetten
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const startSessionTimer = useCallback(() => {
     clearTimeout(logoutTimer.current);
@@ -66,7 +71,6 @@ const handleLogout = useCallback(() => {
       handleLogout();
     }, SESSION_TIMEOUT_MS);
   }, [handleLogout, SESSION_TIMEOUT_MS]);
-
 
   // 🖱️ Reset timer bij activiteit
   useEffect(() => {
@@ -84,7 +88,7 @@ const handleLogout = useCallback(() => {
     };
   }, [token, startSessionTimer]);
 
-  // 🌀 Loader-scherm met fade-in animatie en responsieve verhoudingen
+  // 🌀 Loader-scherm
   if (isLoading) {
     return (
       <div
@@ -102,7 +106,6 @@ const handleLogout = useCallback(() => {
           animation: "fadeIn 1.2s ease-in-out",
         }}
       >
-        {/* Logo */}
         <img
           src={logo2}
           alt="AI.THLETE Logo"
@@ -115,7 +118,6 @@ const handleLogout = useCallback(() => {
           }}
         />
 
-        {/* Spinner gecentreerd onder logo */}
         <div
           style={{
             display: "flex",
@@ -125,10 +127,7 @@ const handleLogout = useCallback(() => {
             animation: "fadeIn 1.6s ease-in-out",
           }}
         >
-          <PuffLoader
-            color="#FF7900"
-            size={Math.min(window.innerWidth * 0.15, 100)} // 15% van breedte, max 100px
-          />
+          <PuffLoader color="#FF7900" size={Math.min(window.innerWidth * 0.15, 100)} />
         </div>
 
         <style>{`
@@ -141,18 +140,20 @@ const handleLogout = useCallback(() => {
     );
   }
 
-  // 🔐 Login check
+  // 🔐 Login check (geldt voor zowel desktop als mobile)
   if (!token) {
     return <Login onLogin={handleLogin} />;
   }
 
-  // 🧩 Router
+  // 🧩 Desktop router
   const renderPage = () => {
     switch (currentPage) {
       case "Home":
         return <Home />;
       case "Voorste Kruisband":
         return <VoorsteKruisband defaultTab="Populatie" />;
+      case "Oefenschema":
+        return <Oefenschema />;           
       default:
         return (
           <div style={{ padding: "20px 30px" }}>
@@ -163,7 +164,17 @@ const handleLogout = useCallback(() => {
     }
   };
 
-  // 🎯 Layout
+  // 📱 Mobile: toon aparte app (zonder Sidebar/desktop-layout)
+  if (mode === "mobile") {
+    return (
+      <Suspense fallback={<div style={{ color: "#fff", padding: 16 }}>Laden…</div>}>
+        <ModeSwitcher setMode={setMode} />
+        <MobileApp userName={userName} onLogout={handleLogout} />
+      </Suspense>
+    );
+  }
+
+  // 💻 Desktop: jouw bestaande layout
   return (
     <div
       style={{
@@ -171,6 +182,8 @@ const handleLogout = useCallback(() => {
         transition: "opacity 0.5s ease-in-out",
       }}
     >
+      <ModeSwitcher setMode={setMode} />
+
       <Sidebar
         currentPage={currentPage}
         onNavigate={setCurrentPage}
@@ -197,19 +210,30 @@ const handleLogout = useCallback(() => {
           0% { opacity: 0; transform: translateY(10px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(10px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-
-        body.sidebar-collapsed {
-          --sidebar-offset: 0px;
-        }
-        body:not(.sidebar-collapsed) {
-          --sidebar-offset: 280px;
-        }
+        body.sidebar-collapsed { --sidebar-offset: 0px; }
+        body:not(.sidebar-collapsed) { --sidebar-offset: 280px; }
       `}</style>
+    </div>
+  );
+}
+
+// 🔸 Bovenaan rechts: handmatig testen (force mobile/desktop)
+function ModeSwitcher({ setMode }) {
+  return null;(
+    <div style={{ position: "fixed", top: 10, right: 10, zIndex: 9999 }}>
+      <button onClick={() => setMode("mobile")}>📱 Mobile</button>
+      <button onClick={() => setMode("desktop")} style={{ marginLeft: 6 }}>
+        💻 Desktop
+      </button>
+      <button
+        onClick={() => {
+        localStorage.removeItem("forceMode");
+        window.location.reload();
+        }}
+        style={{ marginLeft: 6 }}
+      >
+        🔄 Auto
+      </button>
     </div>
   );
 }

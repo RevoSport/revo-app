@@ -50,6 +50,8 @@ export default function FormWeek6() {
 
   const [blessures, setBlessures] = useState([]);
   const [statusMsg, setStatusMsg] = useState(null);
+  const [loadedData, setLoadedData] = useState(false);
+
 
   // 🔹 Blessures ophalen
   useEffect(() => {
@@ -69,6 +71,30 @@ export default function FormWeek6() {
     fetchBlessures();
   }, []);
 
+  // 🔹 Bestaande Week6-data ophalen bij blessureselectie
+useEffect(() => {
+  const fetchWeek6 = async () => {
+    if (!formData.blessure_id) return;
+    try {
+      const data = await apiGet(`/week6/${formData.blessure_id}`);
+      if (data && data.blessure_id) {
+        setFormData({
+          ...formData,
+          ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? ""])),
+        });
+        setLoadedData(true);
+      } else {
+        setLoadedData(false);
+      }
+    } catch {
+      setLoadedData(false);
+    }
+  };
+  fetchWeek6();
+  // eslint-disable-next-line
+}, [formData.blessure_id]);
+
+
   // 🔹 Input handler
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -76,18 +102,25 @@ export default function FormWeek6() {
   };
 
   // 🔹 Opslaan
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await apiPost("/week6", formData);
-      setStatusMsg({ type: "success", msg: "✅ Week 6 succesvol opgeslagen" });
-      setTimeout(() => setStatusMsg(null), 3000);
-    } catch (err) {
-      console.error("❌ API-fout:", err);
-      setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
-      setTimeout(() => setStatusMsg(null), 4000);
-    }
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    await apiPost("/week6", formData);
+    setStatusMsg({
+      type: "success",
+      msg: loadedData
+        ? "✅ Bestaande resultaten bijgewerkt"
+        : "✅ Week 6 succesvol opgeslagen",
+    });
+    setLoadedData(true);
+    setTimeout(() => setStatusMsg(null), 3000);
+  } catch (err) {
+    console.error("❌ API-fout:", err);
+    setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
+    setTimeout(() => setStatusMsg(null), 4000);
+  }
+};
+
 
   return (
     <motion.div
@@ -108,19 +141,20 @@ export default function FormWeek6() {
           "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
       }}
     >
-      <h2
-        style={{
-          textAlign: "center",
-          color: COLOR_TEXT,
-          fontSize: 18,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          marginBottom: "25px",
-          letterSpacing: "1px",
-        }}
-      >
-        Week 6 toevoegen
-      </h2>
+    <h2
+      style={{
+        textAlign: "center",
+        color: COLOR_TEXT,
+        fontSize: 18,
+        fontWeight: 700,
+        textTransform: "uppercase",
+        marginBottom: "25px",
+        letterSpacing: "1px",
+      }}
+    >
+      Week 6 — {loadedData ? "Resultaten bewerken" : "toevoegen"}
+    </h2>
+
 
       <form onSubmit={handleSubmit}>
         {/* 🔹 Blessure selecteren */}
@@ -202,7 +236,7 @@ export default function FormWeek6() {
         />
 
         {/* 🔹 Krachtmetingen */}
-        <SectionTitle text="Spierkracht (Nm)" />
+        <SectionTitle text="Spierkracht (N)" />
         <TwoColumnFields
           leftLabel="Quadriceps 60° (L)"
           rightLabel="Quadriceps 60° (R)"
@@ -234,30 +268,20 @@ export default function FormWeek6() {
           rightPlaceholder="in N"
         />
         <TwoColumnFields
-          leftLabel="Abductoren kort (L)"
-          rightLabel="Abductoren kort (R)"
-          leftName="kracht_abductoren_kort_l"
-          rightName="kracht_abductoren_kort_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Abductoren lang (L)"
-          rightLabel="Abductoren lang (R)"
-          leftName="kracht_abductoren_lang_l"
-          rightName="kracht_abductoren_lang_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
           leftLabel="Adductoren kort (L)"
           rightLabel="Adductoren kort (R)"
           leftName="kracht_adductoren_kort_l"
           rightName="kracht_adductoren_kort_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in N"
+          rightPlaceholder="in N"
+        />
+        <TwoColumnFields
+          leftLabel="Abductoren kort (L)"
+          rightLabel="Abductoren kort (R)"
+          leftName="kracht_abductoren_kort_l"
+          rightName="kracht_abductoren_kort_r"
           values={formData}
           onChange={handleChange}
           leftPlaceholder="in N"
@@ -273,9 +297,19 @@ export default function FormWeek6() {
           leftPlaceholder="in N"
           rightPlaceholder="in N"
         />
+        <TwoColumnFields
+          leftLabel="Abductoren lang (L)"
+          rightLabel="Abductoren lang (R)"
+          leftName="kracht_abductoren_lang_l"
+          rightName="kracht_abductoren_lang_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in N"
+          rightPlaceholder="in N"
+        />
 
         {/* 🔹 Step Down Test */}
-        <SectionTitle text="Step Down Test (Valgus + Pelvis)" />
+        <SectionTitle text="Functioneel" />
         <TwoColumnFields
           leftLabel="Valgus controle (L)"
           rightLabel="Valgus controle (R)"
@@ -300,8 +334,8 @@ export default function FormWeek6() {
         {/* 🔹 Squat Forceplate */}
         <SectionTitle text="Squat Forceplate (%)" />
         <TwoColumnFields
-          leftLabel="Squat belasting (L)"
-          rightLabel="Squat belasting (R)"
+          leftLabel="% Verdeling (L)"
+          rightLabel="% Verdeling (R)"
           leftName="squat_forceplate_l"
           rightName="squat_forceplate_r"
           values={formData}

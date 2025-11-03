@@ -6,6 +6,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from colorama import Fore, Style, init as colorama_init
+from models import oefenschema 
 
 # Routers importeren
 from routers import (
@@ -23,7 +24,9 @@ from routers import (
     metrics,
     kracht, 
     functioneel,
-    individueel
+    individueel,
+    kinvent,
+    oefenschema,
 )
 from security import get_current_user
 
@@ -86,6 +89,9 @@ app.include_router(metrics.router, dependencies=protected)
 app.include_router(kracht.router, dependencies=protected)  
 app.include_router(functioneel.router, dependencies=protected)
 app.include_router(individueel.router, dependencies=protected)
+app.include_router(oefenschema.router)
+app.include_router(kinvent.router)
+
 
 # =====================================================
 #   ROOT ENDPOINT

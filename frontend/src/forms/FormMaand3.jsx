@@ -57,6 +57,8 @@ export default function FormMaand3() {
 
   const [blessures, setBlessures] = useState([]);
   const [statusMsg, setStatusMsg] = useState(null);
+  const [loadedData, setLoadedData] = useState(false);
+
 
   // 🔹 Blessures ophalen
   useEffect(() => {
@@ -81,18 +83,48 @@ export default function FormMaand3() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    await apiPost("/maand3", formData);
+    setStatusMsg({
+      type: "success",
+      msg: loadedData
+        ? "✅ Bestaande resultaten bijgewerkt"
+        : "✅ Maand 3 succesvol opgeslagen",
+    });
+    setLoadedData(true);
+    setTimeout(() => setStatusMsg(null), 3000);
+  } catch (err) {
+    console.error("❌ API-fout:", err);
+    setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
+    setTimeout(() => setStatusMsg(null), 4000);
+  }
+};
+
+
+  // 🔹 Bestaande Maand3-data ophalen bij blessureselectie
+useEffect(() => {
+  const fetchMaand3 = async () => {
+    if (!formData.blessure_id) return;
     try {
-      await apiPost("/maand3", formData);
-      setStatusMsg({ type: "success", msg: "✅ Maand 3 succesvol opgeslagen" });
-      setTimeout(() => setStatusMsg(null), 3000);
-    } catch (err) {
-      console.error("❌ API-fout:", err);
-      setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
-      setTimeout(() => setStatusMsg(null), 4000);
+      const data = await apiGet(`/maand3/${formData.blessure_id}`);
+      if (data && data.blessure_id) {
+        setFormData((prev) => ({
+          ...prev,
+          ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? ""])),
+        }));
+        setLoadedData(true);
+      } else {
+        setLoadedData(false);
+      }
+    } catch {
+      setLoadedData(false);
     }
   };
+  fetchMaand3();
+  // eslint-disable-next-line
+}, [formData.blessure_id]);
 
   return (
     <motion.div
@@ -113,19 +145,20 @@ export default function FormMaand3() {
           "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
       }}
     >
-      <h2
-        style={{
-          textAlign: "center",
-          color: COLOR_TEXT,
-          fontSize: 18,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          marginBottom: "25px",
-          letterSpacing: "1px",
-        }}
-      >
-        Maand 3 toevoegen
-      </h2>
+    <h2
+      style={{
+        textAlign: "center",
+        color: COLOR_TEXT,
+        fontSize: 18,
+        fontWeight: 700,
+        textTransform: "uppercase",
+        marginBottom: "25px",
+        letterSpacing: "1px",
+      }}
+    >
+      Maand 3 — {loadedData ? "Resultaten bewerken" : "toevoegen"}
+    </h2>
+
 
       <form onSubmit={handleSubmit}>
         {/* 🔹 Blessure selecteren */}
@@ -207,7 +240,7 @@ export default function FormMaand3() {
         />
 
         {/* 🔹 Krachtmetingen */}
-        <SectionTitle text="Spierkracht (Nm)" />
+        <SectionTitle text="Spierkracht (N)" />
         <TwoColumnFields
           leftLabel="Quadriceps 60° (L)"
           rightLabel="Quadriceps 60° (R)"
@@ -249,26 +282,6 @@ export default function FormMaand3() {
           rightPlaceholder="in N"
         />
         <TwoColumnFields
-          leftLabel="Abductoren kort (L)"
-          rightLabel="Abductoren kort (R)"
-          leftName="kracht_abductoren_kort_l"
-          rightName="kracht_abductoren_kort_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Abductoren lang (L)"
-          rightLabel="Abductoren lang (R)"
-          leftName="kracht_abductoren_lang_l"
-          rightName="kracht_abductoren_lang_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
           leftLabel="Adductoren kort (L)"
           rightLabel="Adductoren kort (R)"
           leftName="kracht_adductoren_kort_l"
@@ -279,10 +292,30 @@ export default function FormMaand3() {
           rightPlaceholder="in N"
         />
         <TwoColumnFields
+          leftLabel="Abductoren kort (L)"
+          rightLabel="Abductoren kort (R)"
+          leftName="kracht_abductoren_kort_l"
+          rightName="kracht_abductoren_kort_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in N"
+          rightPlaceholder="in N"
+        />
+        <TwoColumnFields
           leftLabel="Adductoren lang (L)"
           rightLabel="Adductoren lang (R)"
           leftName="kracht_adductoren_lang_l"
           rightName="kracht_adductoren_lang_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in N"
+          rightPlaceholder="in N"
+        />
+        <TwoColumnFields
+          leftLabel="Abductoren lang (L)"
+          rightLabel="Abductoren lang (R)"
+          leftName="kracht_abductoren_lang_l"
+          rightName="kracht_abductoren_lang_r"
           values={formData}
           onChange={handleChange}
           leftPlaceholder="in N"
@@ -300,17 +333,7 @@ export default function FormMaand3() {
         />
 
         {/* 🔹 Functioneel */}
-        <SectionTitle text="Functionele testen" />
-        <TwoColumnFields
-          leftLabel="Squat % (L)"
-          rightLabel="Squat % (R)"
-          leftName="squat_forceplate_l"
-          rightName="squat_forceplate_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="Bv. 54"
-          rightPlaceholder="Bv. 46"
-        />
+        <SectionTitle text="Functioneel" />
         <TwoColumnFields
           leftLabel="Stepdown valgus (L)"
           rightLabel="Stepdown valgus (R)"
@@ -332,11 +355,23 @@ export default function FormMaand3() {
           rightPlaceholder="Score 0 - 3"
         />
 
-        {/* 🔹 Springtesten */}
-        <SectionTitle text="Springtesten" />
+        {/* 🔹 Functioneel */}
+        <SectionTitle text="Squat Forceplate (%)" />
         <TwoColumnFields
-          leftLabel="CMJ Landing % (L)"
-          rightLabel="CMJ Landing % (R)"
+          leftLabel="% Verdeling (L)"
+          rightLabel="% Verdeling (R)"
+          leftName="squat_forceplate_l"
+          rightName="squat_forceplate_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="Bv. 54"
+          rightPlaceholder="Bv. 46"
+        />
+        {/* 🔹 CMJ */}
+        <SectionTitle text="Counter Movement Jump (CMJ)" />
+        <TwoColumnFields
+          leftLabel="2-Benig Landing % (L)"
+          rightLabel="2-Benig Landing % (R)"
           leftName="cmj_asymmetrie_l"
           rightName="cmj_asymmetrie_r"
           values={formData}
@@ -345,7 +380,7 @@ export default function FormMaand3() {
           rightPlaceholder="Bv. 46"
         />
         <FormField
-          label="CMJ Hoogte (2-benig)"
+          label="2-Benig Hoogte"
           name="cmj_hoogte_2benig"
           value={formData.cmj_hoogte_2benig}
           onChange={handleChange}

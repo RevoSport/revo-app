@@ -1,10 +1,10 @@
 // =====================================================
-// FILE: src/forms/FormAutorijden.jsx
-// Revo Sport — Autorijden + Lopen (Week6 + Maand45)
+// FILE: src/forms/FormBaseline.jsx
+// Revo Sport — Baseline toevoegen + tonen bestaande resultaten
 // =====================================================
 
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPost } from "../api";
+import { apiGet, apiPost } from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 
 const COLOR_ACCENT = "#FF7900";
@@ -13,20 +13,27 @@ const COLOR_TEXT = "#ffffff";
 const COLOR_MUTED = "#c9c9c9";
 const COLOR_PLACEHOLDER = "rgba(255,255,255,0.55)";
 
-export default function FormAutorijden() {
+export default function FormBaseline() {
   const [formData, setFormData] = useState({
     blessure_id: "",
     datum_onderzoek: "",
-    autorijden: "",
-    autorijden_schakelen: "",
-    autorijden_datum: "",
-    lopen_opstartdatum: "",
+    knie_flexie_l: "",
+    knie_flexie_r: "",
+    knie_extensie_l: "",
+    knie_extensie_r: "",
+    omtrek_5cm_boven_patella_l: "",
+    omtrek_5cm_boven_patella_r: "",
+    omtrek_10cm_boven_patella_l: "",
+    omtrek_10cm_boven_patella_r: "",
+    omtrek_20cm_boven_patella_l: "",
+    omtrek_20cm_boven_patella_r: "",
+    lag_test: "",
+    vmo_activatie: "",
   });
 
   const [blessures, setBlessures] = useState([]);
   const [statusMsg, setStatusMsg] = useState(null);
   const [loadedData, setLoadedData] = useState(false);
-
 
   // 🔹 Blessures ophalen
   useEffect(() => {
@@ -46,74 +53,58 @@ export default function FormAutorijden() {
     fetchBlessures();
   }, []);
 
-  // 🔹 Input handler
+  // 🔹 Haal bestaande baseline op bij blessureselectie
+  useEffect(() => {
+    const fetchBaseline = async () => {
+      if (!formData.blessure_id) return;
+      try {
+        const data = await apiGet(`/baseline/${formData.blessure_id}`);
+        if (data && data.blessure_id) {
+          setFormData({
+            blessure_id: data.blessure_id,
+            datum_onderzoek: data.datum_onderzoek || "",
+            knie_flexie_l: data.knie_flexie_l || "",
+            knie_flexie_r: data.knie_flexie_r || "",
+            knie_extensie_l: data.knie_extensie_l || "",
+            knie_extensie_r: data.knie_extensie_r || "",
+            omtrek_5cm_boven_patella_l: data.omtrek_5cm_boven_patella_l || "",
+            omtrek_5cm_boven_patella_r: data.omtrek_5cm_boven_patella_r || "",
+            omtrek_10cm_boven_patella_l: data.omtrek_10cm_boven_patella_l || "",
+            omtrek_10cm_boven_patella_r: data.omtrek_10cm_boven_patella_r || "",
+            omtrek_20cm_boven_patella_l: data.omtrek_20cm_boven_patella_l || "",
+            omtrek_20cm_boven_patella_r: data.omtrek_20cm_boven_patella_r || "",
+            lag_test: data.lag_test || "",
+            vmo_activatie: data.vmo_activatie || "",
+          });
+          setLoadedData(true);
+        }
+      } catch (err) {
+        console.warn("ℹ️ Geen bestaande baseline gevonden");
+        setLoadedData(false);
+      }
+    };
+    fetchBaseline();
+  }, [formData.blessure_id]);
+
+  // 🔹 Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Data ophalen bij blessureselectie (Week6 + Maand45)
-useEffect(() => {
-  if (!formData.blessure_id) return;
-
-  const fetchExisting = async () => {
-    try {
-      // Autorijden (Week6)
-      const week6 = await apiGet(`/week6/${formData.blessure_id}`);
-      // Lopen (Maand45)
-      const maand45 = await apiGet(`/maand45/${formData.blessure_id}`);
-
-      setFormData((prev) => ({
-        ...prev,
-        autorijden: week6?.autorijden || "",
-        autorijden_schakelen: week6?.autorijden_schakelen || "",
-        autorijden_datum: week6?.autorijden_datum || "",
-        lopen_opstartdatum: maand45?.lopen_opstartdatum || "",
-        blessure_id: prev.blessure_id,
-      }));
-
-      setLoadedData(true);
-    } catch {
-      setLoadedData(false);
-    }
-  };
-
-  fetchExisting();
-  // eslint-disable-next-line
-}, [formData.blessure_id]);
-
-  // 🔹 Submit → twee API calls
+  // 🔹 Submit — Upsert automatisch
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const week6Payload = {
-        blessure_id: formData.blessure_id,
-        datum_onderzoek: formData.datum_onderzoek,
-        autorijden: formData.autorijden,
-        autorijden_schakelen: formData.autorijden_schakelen,
-        autorijden_datum: formData.autorijden_datum,
-      };
-
-      const maand45Payload = {
-        blessure_id: formData.blessure_id,
-        datum_onderzoek: formData.datum_onderzoek,
-        lopen_opstartdatum: formData.lopen_opstartdatum,
-      };
-
-      await apiPost("/week6", week6Payload);
-      await apiPost("/maand45", maand45Payload);
-
-      setStatusMsg({ type: "success", msg: "✅ Gegevens succesvol opgeslagen" });
-      setTimeout(() => setStatusMsg(null), 3000);
-
-      setFormData({
-        blessure_id: "",
-        datum_onderzoek: "",
-        autorijden: "",
-        autorijden_schakelen: "",
-        autorijden_datum: "",
-        lopen_opstartdatum: "",
+      await apiPost("/baseline", formData);
+      setStatusMsg({
+        type: "success",
+        msg: loadedData
+          ? "✅ Bestaande resultaten bijgewerkt"
+          : "✅ Baseline succesvol opgeslagen",
       });
+      setLoadedData(true);
+      setTimeout(() => setStatusMsg(null), 3000);
     } catch (err) {
       console.error("❌ API-fout:", err);
       setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
@@ -126,35 +117,21 @@ useEffect(() => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      style={{
-        background: COLOR_BG,
-        borderRadius: 12,
-        padding: "40px 60px",
-        maxWidth: "650px",
-        margin: "0 auto 80px",
-        boxShadow: "0 0 10px rgba(0,0,0,0.3)",
-        border: `1px solid rgba(255,255,255,0.08)`,
-        color: COLOR_TEXT,
-        textAlign: "left",
-        fontFamily:
-          "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-      }}
+style={{
+  background: "#111",
+  color: "#fff",
+  padding: "20px 30px 80px",
+  maxWidth: 500,
+  margin: "0 auto",
+  textAlign: "left",
+  fontFamily:
+    "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+}}
+
     >
-      <h2
-        style={{
-          textAlign: "center",
-          color: COLOR_TEXT,
-          fontSize: 18,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          marginBottom: "25px",
-          letterSpacing: "1px",
-        }}
-      >
-         Autorijden / Lopen — {loadedData ? "Resultaten bewerken" : "toevoegen"}
-      </h2>
 
       <form onSubmit={handleSubmit}>
+        {/* 🔹 Blessure selecteren */}
         <SelectField
           label="Blessure (Patiënt)"
           name="blessure_id"
@@ -168,6 +145,7 @@ useEffect(() => {
           required
         />
 
+        {/* 🔹 Datum onderzoek */}
         <FormField
           label="Datum onderzoek"
           name="datum_onderzoek"
@@ -176,50 +154,92 @@ useEffect(() => {
           onChange={handleChange}
         />
 
-        {/* ===== AUTORIJDEN ===== */}
-        <SectionTitle text="Autorijden" />
-
-        <SelectField
-          label="Autorijden"
-          name="autorijden"
-          value={formData.autorijden}
+        {/* 🔹 Knie mobiliteit */}
+        <SectionTitle text="Knie mobiliteit (°)" />
+        <TwoColumnFields
+          leftLabel="Flexie links"
+          rightLabel="Flexie rechts"
+          leftName="knie_flexie_l"
+          rightName="knie_flexie_r"
+          values={formData}
           onChange={handleChange}
-          options={[
-            { value: "Ja", label: "Ja" },
-            { value: "Nee", label: "Nee" },
-            { value: "Nvt", label: "Nvt" },
-          ]}
+          leftPlaceholder="in °"
+          rightPlaceholder="in °"
+        />
+        <TwoColumnFields
+          leftLabel="Extensie links"
+          rightLabel="Extensie rechts"
+          leftName="knie_extensie_l"
+          rightName="knie_extensie_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in °"
+          rightPlaceholder="in °"
         />
 
-        <SelectField
-          label="Schakelen"
-          name="autorijden_schakelen"
-          value={formData.autorijden_schakelen}
+        {/* 🔹 Omtrekmetingen */}
+        <SectionTitle text="Omtrek boven patella (cm)" />
+        <TwoColumnFields
+          leftLabel="5 cm boven patella (L)"
+          rightLabel="5 cm boven patella (R)"
+          leftName="omtrek_5cm_boven_patella_l"
+          rightName="omtrek_5cm_boven_patella_r"
+          values={formData}
           onChange={handleChange}
-          options={[
-            { value: "Manueel", label: "Manueel" },
-            { value: "Automaat", label: "Automaat" },
-            { value: "Nvt", label: "Nvt" },
-          ]}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
+          
+        />
+        <TwoColumnFields
+          leftLabel="10 cm boven patella (L)"
+          rightLabel="10 cm boven patella (R)"
+          leftName="omtrek_10cm_boven_patella_l"
+          rightName="omtrek_10cm_boven_patella_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
+        />
+        <TwoColumnFields
+          leftLabel="20 cm boven patella (L)"
+          rightLabel="20 cm boven patella (R)"
+          leftName="omtrek_20cm_boven_patella_l"
+          rightName="omtrek_20cm_boven_patella_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
+          
         />
 
-        <FormField
-          label="Datum hervatten autorijden"
-          name="autorijden_datum"
-          type="date"
-          value={formData.autorijden_datum}
-          onChange={handleChange}
-        />
-
-        {/* ===== LOPEN ===== */}
-        <SectionTitle text="Lopen" />
-        <FormField
-          label="Datum opstart lopen"
-          name="lopen_opstartdatum"
-          type="date"
-          value={formData.lopen_opstartdatum}
-          onChange={handleChange}
-        />
+        {/* 🔹 Functionele observaties */}
+        <SectionTitle text="Functioneel" />
+        <div style={{ display: "flex", gap: "16px", width: "100%" }}>
+          <SelectField
+            label="Lag test"
+            name="lag_test"
+            value={formData.lag_test}
+            onChange={handleChange}
+            options={[
+              { value: "Ja", label: "Ja" },
+              { value: "Nee", label: "Nee" },
+              { value: "Nvt", label: "Nvt" },
+            ]}
+            placeholder="Kies"
+          />
+          <SelectField
+            label="VMO activatie"
+            name="vmo_activatie"
+            value={formData.vmo_activatie}
+            onChange={handleChange}
+            options={[
+              { value: "Ja", label: "Ja" },
+              { value: "Nee", label: "Nee" },
+              { value: "Nvt", label: "Nvt" },
+            ]}
+            placeholder="Kies"
+          />
+        </div>
 
         {/* 🔸 Opslaan */}
         <motion.button
@@ -244,21 +264,12 @@ useEffect(() => {
             letterSpacing: "0.5px",
             textTransform: "uppercase",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#fff";
-            e.currentTarget.style.color = "#fff";
-            e.currentTarget.style.boxShadow = "0 0 8px rgba(255,121,0,0.25)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = COLOR_ACCENT;
-            e.currentTarget.style.color = COLOR_ACCENT;
-            e.currentTarget.style.boxShadow = "none";
-          }}
         >
           Opslaan
         </motion.button>
       </form>
 
+      {/* ✅ Feedbackmelding */}
       <AnimatePresence>
         {statusMsg && (
           <motion.p
@@ -279,9 +290,7 @@ useEffect(() => {
           </motion.p>
         )}
       </AnimatePresence>
-
-      {/* 🎨 Kalenderstijl identiek aan andere formulieren */}
-      <style>{`
+            <style>{`
         input::placeholder,
         select:invalid {
           color: ${COLOR_PLACEHOLDER};
@@ -312,11 +321,11 @@ useEffect(() => {
 }
 
 // =====================================================
-// 🔹 Subcomponenten (zelfde stijl als Maand6)
+// 🔹 Subcomponenten (identiek aan jouw stijl)
 // =====================================================
 function FormField({ label, name, value, onChange, type = "text", placeholder }) {
   return (
-    <div style={{ flex: 1, minWidth: "calc(50% - 8px)", marginBottom: "18px" }}>
+    <div style={{ marginBottom: "18px" }}>
       <label style={{ display: "block", color: COLOR_MUTED, fontSize: 13, marginBottom: 6 }}>
         {label}
       </label>
@@ -343,7 +352,7 @@ function FormField({ label, name, value, onChange, type = "text", placeholder })
 
 function SelectField({ label, name, value, onChange, options, placeholder }) {
   return (
-    <div style={{ flex: 1, minWidth: "calc(50% - 8px)", marginBottom: "18px" }}>
+    <div style={{ flex: 1, marginBottom: "18px" }}>
       <label style={{ display: "block", color: COLOR_MUTED, fontSize: 13, marginBottom: 6 }}>
         {label}
       </label>
@@ -363,13 +372,43 @@ function SelectField({ label, name, value, onChange, options, placeholder }) {
           outline: "none",
         }}
       >
-        <option value="">{placeholder || "Kies"}</option>
+        <option value="">{placeholder || "Kies..."}</option>
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function TwoColumnFields({
+  leftLabel,
+  rightLabel,
+  leftName,
+  rightName,
+  values,
+  onChange,
+  leftPlaceholder,
+  rightPlaceholder,
+}) {
+  return (
+    <div style={{ display: "flex", gap: "16px", width: "100%" }}>
+      <FormField
+        label={leftLabel}
+        name={leftName}
+        value={values[leftName]}
+        onChange={onChange}
+        placeholder={leftPlaceholder}
+      />
+      <FormField
+        label={rightLabel}
+        name={rightName}
+        value={values[rightName]}
+        onChange={onChange}
+        placeholder={rightPlaceholder}
+      />
     </div>
   );
 }

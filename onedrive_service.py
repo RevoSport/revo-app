@@ -115,3 +115,46 @@ def upload_to_onedrive(
         }
     else:
         raise Exception(f"Upload failed: {response.status_code} - {response.text}")
+    
+    # =====================================================
+#   UPLOAD VANUIT GEHEUGEN (BYTES)
+# =====================================================
+def upload_to_onedrive_bytes(
+    file_bytes: bytes,
+    remote_name: str,
+    patient_naam: str,
+    datum: str = None,
+    base_folder="RevoSport/DataLab",
+):
+    """
+    Uploadt een bestand dat al in het geheugen zit (bijv. PDF-bytes)
+    naar OneDrive in de structuur:
+    /RevoSport/DataLab/{PatiëntNaam}/{Datum}/
+    """
+    token = get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    if not datum:
+        datum = datetime.today().strftime("%Y-%m-%d")
+
+    folder_path = f"{base_folder}/{patient_naam}/{datum}"
+    ensure_folder_structure(folder_path, token)
+
+    # Upload rechtstreeks uit geheugen
+    url = f"https://graph.microsoft.com/v1.0/users/{OWNER_UPN}/drive/root:/{folder_path}/{remote_name}:/content"
+    response = requests.put(url, headers=headers, data=file_bytes)
+
+    if response.status_code in (200, 201):
+        data = response.json()
+        return {
+            "status": "success",
+            "patient": patient_naam,
+            "datum": datum,
+            "name": data["name"],
+            "url": data["webUrl"],
+            "size_kb": round(data["size"] / 1024, 2),
+            "folder_path": folder_path,
+        }
+    else:
+        raise Exception(f"Upload (bytes) failed: {response.status_code} - {response.text}")
+

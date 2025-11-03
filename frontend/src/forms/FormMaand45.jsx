@@ -66,6 +66,8 @@ export default function FormMaand45() {
 
   const [blessures, setBlessures] = useState([]);
   const [statusMsg, setStatusMsg] = useState(null);
+  const [loadedData, setLoadedData] = useState(false);
+
 
   // 🔹 Blessures ophalen
   useEffect(() => {
@@ -90,18 +92,50 @@ export default function FormMaand45() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    await apiPost("/maand45", formData);
+    setStatusMsg({
+      type: "success",
+      msg: loadedData
+        ? "✅ Bestaande resultaten bijgewerkt"
+        : "✅ Maand 4.5 succesvol opgeslagen",
+    });
+    setLoadedData(true);
+    setTimeout(() => setStatusMsg(null), 3000);
+  } catch (err) {
+    console.error("❌ API-fout:", err);
+    setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
+    setTimeout(() => setStatusMsg(null), 4000);
+  }
+};
+
+// 🔹 Bestaande Maand4.5-data ophalen bij blessureselectie
+useEffect(() => {
+  if (!formData.blessure_id) return;
+
+  const fetchMaand45 = async () => {
     try {
-      await apiPost("/maand45", formData);
-      setStatusMsg({ type: "success", msg: "✅ Maand 4.5 succesvol opgeslagen" });
-      setTimeout(() => setStatusMsg(null), 3000);
-    } catch (err) {
-      console.error("❌ API-fout:", err);
-      setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
-      setTimeout(() => setStatusMsg(null), 4000);
+      const data = await apiGet(`/maand45/${formData.blessure_id}`);
+      if (data && data.blessure_id) {
+        setFormData((prev) => ({
+          ...prev,
+          ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? ""])),
+        }));
+        setLoadedData(true);
+      } else {
+        setLoadedData(false);
+      }
+    } catch {
+      setLoadedData(false);
     }
   };
+
+  fetchMaand45();
+  // eslint-disable-next-line
+}, [formData.blessure_id]);
+
 
   return (
     <motion.div
@@ -122,19 +156,20 @@ export default function FormMaand45() {
           "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
       }}
     >
-      <h2
-        style={{
-          textAlign: "center",
-          color: COLOR_TEXT,
-          fontSize: 18,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          marginBottom: "25px",
-          letterSpacing: "1px",
-        }}
-      >
-        Maand 4.5 toevoegen
-      </h2>
+<h2
+  style={{
+    textAlign: "center",
+    color: COLOR_TEXT,
+    fontSize: 18,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    marginBottom: "25px",
+    letterSpacing: "1px",
+  }}
+>
+  Maand 4.5 — {loadedData ? "Resultaten bewerken" : "toevoegen"}
+</h2>
+
 
       <form onSubmit={handleSubmit}>
         {/* 🔹 Blessure selecteren */}
@@ -175,6 +210,8 @@ export default function FormMaand45() {
           rightName="knie_extensie"
           values={formData}
           onChange={handleChange}
+          leftPlaceholder="in °"
+          rightPlaceholder="in °"
         />
 
         <SectionTitle text="Omtrek boven patella (cm)" />
@@ -185,6 +222,8 @@ export default function FormMaand45() {
           rightName="omtrek_5cm_boven_patella_r"
           values={formData}
           onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
         />
         <TwoColumnFields
           leftLabel="10 cm boven patella (L)"
@@ -193,6 +232,8 @@ export default function FormMaand45() {
           rightName="omtrek_10cm_boven_patella_r"
           values={formData}
           onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
         />
         <TwoColumnFields
           leftLabel="20 cm boven patella (L)"
@@ -201,19 +242,21 @@ export default function FormMaand45() {
           rightName="omtrek_20cm_boven_patella_r"
           values={formData}
           onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
         />
 
-        <SectionTitle text="Spierkracht (Nm)" />
+        <SectionTitle text="Spierkracht (N)" />
         {[
           ["Quadriceps 60°", "kracht_quadriceps_60_l", "kracht_quadriceps_60_r"],
           ["Hamstrings 30°", "kracht_hamstrings_30_l", "kracht_hamstrings_30_r"],
           ["Hamstrings 90-90°", "kracht_hamstrings_90_90_l", "kracht_hamstrings_90_90_r"],
-          ["Soleus", "kracht_soleus_l", "kracht_soleus_r"],
-          ["Abductoren kort", "kracht_abductoren_kort_l", "kracht_abductoren_kort_r"],
-          ["Abductoren lang", "kracht_abductoren_lang_l", "kracht_abductoren_lang_r"],
           ["Adductoren kort", "kracht_adductoren_kort_l", "kracht_adductoren_kort_r"],
+          ["Abductoren kort", "kracht_abductoren_kort_l", "kracht_abductoren_kort_r"],
           ["Adductoren lang", "kracht_adductoren_lang_l", "kracht_adductoren_lang_r"],
+          ["Abductoren lang", "kracht_abductoren_lang_l", "kracht_abductoren_lang_r"],
           ["Exorotatoren heup", "kracht_exorotatoren_heup_l", "kracht_exorotatoren_heup_r"],
+          ["Soleus", "kracht_soleus_l", "kracht_soleus_r"],
           ["Nordics", "kracht_nordics_l", "kracht_nordics_r"],
         ].map(([label, left, right]) => (
           <TwoColumnFields
@@ -224,49 +267,74 @@ export default function FormMaand45() {
             rightName={right}
             values={formData}
             onChange={handleChange}
+            leftPlaceholder="in N"
+            rightPlaceholder="in N"
           />
         ))}
 
-        <SectionTitle text="CMJ (Counter Movement Jump)" />
+        <SectionTitle text="Counter Movement Jump (CMJ)" />
         <TwoColumnFields
-          leftLabel="Asymmetrie (L)"
-          rightLabel="Asymmetrie (R)"
+          leftLabel="2-Benig Landing % (L)"
+          rightLabel="2-Benig Landing % (R)"
           leftName="cmj_asymmetrie_l"
           rightName="cmj_asymmetrie_r"
           values={formData}
           onChange={handleChange}
+          leftPlaceholder="Bv. 54"
+          rightPlaceholder="Bv. 46"
         />
+        <FormField label="2-Benig Hoogte" name="cmj_hoogte_2benig" value={formData.cmj_hoogte_2benig} onChange={handleChange} placeholder="In cm"/>
         <TwoColumnFields
-          leftLabel="Hoogte (L)"
-          rightLabel="Hoogte (R)"
+          leftLabel="1-Benig Hoogte (L)"
+          rightLabel="1-Benig Hoogte (R)"
           leftName="cmj_hoogte_l"
           rightName="cmj_hoogte_r"
           values={formData}
           onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
         />
-        <FormField label="Hoogte (2-benig)" name="cmj_hoogte_2benig" value={formData.cmj_hoogte_2benig} onChange={handleChange} />
-        <FormField label="LSI (%)" name="cmj_lsi" value={formData.cmj_lsi} onChange={handleChange} />
 
         <SectionTitle text="Drop Jump" />
-        {[
-          ["Hoogte (L)", "dropjump_hoogte_l", "dropjump_hoogte_r"],
-          ["RSI (L)", "dropjump_rsi_l", "dropjump_rsi_r"],
-          ["Steunname landing", "dropjump_steunname_landing_l", "dropjump_steunname_landing_r"],
-        ].map(([label, left, right]) => (
-          <TwoColumnFields
-            key={label}
-            leftLabel={label + " (L)"}
-            rightLabel={label + " (R)"}
-            leftName={left}
-            rightName={right}
-            values={formData}
-            onChange={handleChange}
-          />
-        ))}
-        <FormField label="Hoogte (2-benig)" name="dropjump_hoogte_2benig" value={formData.dropjump_hoogte_2benig} onChange={handleChange} />
-        <FormField label="LSI (%)" name="dropjump_lsi" value={formData.dropjump_lsi} onChange={handleChange} />
+        <FormField 
+          label="2-Benig Hoogte" 
+          name="dropjump_hoogte_2benig" 
+          value={formData.dropjump_hoogte_2benig} 
+          onChange={handleChange} 
+          placeholder="In cm" />
+        <TwoColumnFields
+          leftLabel="2-Benig Steunname landing (L)"
+          rightLabel="2-Benig Steunname landing (R)"
+          leftName="dropjump_steunname_landing_l"
+          rightName="dropjump_steunname_landing_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="Bv. 54"
+          rightPlaceholder="Bv. 46"
+        />
+        <TwoColumnFields
+          leftLabel="1-Benig Hoogte (L)"
+          rightLabel="1-Benig Hoogte (R)"
+          leftName="dropjump_hoogte_l"
+          rightName="dropjump_hoogte_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
+        />
 
-        <SectionTitle text="Functionele testen" />
+        <TwoColumnFields
+          leftLabel="RSI (L)"
+          rightLabel="RSI (R)"
+          leftName="dropjump_rsi_l"
+          rightName="dropjump_rsi_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="Bv. 4.1"
+          rightPlaceholder="Bv. 2.3"
+        />
+
+        <SectionTitle text="Functioneel" />
         <TwoColumnFields
           leftLabel="Single Hop Distance (L)"
           rightLabel="Single Hop Distance (R)"
@@ -274,6 +342,8 @@ export default function FormMaand45() {
           rightName="single_hop_distance_r"
           values={formData}
           onChange={handleChange}
+          leftPlaceholder="in cm"
+          rightPlaceholder="in cm"
         />
 
        {/* 🔸 Opslaan-knop */}
@@ -424,11 +494,32 @@ function SelectField({ label, name, value, onChange, options, placeholder }) {
   );
 }
 
-function TwoColumnFields({ leftLabel, rightLabel, leftName, rightName, values, onChange }) {
+function TwoColumnFields({
+  leftLabel,
+  rightLabel,
+  leftName,
+  rightName,
+  values,
+  onChange,
+  leftPlaceholder,
+  rightPlaceholder,
+}) {
   return (
     <div style={{ display: "flex", gap: "16px", width: "100%" }}>
-      <FormField label={leftLabel} name={leftName} value={values[leftName]} onChange={onChange} />
-      <FormField label={rightLabel} name={rightName} value={values[rightName]} onChange={onChange} />
+      <FormField
+        label={leftLabel}
+        name={leftName}
+        value={values[leftName]}
+        onChange={onChange}
+        placeholder={leftPlaceholder}
+      />
+      <FormField
+        label={rightLabel}
+        name={rightName}
+        value={values[rightName]}
+        onChange={onChange}
+        placeholder={rightPlaceholder}
+      />
     </div>
   );
 }

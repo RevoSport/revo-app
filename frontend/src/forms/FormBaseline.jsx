@@ -1,6 +1,6 @@
 // =====================================================
 // FILE: src/forms/FormBaseline.jsx
-// Revo Sport — Baseline toevoegen (met correcte placeholders)
+// Revo Sport — Baseline toevoegen + tonen bestaande resultaten
 // =====================================================
 
 import React, { useState, useEffect } from "react";
@@ -33,7 +33,9 @@ export default function FormBaseline() {
 
   const [blessures, setBlessures] = useState([]);
   const [statusMsg, setStatusMsg] = useState(null);
+  const [loadedData, setLoadedData] = useState(false);
 
+  // 🔹 Blessures ophalen
   useEffect(() => {
     const fetchBlessures = async () => {
       try {
@@ -51,32 +53,57 @@ export default function FormBaseline() {
     fetchBlessures();
   }, []);
 
+  // 🔹 Haal bestaande baseline op bij blessureselectie
+  useEffect(() => {
+    const fetchBaseline = async () => {
+      if (!formData.blessure_id) return;
+      try {
+        const data = await apiGet(`/baseline/${formData.blessure_id}`);
+        if (data && data.blessure_id) {
+          setFormData({
+            blessure_id: data.blessure_id,
+            datum_onderzoek: data.datum_onderzoek || "",
+            knie_flexie_l: data.knie_flexie_l || "",
+            knie_flexie_r: data.knie_flexie_r || "",
+            knie_extensie_l: data.knie_extensie_l || "",
+            knie_extensie_r: data.knie_extensie_r || "",
+            omtrek_5cm_boven_patella_l: data.omtrek_5cm_boven_patella_l || "",
+            omtrek_5cm_boven_patella_r: data.omtrek_5cm_boven_patella_r || "",
+            omtrek_10cm_boven_patella_l: data.omtrek_10cm_boven_patella_l || "",
+            omtrek_10cm_boven_patella_r: data.omtrek_10cm_boven_patella_r || "",
+            omtrek_20cm_boven_patella_l: data.omtrek_20cm_boven_patella_l || "",
+            omtrek_20cm_boven_patella_r: data.omtrek_20cm_boven_patella_r || "",
+            lag_test: data.lag_test || "",
+            vmo_activatie: data.vmo_activatie || "",
+          });
+          setLoadedData(true);
+        }
+      } catch (err) {
+        console.warn("ℹ️ Geen bestaande baseline gevonden");
+        setLoadedData(false);
+      }
+    };
+    fetchBaseline();
+  }, [formData.blessure_id]);
+
+  // 🔹 Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 🔹 Submit — Upsert automatisch
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await apiPost("/baseline", formData);
-      setFormData({
-        blessure_id: "",
-        datum_onderzoek: "",
-        knie_flexie_l: "",
-        knie_flexie_r: "",
-        knie_extensie_l: "",
-        knie_extensie_r: "",
-        omtrek_5cm_boven_patella_l: "",
-        omtrek_5cm_boven_patella_r: "",
-        omtrek_10cm_boven_patella_l: "",
-        omtrek_10cm_boven_patella_r: "",
-        omtrek_20cm_boven_patella_l: "",
-        omtrek_20cm_boven_patella_r: "",
-        lag_test: "",
-        vmo_activatie: "",
+      setStatusMsg({
+        type: "success",
+        msg: loadedData
+          ? "✅ Bestaande resultaten bijgewerkt"
+          : "✅ Baseline succesvol opgeslagen",
       });
-      setStatusMsg({ type: "success", msg: "✅ Baseline succesvol opgeslagen" });
+      setLoadedData(true);
       setTimeout(() => setStatusMsg(null), 3000);
     } catch (err) {
       console.error("❌ API-fout:", err);
@@ -115,7 +142,7 @@ export default function FormBaseline() {
           letterSpacing: "1px",
         }}
       >
-        Baseline toevoegen
+        Baseline {loadedData ? "— Resultaten bewerken" : "toevoegen"}
       </h2>
 
       <form onSubmit={handleSubmit}>
@@ -140,7 +167,6 @@ export default function FormBaseline() {
           type="date"
           value={formData.datum_onderzoek}
           onChange={handleChange}
-          placeholder="DD/MM/JJJJ"
         />
 
         {/* 🔹 Knie mobiliteit */}
@@ -177,6 +203,7 @@ export default function FormBaseline() {
           onChange={handleChange}
           leftPlaceholder="in cm"
           rightPlaceholder="in cm"
+          
         />
         <TwoColumnFields
           leftLabel="10 cm boven patella (L)"
@@ -197,10 +224,11 @@ export default function FormBaseline() {
           onChange={handleChange}
           leftPlaceholder="in cm"
           rightPlaceholder="in cm"
+          
         />
 
-        {/* 🔹 Functionele testen */}
-        <SectionTitle text="Functionele observaties" />
+        {/* 🔹 Functionele observaties */}
+        <SectionTitle text="Functioneel" />
         <div style={{ display: "flex", gap: "16px", width: "100%" }}>
           <SelectField
             label="Lag test"
@@ -210,8 +238,9 @@ export default function FormBaseline() {
             options={[
               { value: "Ja", label: "Ja" },
               { value: "Nee", label: "Nee" },
+              { value: "Nvt", label: "Nvt" },
             ]}
-            placeholder="Kies resultaat"
+            placeholder="Kies"
           />
           <SelectField
             label="VMO activatie"
@@ -221,12 +250,13 @@ export default function FormBaseline() {
             options={[
               { value: "Ja", label: "Ja" },
               { value: "Nee", label: "Nee" },
+              { value: "Nvt", label: "Nvt" },
             ]}
-            placeholder="Kies resultaat"
+            placeholder="Kies"
           />
         </div>
 
-        {/* 🔸 Opslaan-knop */}
+        {/* 🔸 Opslaan */}
         <motion.button
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
@@ -248,16 +278,6 @@ export default function FormBaseline() {
             cursor: "pointer",
             letterSpacing: "0.5px",
             textTransform: "uppercase",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#fff";
-            e.currentTarget.style.color = "#fff";
-            e.currentTarget.style.boxShadow = "0 0 8px rgba(255,121,0,0.25)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = COLOR_ACCENT;
-            e.currentTarget.style.color = COLOR_ACCENT;
-            e.currentTarget.style.boxShadow = "none";
           }}
         >
           Opslaan
@@ -285,9 +305,7 @@ export default function FormBaseline() {
           </motion.p>
         )}
       </AnimatePresence>
-
-      {/* 🎨 Kalenderstijl gelijk aan Blessure */}
-      <style>{`
+            <style>{`
         input::placeholder,
         select:invalid {
           color: ${COLOR_PLACEHOLDER};
@@ -318,7 +336,7 @@ export default function FormBaseline() {
 }
 
 // =====================================================
-// 🔹 Subcomponenten
+// 🔹 Subcomponenten (identiek aan jouw stijl)
 // =====================================================
 function FormField({ label, name, value, onChange, type = "text", placeholder }) {
   return (

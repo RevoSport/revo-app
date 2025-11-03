@@ -1,10 +1,10 @@
 // =====================================================
-// FILE: src/forms/FormMaand6.jsx
-// Revo Sport — Maand 6 toevoegen (zelfde stijl als Maand45/Maand3)
+// FILE: src/forms/FormWeek6.jsx
+// Revo Sport — Week 6 toevoegen (zelfde stijl als Baseline/Blessure)
 // =====================================================
 
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPost } from "../api";
+import { apiGet, apiPost } from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 
 const COLOR_ACCENT = "#FF7900";
@@ -13,7 +13,7 @@ const COLOR_TEXT = "#ffffff";
 const COLOR_MUTED = "#c9c9c9";
 const COLOR_PLACEHOLDER = "rgba(255,255,255,0.55)";
 
-export default function FormMaand6() {
+export default function FormWeek6() {
   const [formData, setFormData] = useState({
     blessure_id: "",
     datum_onderzoek: "",
@@ -29,8 +29,6 @@ export default function FormMaand6() {
     kracht_quadriceps_60_r: "",
     kracht_hamstrings_30_l: "",
     kracht_hamstrings_30_r: "",
-    kracht_hamstrings_90_90_l: "",
-    kracht_hamstrings_90_90_r: "",
     kracht_soleus_l: "",
     kracht_soleus_r: "",
     kracht_abductoren_kort_l: "",
@@ -41,28 +39,12 @@ export default function FormMaand6() {
     kracht_adductoren_kort_r: "",
     kracht_adductoren_lang_l: "",
     kracht_adductoren_lang_r: "",
-    kracht_exorotatoren_heup_l: "",
-    kracht_exorotatoren_heup_r: "",
-    kracht_nordics_l: "",
-    kracht_nordics_r: "",
-    cmj_asymmetrie_l: "",
-    cmj_asymmetrie_r: "",
-    cmj_hoogte_2benig: "",
-    cmj_hoogte_l: "",
-    cmj_hoogte_r: "",
-    cmj_lsi: "",
-    dropjump_hoogte_l: "",
-    dropjump_hoogte_r: "",
-    dropjump_rsi_l: "",
-    dropjump_rsi_r: "",
-    dropjump_lsi: "",
-    dropjump_steunname_landing_l: "",
-    dropjump_steunname_landing_r: "",
-    dropjump_hoogte_2benig: "",
-    single_hop_distance_l: "",
-    single_hop_distance_r: "",
-    sidehop_l: "",
-    sidehop_r: "",
+    stepdown_valgus_score_l: "",
+    stepdown_valgus_score_r: "",
+    stepdown_pelvische_controle_l: "",
+    stepdown_pelvische_controle_r: "",
+    squat_forceplate_l: "",
+    squat_forceplate_r: "",
     aantal_sessies: "",
   });
 
@@ -89,20 +71,46 @@ export default function FormMaand6() {
     fetchBlessures();
   }, []);
 
+  // 🔹 Bestaande Week6-data ophalen bij blessureselectie
+useEffect(() => {
+  const fetchWeek6 = async () => {
+    if (!formData.blessure_id) return;
+    try {
+      const data = await apiGet(`/week6/${formData.blessure_id}`);
+      if (data && data.blessure_id) {
+        setFormData({
+          ...formData,
+          ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? ""])),
+        });
+        setLoadedData(true);
+      } else {
+        setLoadedData(false);
+      }
+    } catch {
+      setLoadedData(false);
+    }
+  };
+  fetchWeek6();
+  // eslint-disable-next-line
+}, [formData.blessure_id]);
+
+
+  // 🔹 Input handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 🔹 Opslaan
 const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    await apiPost("/maand6", formData);
+    await apiPost("/week6", formData);
     setStatusMsg({
       type: "success",
       msg: loadedData
         ? "✅ Bestaande resultaten bijgewerkt"
-        : "✅ Maand 6 succesvol opgeslagen",
+        : "✅ Week 6 succesvol opgeslagen",
     });
     setLoadedData(true);
     setTimeout(() => setStatusMsg(null), 3000);
@@ -113,67 +121,27 @@ const handleSubmit = async (e) => {
   }
 };
 
-  // 🔹 Bestaande Maand6-data ophalen bij blessureselectie
-useEffect(() => {
-  if (!formData.blessure_id) return;
-
-  const fetchMaand6 = async () => {
-    try {
-      const data = await apiGet(`/maand6/${formData.blessure_id}`);
-      if (data && data.blessure_id) {
-      setFormData((prev) => ({
-        ...prev,
-        ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? ""])),
-        blessure_id: prev.blessure_id, // ✅ behoud selectie
-      }));
-        setLoadedData(true);
-      } else {
-        setLoadedData(false);
-      }
-    } catch {
-      setLoadedData(false);
-    }
-  };
-
-  fetchMaand6();
-  // eslint-disable-next-line
-}, [formData.blessure_id]);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      style={{
-        background: COLOR_BG,
-        borderRadius: 12,
-        padding: "40px 60px",
-        maxWidth: "650px",
-        margin: "0 auto 80px",
-        boxShadow: "0 0 10px rgba(0,0,0,0.3)",
-        border: `1px solid rgba(255,255,255,0.08)`,
-        color: COLOR_TEXT,
-        textAlign: "left",
-        fontFamily:
-          "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-      }}
-    >
-    <h2
-      style={{
-        textAlign: "center",
-        color: COLOR_TEXT,
-        fontSize: 18,
-        fontWeight: 700,
-        textTransform: "uppercase",
-        marginBottom: "25px",
-        letterSpacing: "1px",
-      }}
-    >
-      Maand 6 — {loadedData ? "Resultaten bewerken" : "toevoegen"}
-    </h2>
+style={{
+  background: "#111",
+  color: "#fff",
+  padding: "20px 30px 80px",
+  maxWidth: 500,
+  margin: "0 auto",
+  textAlign: "left",
+  fontFamily:
+    "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+}}
 
+    >
 
       <form onSubmit={handleSubmit}>
+        {/* 🔹 Blessure selecteren */}
         <SelectField
           label="Blessure (Patiënt)"
           name="blessure_id"
@@ -193,8 +161,10 @@ useEffect(() => {
           type="date"
           value={formData.datum_onderzoek}
           onChange={handleChange}
+          placeholder="DD/MM/JJJJ"
         />
 
+        {/* 🔹 Sessie-informatie */}
         <FormField
           label="Aantal sessies"
           name="aantal_sessies"
@@ -202,8 +172,8 @@ useEffect(() => {
           onChange={handleChange}
           placeholder="Aantal"
         />
-        <div style={{ marginBottom: "25px" }}></div>
 
+        {/* 🔹 Knie mobiliteit */}
         <SectionTitle text="Knie mobiliteit (°)" />
         <TwoColumnFields
           leftLabel="Flexie"
@@ -216,6 +186,7 @@ useEffect(() => {
           rightPlaceholder="in °"
         />
 
+        {/* 🔹 Omtrek */}
         <SectionTitle text="Omtrek boven patella (cm)" />
         <TwoColumnFields
           leftLabel="5 cm boven patella (L)"
@@ -248,7 +219,8 @@ useEffect(() => {
           rightPlaceholder="in cm"
         />
 
-        <SectionTitle text="Spierkracht (Nm)" />
+        {/* 🔹 Krachtmetingen */}
+        <SectionTitle text="Spierkracht (N)" />
         <TwoColumnFields
           leftLabel="Quadriceps 60° (L)"
           rightLabel="Quadriceps 60° (R)"
@@ -270,10 +242,10 @@ useEffect(() => {
           rightPlaceholder="in N"
         />
         <TwoColumnFields
-          leftLabel="Hamstrings 90-90° (L)"
-          rightLabel="Hamstrings 90-90° (R)"
-          leftName="kracht_hamstrings_90_90_l"
-          rightName="kracht_hamstrings_90_90_r"
+          leftLabel="Soleus (L)"
+          rightLabel="Soleus (R)"
+          leftName="kracht_soleus_l"
+          rightName="kracht_soleus_r"
           values={formData}
           onChange={handleChange}
           leftPlaceholder="in N"
@@ -309,7 +281,7 @@ useEffect(() => {
           leftPlaceholder="in N"
           rightPlaceholder="in N"
         />
-       <TwoColumnFields
+        <TwoColumnFields
           leftLabel="Abductoren lang (L)"
           rightLabel="Abductoren lang (R)"
           leftName="kracht_abductoren_lang_l"
@@ -319,126 +291,42 @@ useEffect(() => {
           leftPlaceholder="in N"
           rightPlaceholder="in N"
         />
-        <TwoColumnFields
-          leftLabel="Exorotatoren heup (L)"
-          rightLabel="Exorotatoren heup (R)"
-          leftName="kracht_exorotatoren_heup_l"
-          rightName="kracht_exorotatoren_heup_r"
-          values={formData}
-          onChange={handleChange}leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Soleus (L)"
-          rightLabel="Soleus (R)"
-          leftName="kracht_soleus_l"
-          rightName="kracht_soleus_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Nordics (L)"
-          rightLabel="Nordics (R)"
-          leftName="kracht_nordics_l"
-          rightName="kracht_nordics_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
 
-        <SectionTitle text="Counter Movement Jump (CMJ)" />
-        <TwoColumnFields
-          leftLabel="2-Benig Landing % (L)"
-          rightLabel="2-Benig Landing % (R)"
-          leftName="cmj_asymmetrie_l"
-          rightName="cmj_asymmetrie_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="Bv. 54"
-          rightPlaceholder="Bv. 46"
-        />
-        <FormField
-          label="2-Benig Hoogte"
-          name="cmj_hoogte_2benig"
-          value={formData.cmj_hoogte_2benig}
-          onChange={handleChange}
-          placeholder="in cm"
-        />
-        <TwoColumnFields
-          leftLabel="1-Benig Hoogte (L)"
-          rightLabel="1-Benig Hoogte (R)"
-          leftName="cmj_hoogte_l"
-          rightName="cmj_hoogte_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in cm"
-          rightPlaceholder="in cm"
-        />
-
-        <SectionTitle text="Drop Jump" />
-        <TwoColumnFields
-          leftLabel="2-Benig Steunname landing (L)"
-          rightLabel="2-Benig Steunname landing (R)"
-          leftName="dropjump_steunname_landing_l"
-          rightName="dropjump_steunname_landing_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="Bv. 54"
-          rightPlaceholder="Bv. 46"
-        />
-        <FormField
-          label="2-Benig Hoogte"
-          name="dropjump_hoogte_2benig"
-          value={formData.dropjump_hoogte_2benig}
-          onChange={handleChange}
-          placeholder="in cm"
-        />
-        <TwoColumnFields
-          leftLabel="1-Benig Hoogte (L)"
-          rightLabel="1-Benig Hoogte (R)"
-          leftName="dropjump_hoogte_l"
-          rightName="dropjump_hoogte_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in cm"
-          rightPlaceholder="in cm"
-        />
-        <TwoColumnFields
-          leftLabel="RSI (L)"
-          rightLabel="RSI (R)"
-          leftName="dropjump_rsi_l"
-          rightName="dropjump_rsi_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="Bv. 4.1"
-          rightPlaceholder="Bv. 1.4"
-        />
-
+        {/* 🔹 Step Down Test */}
         <SectionTitle text="Functioneel" />
         <TwoColumnFields
-          leftLabel="Single Hop Distance (L)"
-          rightLabel="Single Hop Distance (R)"
-          leftName="single_hop_distance_l"
-          rightName="single_hop_distance_r"
+          leftLabel="Valgus controle (L)"
+          rightLabel="Valgus controle (R)"
+          leftName="stepdown_valgus_score_l"
+          rightName="stepdown_valgus_score_r"
           values={formData}
           onChange={handleChange}
-          leftPlaceholder="in cm"
-          rightPlaceholder="in cm"
+          leftPlaceholder="Score 0 - 3"
+          rightPlaceholder="Score 0 - 3"
         />
         <TwoColumnFields
-          leftLabel="Side Hop (L)"
-          rightLabel="Side Hop (R)"
-          leftName="sidehop_l"
-          rightName="sidehop_r"
+          leftLabel="Pelvische controle (L)"
+          rightLabel="Pelvische controle (R)"
+          leftName="stepdown_pelvische_controle_l"
+          rightName="stepdown_pelvische_controle_r"
           values={formData}
           onChange={handleChange}
-          leftPlaceholder="Aantal"
-          rightPlaceholder="Aantal"
+          leftPlaceholder="Score 0 - 3"
+          rightPlaceholder="Score 0 - 3"
         />
 
+        {/* 🔹 Squat Forceplate */}
+        <SectionTitle text="Squat Forceplate (%)" />
+        <TwoColumnFields
+          leftLabel="% Verdeling (L)"
+          rightLabel="% Verdeling (R)"
+          leftName="squat_forceplate_l"
+          rightName="squat_forceplate_r"
+          values={formData}
+          onChange={handleChange}
+          leftPlaceholder="Bv. 54"
+          rightPlaceholder="Bv. 46"
+        />
 
         {/* 🔸 Opslaan-knop */}
         <motion.button
@@ -478,6 +366,7 @@ useEffect(() => {
         </motion.button>
       </form>
 
+      {/* ✅ Feedbackmelding */}
       <AnimatePresence>
         {statusMsg && (
           <motion.p
@@ -498,7 +387,8 @@ useEffect(() => {
           </motion.p>
         )}
       </AnimatePresence>
-                  {/* 🎨 Kalenderstijl identiek aan Blessure */}
+
+      {/* 🎨 Kalenderstijl identiek aan Blessure */}
       <style>{`
         input::placeholder,
         select:invalid {
@@ -530,7 +420,7 @@ useEffect(() => {
 }
 
 // =====================================================
-// 🔹 Subcomponenten (zelfde stijl als Maand45)
+// 🔹 Subcomponenten (ongewijzigd)
 // =====================================================
 function FormField({ label, name, value, onChange, type = "text", placeholder }) {
   return (
@@ -561,7 +451,7 @@ function FormField({ label, name, value, onChange, type = "text", placeholder })
 
 function SelectField({ label, name, value, onChange, options, placeholder }) {
   return (
-    <div style={{ flex: 1, minWidth: "calc(50% - 8px)", marginBottom: "18px" }}>
+    <div style={{ flex: 1, marginBottom: "18px" }}>
       <label style={{ display: "block", color: COLOR_MUTED, fontSize: 13, marginBottom: 6 }}>
         {label}
       </label>

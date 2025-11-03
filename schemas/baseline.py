@@ -1,6 +1,7 @@
 # =====================================================
 # FILE: schemas/baseline.py
 # Revo Sport API — Pydantic Schema voor Baseline testing
+# (Upsert-compatible versie)
 # =====================================================
 
 from datetime import date, datetime
@@ -8,9 +9,6 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
-# =====================================================
-# 🔹 BaselineSchema
-# =====================================================
 class BaselineSchema(BaseModel):
     blessure_id: int
 
@@ -32,8 +30,8 @@ class BaselineSchema(BaseModel):
     omtrek_20cm_boven_patella_r: Optional[float] = Field(default=None, description="Omtrek 20 cm boven patella R")
 
     # 🔹 Functionele observaties
-    lag_test: Optional[str] = Field(default=None, description="Lag test (Ja/Nee)")
-    vmo_activatie: Optional[str] = Field(default=None, description="VMO activatie (Ja/Nee)")
+    lag_test: Optional[str] = Field(default=None, pattern="^(Ja|Nee|Nvt)$", description="Lag test (Ja/Nee/Nvt)")
+    vmo_activatie: Optional[str] = Field(default=None, pattern="^(Ja|Nee|Nvt)$", description="VMO activatie (Ja/Nee/Nvt)")
 
     # ✅ Datumvalidatie (ondersteunt zowel DD/MM/YYYY als YYYY-MM-DD)
     @field_validator("datum_onderzoek", mode="before")

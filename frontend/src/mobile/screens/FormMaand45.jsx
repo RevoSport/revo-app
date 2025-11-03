@@ -1,10 +1,10 @@
 // =====================================================
-// FILE: src/forms/FormMaand6.jsx
-// Revo Sport — Maand 6 toevoegen (zelfde stijl als Maand45/Maand3)
+// FILE: src/forms/FormMaand45.jsx
+// Revo Sport — Maand 4.5 toevoegen (volledig conform schema/model)
 // =====================================================
 
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPost } from "../api";
+import { apiGet, apiPost } from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 
 const COLOR_ACCENT = "#FF7900";
@@ -13,7 +13,7 @@ const COLOR_TEXT = "#ffffff";
 const COLOR_MUTED = "#c9c9c9";
 const COLOR_PLACEHOLDER = "rgba(255,255,255,0.55)";
 
-export default function FormMaand6() {
+export default function FormMaand45() {
   const [formData, setFormData] = useState({
     blessure_id: "",
     datum_onderzoek: "",
@@ -61,8 +61,6 @@ export default function FormMaand6() {
     dropjump_hoogte_2benig: "",
     single_hop_distance_l: "",
     single_hop_distance_r: "",
-    sidehop_l: "",
-    sidehop_r: "",
     aantal_sessies: "",
   });
 
@@ -97,12 +95,12 @@ export default function FormMaand6() {
 const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    await apiPost("/maand6", formData);
+    await apiPost("/maand45", formData);
     setStatusMsg({
       type: "success",
       msg: loadedData
         ? "✅ Bestaande resultaten bijgewerkt"
-        : "✅ Maand 6 succesvol opgeslagen",
+        : "✅ Maand 4.5 succesvol opgeslagen",
     });
     setLoadedData(true);
     setTimeout(() => setStatusMsg(null), 3000);
@@ -113,19 +111,18 @@ const handleSubmit = async (e) => {
   }
 };
 
-  // 🔹 Bestaande Maand6-data ophalen bij blessureselectie
+// 🔹 Bestaande Maand4.5-data ophalen bij blessureselectie
 useEffect(() => {
   if (!formData.blessure_id) return;
 
-  const fetchMaand6 = async () => {
+  const fetchMaand45 = async () => {
     try {
-      const data = await apiGet(`/maand6/${formData.blessure_id}`);
+      const data = await apiGet(`/maand45/${formData.blessure_id}`);
       if (data && data.blessure_id) {
-      setFormData((prev) => ({
-        ...prev,
-        ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? ""])),
-        blessure_id: prev.blessure_id, // ✅ behoud selectie
-      }));
+        setFormData((prev) => ({
+          ...prev,
+          ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v ?? ""])),
+        }));
         setLoadedData(true);
       } else {
         setLoadedData(false);
@@ -135,45 +132,31 @@ useEffect(() => {
     }
   };
 
-  fetchMaand6();
+  fetchMaand45();
   // eslint-disable-next-line
 }, [formData.blessure_id]);
+
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      style={{
-        background: COLOR_BG,
-        borderRadius: 12,
-        padding: "40px 60px",
-        maxWidth: "650px",
-        margin: "0 auto 80px",
-        boxShadow: "0 0 10px rgba(0,0,0,0.3)",
-        border: `1px solid rgba(255,255,255,0.08)`,
-        color: COLOR_TEXT,
-        textAlign: "left",
-        fontFamily:
-          "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-      }}
-    >
-    <h2
-      style={{
-        textAlign: "center",
-        color: COLOR_TEXT,
-        fontSize: 18,
-        fontWeight: 700,
-        textTransform: "uppercase",
-        marginBottom: "25px",
-        letterSpacing: "1px",
-      }}
-    >
-      Maand 6 — {loadedData ? "Resultaten bewerken" : "toevoegen"}
-    </h2>
+style={{
+  background: "#111",
+  color: "#fff",
+  padding: "20px 30px 80px",
+  maxWidth: 500,
+  margin: "0 auto",
+  textAlign: "left",
+  fontFamily:
+    "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+}}
 
+    >
 
       <form onSubmit={handleSubmit}>
+        {/* 🔹 Blessure selecteren */}
         <SelectField
           label="Blessure (Patiënt)"
           name="blessure_id"
@@ -202,7 +185,6 @@ useEffect(() => {
           onChange={handleChange}
           placeholder="Aantal"
         />
-        <div style={{ marginBottom: "25px" }}></div>
 
         <SectionTitle text="Knie mobiliteit (°)" />
         <TwoColumnFields
@@ -248,106 +230,31 @@ useEffect(() => {
           rightPlaceholder="in cm"
         />
 
-        <SectionTitle text="Spierkracht (Nm)" />
-        <TwoColumnFields
-          leftLabel="Quadriceps 60° (L)"
-          rightLabel="Quadriceps 60° (R)"
-          leftName="kracht_quadriceps_60_l"
-          rightName="kracht_quadriceps_60_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Hamstrings 30° (L)"
-          rightLabel="Hamstrings 30° (R)"
-          leftName="kracht_hamstrings_30_l"
-          rightName="kracht_hamstrings_30_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Hamstrings 90-90° (L)"
-          rightLabel="Hamstrings 90-90° (R)"
-          leftName="kracht_hamstrings_90_90_l"
-          rightName="kracht_hamstrings_90_90_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Adductoren kort (L)"
-          rightLabel="Adductoren kort (R)"
-          leftName="kracht_adductoren_kort_l"
-          rightName="kracht_adductoren_kort_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Abductoren kort (L)"
-          rightLabel="Abductoren kort (R)"
-          leftName="kracht_abductoren_kort_l"
-          rightName="kracht_abductoren_kort_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Adductoren lang (L)"
-          rightLabel="Adductoren lang (R)"
-          leftName="kracht_adductoren_lang_l"
-          rightName="kracht_adductoren_lang_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-       <TwoColumnFields
-          leftLabel="Abductoren lang (L)"
-          rightLabel="Abductoren lang (R)"
-          leftName="kracht_abductoren_lang_l"
-          rightName="kracht_abductoren_lang_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Exorotatoren heup (L)"
-          rightLabel="Exorotatoren heup (R)"
-          leftName="kracht_exorotatoren_heup_l"
-          rightName="kracht_exorotatoren_heup_r"
-          values={formData}
-          onChange={handleChange}leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Soleus (L)"
-          rightLabel="Soleus (R)"
-          leftName="kracht_soleus_l"
-          rightName="kracht_soleus_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
-        <TwoColumnFields
-          leftLabel="Nordics (L)"
-          rightLabel="Nordics (R)"
-          leftName="kracht_nordics_l"
-          rightName="kracht_nordics_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="in N"
-          rightPlaceholder="in N"
-        />
+        <SectionTitle text="Spierkracht (N)" />
+        {[
+          ["Quadriceps 60°", "kracht_quadriceps_60_l", "kracht_quadriceps_60_r"],
+          ["Hamstrings 30°", "kracht_hamstrings_30_l", "kracht_hamstrings_30_r"],
+          ["Hamstrings 90-90°", "kracht_hamstrings_90_90_l", "kracht_hamstrings_90_90_r"],
+          ["Adductoren kort", "kracht_adductoren_kort_l", "kracht_adductoren_kort_r"],
+          ["Abductoren kort", "kracht_abductoren_kort_l", "kracht_abductoren_kort_r"],
+          ["Adductoren lang", "kracht_adductoren_lang_l", "kracht_adductoren_lang_r"],
+          ["Abductoren lang", "kracht_abductoren_lang_l", "kracht_abductoren_lang_r"],
+          ["Exorotatoren heup", "kracht_exorotatoren_heup_l", "kracht_exorotatoren_heup_r"],
+          ["Soleus", "kracht_soleus_l", "kracht_soleus_r"],
+          ["Nordics", "kracht_nordics_l", "kracht_nordics_r"],
+        ].map(([label, left, right]) => (
+          <TwoColumnFields
+            key={label}
+            leftLabel={`${label} (L)`}
+            rightLabel={`${label} (R)`}
+            leftName={left}
+            rightName={right}
+            values={formData}
+            onChange={handleChange}
+            leftPlaceholder="in N"
+            rightPlaceholder="in N"
+          />
+        ))}
 
         <SectionTitle text="Counter Movement Jump (CMJ)" />
         <TwoColumnFields
@@ -360,13 +267,7 @@ useEffect(() => {
           leftPlaceholder="Bv. 54"
           rightPlaceholder="Bv. 46"
         />
-        <FormField
-          label="2-Benig Hoogte"
-          name="cmj_hoogte_2benig"
-          value={formData.cmj_hoogte_2benig}
-          onChange={handleChange}
-          placeholder="in cm"
-        />
+        <FormField label="2-Benig Hoogte" name="cmj_hoogte_2benig" value={formData.cmj_hoogte_2benig} onChange={handleChange} placeholder="In cm"/>
         <TwoColumnFields
           leftLabel="1-Benig Hoogte (L)"
           rightLabel="1-Benig Hoogte (R)"
@@ -379,6 +280,12 @@ useEffect(() => {
         />
 
         <SectionTitle text="Drop Jump" />
+        <FormField 
+          label="2-Benig Hoogte" 
+          name="dropjump_hoogte_2benig" 
+          value={formData.dropjump_hoogte_2benig} 
+          onChange={handleChange} 
+          placeholder="In cm" />
         <TwoColumnFields
           leftLabel="2-Benig Steunname landing (L)"
           rightLabel="2-Benig Steunname landing (R)"
@@ -388,13 +295,6 @@ useEffect(() => {
           onChange={handleChange}
           leftPlaceholder="Bv. 54"
           rightPlaceholder="Bv. 46"
-        />
-        <FormField
-          label="2-Benig Hoogte"
-          name="dropjump_hoogte_2benig"
-          value={formData.dropjump_hoogte_2benig}
-          onChange={handleChange}
-          placeholder="in cm"
         />
         <TwoColumnFields
           leftLabel="1-Benig Hoogte (L)"
@@ -406,6 +306,7 @@ useEffect(() => {
           leftPlaceholder="in cm"
           rightPlaceholder="in cm"
         />
+
         <TwoColumnFields
           leftLabel="RSI (L)"
           rightLabel="RSI (R)"
@@ -414,7 +315,7 @@ useEffect(() => {
           values={formData}
           onChange={handleChange}
           leftPlaceholder="Bv. 4.1"
-          rightPlaceholder="Bv. 1.4"
+          rightPlaceholder="Bv. 2.3"
         />
 
         <SectionTitle text="Functioneel" />
@@ -428,19 +329,8 @@ useEffect(() => {
           leftPlaceholder="in cm"
           rightPlaceholder="in cm"
         />
-        <TwoColumnFields
-          leftLabel="Side Hop (L)"
-          rightLabel="Side Hop (R)"
-          leftName="sidehop_l"
-          rightName="sidehop_r"
-          values={formData}
-          onChange={handleChange}
-          leftPlaceholder="Aantal"
-          rightPlaceholder="Aantal"
-        />
 
-
-        {/* 🔸 Opslaan-knop */}
+       {/* 🔸 Opslaan-knop */}
         <motion.button
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
@@ -498,7 +388,7 @@ useEffect(() => {
           </motion.p>
         )}
       </AnimatePresence>
-                  {/* 🎨 Kalenderstijl identiek aan Blessure */}
+            {/* 🎨 Kalenderstijl identiek aan Blessure */}
       <style>{`
         input::placeholder,
         select:invalid {
@@ -530,14 +420,12 @@ useEffect(() => {
 }
 
 // =====================================================
-// 🔹 Subcomponenten (zelfde stijl als Maand45)
+// 🔹 Subcomponenten
 // =====================================================
 function FormField({ label, name, value, onChange, type = "text", placeholder }) {
   return (
     <div style={{ flex: 1, minWidth: "calc(50% - 8px)", marginBottom: "18px" }}>
-      <label style={{ display: "block", color: COLOR_MUTED, fontSize: 13, marginBottom: 6 }}>
-        {label}
-      </label>
+      <label style={{ display: "block", color: COLOR_MUTED, fontSize: 13, marginBottom: 6 }}>{label}</label>
       <input
         type={type}
         name={name}
@@ -562,9 +450,7 @@ function FormField({ label, name, value, onChange, type = "text", placeholder })
 function SelectField({ label, name, value, onChange, options, placeholder }) {
   return (
     <div style={{ flex: 1, minWidth: "calc(50% - 8px)", marginBottom: "18px" }}>
-      <label style={{ display: "block", color: COLOR_MUTED, fontSize: 13, marginBottom: 6 }}>
-        {label}
-      </label>
+      <label style={{ display: "block", color: COLOR_MUTED, fontSize: 13, marginBottom: 6 }}>{label}</label>
       <select
         name={name}
         value={value}

@@ -40,7 +40,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
     { title: "Performance", items: ["Performance"] },
     { title: "Monitoring", items: ["KFV Hedes", "KC Floriant"] },
     { title: "Blessurepreventie", items: ["Screening", "Loopanalyse"] },
-    { title: "Oefenschema’s", items: ["Oefenschema’s"] },
+    { title: "Oefenschema", items: ["Oefenschema"] },
   ];
 
   return (
