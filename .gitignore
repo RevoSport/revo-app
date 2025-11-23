@@ -21,3 +21,5 @@ onedrive_config.json
 # Local scripts of tijdelijke bestanden
 scripts/*.py~
 scripts/temp_*.py
+
+cache_media/

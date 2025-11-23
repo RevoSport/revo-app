@@ -2,13 +2,17 @@
 # FILE: main.py
 # Revo Sport API v2.0 — Productieversie met CORS-beveiliging
 # =====================================================
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from colorama import Fore, Style, init as colorama_init
-from models import oefenschema 
 
-# Routers importeren
+
+# =====================================================
+#   ROUTERS
+# =====================================================
 from routers import (
     auth_router,
     patient,
@@ -22,13 +26,18 @@ from routers import (
     onedrive_routes,
     populatie,
     metrics,
-    kracht, 
+    kracht,
     functioneel,
     individueel,
     kinvent,
-    oefenschema,
+    media_proxy,
 )
+
 from security import get_current_user
+from routers.oefenschema.pdf import router as pdf_router
+from routers.oefenschema import router as oefenschema_router
+from routers.oefenschema.mail import router as mail_router
+
 
 # =====================================================
 #   Kleur initialisatie
@@ -45,18 +54,17 @@ app = FastAPI(
 )
 
 # =====================================================
-#   CORS MIDDLEWARE (Frontend-toegang)
+#   CORS
 # =====================================================
 origins = [
-    "http://localhost:3000",           # lokaal React
-    "http://127.0.0.1:3000",           # alternatief localhost
-    "http://localhost:5173",           # lokaal Vite
-    "https://aithlete.revosport.be",   # productie frontend
-    "https://app.revosport.be",        # oudere frontend
-    "https://revosport.vercel.app",    # vaste vercel build
-    "https://*.vercel.app",            # alle preview builds
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "https://aithlete.revosport.be",
+    "https://app.revosport.be",
+    "https://revosport.vercel.app",
+    "https://*.vercel.app",
 ]
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -67,12 +75,21 @@ app.add_middleware(
 )
 
 # =====================================================
-#   ROUTERS REGISTREREN
+#   STATIC FILES
 # =====================================================
-# Publieke router (login)
-app.include_router(auth_router.router)
+from fastapi.staticfiles import StaticFiles
+import os
 
-# Alle andere routes vereisen login
+if not os.path.exists("static"):
+    os.makedirs("static/uploads", exist_ok=True)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# =====================================================
+#   ROUTERS — beveiligd behalve auth
+# =====================================================
+app.include_router(auth_router.router)  # publiek
+
 protected = [Depends(get_current_user)]
 
 app.include_router(patient.router, dependencies=protected)
@@ -86,15 +103,19 @@ app.include_router(timeline.router, dependencies=protected)
 app.include_router(onedrive_routes.router, dependencies=protected)
 app.include_router(populatie.router, dependencies=protected)
 app.include_router(metrics.router, dependencies=protected)
-app.include_router(kracht.router, dependencies=protected)  
+app.include_router(kracht.router, dependencies=protected)
 app.include_router(functioneel.router, dependencies=protected)
 app.include_router(individueel.router, dependencies=protected)
-app.include_router(oefenschema.router)
-app.include_router(kinvent.router)
+app.include_router(kinvent.router, dependencies=protected)
+app.include_router(media_proxy.router, dependencies=protected)  
+app.include_router(oefenschema_router, dependencies=protected)
+app.include_router(pdf_router, dependencies=protected)
+app.include_router(mail_router, dependencies=protected)
+
 
 
 # =====================================================
-#   ROOT ENDPOINT
+#   ROOT
 # =====================================================
 @app.get("/")
 def home():
@@ -102,20 +123,6 @@ def home():
     return {
         "status": "✅ Revo Sport API v2 running",
         "version": "2.0",
-        "routers": [
-            "/patients",
-            "/blessures",
-            "/baseline",
-            "/week6",
-            "/maand3",
-            "/maand45",
-            "/maand6",
-            "/timeline",
-            "/upload_dynamic",
-            "/populatie",
-            "/metrics",
-            "/kracht",  # ✅ toegevoegd aan overzicht
-        ],
     }
 
 # =====================================================
@@ -124,10 +131,4 @@ def home():
 @app.on_event("startup")
 def startup_event():
     print(Fore.GREEN + "WELKOM TERUG." + Style.RESET_ALL)
-    print(
-        Fore.YELLOW
-        + "📂 Routers geladen: patients, blessures, baseline, week6, maand3, maand45, maand6, timeline, onedrive_routes, populatie, metrics, kracht"
-        + Style.RESET_ALL
-    )
-    print(Fore.CYAN + "🌐 Swagger Docs: https://revo-backend-5dji.onrender.com/docs" + Style.RESET_ALL)
-    print(Fore.MAGENTA + "💡 Tip: kleur-logs verschijnen bij elke CRUD-actie in de terminal." + Style.RESET_ALL)
+    print(Fore.CYAN + "🌐 Swagger Docs: (jouw backend URL)/docs" + Style.RESET_ALL)

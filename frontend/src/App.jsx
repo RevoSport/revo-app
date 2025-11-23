@@ -6,7 +6,7 @@ import VoorsteKruisband from "./pages/VoorsteKruisband";
 import { PuffLoader } from "react-spinners";
 import logo2 from "./assets/logo2.png";
 import { useDeviceMode } from "./hooks/useDeviceMode";
-import Oefenschema from "./pages/Oefenschema";
+import Oefenschema from "./pages/Oefenschema/Oefenschema";
 
 const MobileApp = lazy(() => import("./mobile/MobileApp")); // ← nieuw
 
@@ -23,6 +23,14 @@ export default function App() {
   const API_URL = process.env.REACT_APP_API_URL || "https://revo-backend-5dji.onrender.com";
   const logoutTimer = useRef(null);
   const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 60 minuten
+
+  // ✅ Sla ingelogde naam altijd lokaal op
+useEffect(() => {
+  if (userName && userName !== "Gebruiker") {
+    localStorage.setItem("user_name", userName);
+  }
+}, [userName]);
+
 
   // ✅ Backend-check bij opstart
   useEffect(() => {

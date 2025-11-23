@@ -310,4 +310,32 @@ aside div[title="Sidebar verbergen"]:hover,
 aside div[title="Sidebar openen"]:hover {
   color: var(--accent-hover);
 }
+/* =========================================================
+   GLOBAL SCROLLBARS (ChatGPT-stijl)
+========================================================= */
 
+html, body {
+  overflow-y: auto;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(255,255,255,0.22) transparent;
+}
+
+/* Chrome / Edge / Safari */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.22);
+  border-radius: 8px;
+  opacity: 0.35;
+  transition: background 0.25s ease, opacity 0.25s ease;
+}
+
+body:hover ::-webkit-scrollbar-thumb {
+  opacity: 1;
+}

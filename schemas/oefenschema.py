@@ -11,7 +11,7 @@ from datetime import date, datetime
 # 🔹 Oefening
 # -----------------------------------------------------
 class OefeningBase(BaseModel):
-    volgorde: str
+    volgorde: Optional[str] = None
     opmerking: Optional[str] = None
     foto1: Optional[str] = None
     foto2: Optional[str] = None
@@ -27,6 +27,7 @@ class OefeningCreate(OefeningBase):
 
 class OefeningSchema(OefeningBase):
     id: int
+
     class Config:
         orm_mode = True
 
@@ -37,8 +38,6 @@ class OefeningSchema(OefeningBase):
 class OefenschemaBase(BaseModel):
     patient_id: int
     datum: date
-    titel: Optional[str] = None
-    opmerkingen: Optional[str] = None
     created_by: Optional[str] = None
 
 
@@ -52,6 +51,7 @@ class OefenschemaSchema(OefenschemaBase):
     created_at: datetime
     updated_at: datetime
     oefeningen: List[OefeningSchema] = []
+
     class Config:
         orm_mode = True
 
@@ -70,6 +70,7 @@ class PatientCreate(PatientBase):
 
 class PatientSchema(PatientBase):
     id: int
+
     class Config:
         orm_mode = True
 
@@ -87,8 +88,10 @@ class TemplateBase(BaseModel):
 class TemplateSchema(TemplateBase):
     id: int
     created_at: datetime
+
     class Config:
         orm_mode = True
+
 
 # -----------------------------------------------------
 # 🔹 PDF-aanvraag
@@ -96,4 +99,3 @@ class TemplateSchema(TemplateBase):
 class OefenschemaPDFRequest(BaseModel):
     schema_id: int
     extra_bericht: Optional[str] = None
-

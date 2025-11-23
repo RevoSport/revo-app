@@ -1,13 +1,18 @@
+// =====================================================
+// FILE: src/components/Sidebar.jsx
+// Revo Sport — Sidebar (Revo v2 UI + mobile optimised)
+// =====================================================
+
 import React, { useState, useEffect } from "react";
-import logo from "../assets/logo.png";
 import { Menu, X, ChevronLeft, LogOut } from "lucide-react";
+import logo from "../assets/logo.png";
 
 export default function Sidebar({ currentPage, onNavigate, onLogout, userName }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [animateOut, setAnimateOut] = useState(false);
   const WIDTH = 280;
 
+  // Detect mobile
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -19,49 +24,52 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Collapsed state class op body
   useEffect(() => {
     document.body.classList.toggle("sidebar-collapsed", collapsed);
   }, [collapsed]);
 
-  const handleClose = () => {
-    if (isMobile) {
-      setAnimateOut(true);
-      setTimeout(() => {
-        setCollapsed(true);
-        setAnimateOut(false);
-      }, 350);
-    } else {
-      setCollapsed(true);
-    }
-  };
-
+  // Menu-structuur — identiek aan je project
   const sections = [
     { title: "Revalidatie", items: ["Voorste Kruisband"] },
     { title: "Performance", items: ["Performance"] },
     { title: "Monitoring", items: ["KFV Hedes", "KC Floriant"] },
     { title: "Blessurepreventie", items: ["Screening", "Loopanalyse"] },
-    { title: "Oefenschema", items: ["Oefenschema"] },
+    {
+      title: "Oefenschema",
+      items: ["Overzicht","Templates" ,"Schema maken"],
+      map: {
+        "Schema maken": "Oefenschema",
+        Templates: "TemplatesOverzicht",
+        Overzicht: "SchemaOverzicht",
+      },
+    },
   ];
+
+  // Navigate helper
+  const handleNavigate = (item, map) => {
+    const internal = map?.[item] || item;
+    onNavigate(internal);
+    if (isMobile) setCollapsed(true);
+  };
 
   return (
     <>
+      {/* MOBILE OVERLAY */}
       {!collapsed && isMobile && (
         <div
-          onClick={handleClose}
+          onClick={() => setCollapsed(true)}
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.6)",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(3px)",
             zIndex: 90,
-            backdropFilter: "blur(2px)",
-            animation: "fadeInOverlay 0.4s ease forwards",
           }}
-        ></div>
+        />
       )}
 
+      {/* SIDEBAR */}
       <aside
         style={{
           position: "fixed",
@@ -69,99 +77,55 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           left: 0,
           height: "100vh",
           width: WIDTH,
-          background: "var(--panel)",
+          background: "#111",
           borderRight: "2px solid #FF7900",
-          padding: "18px 16px",
-          transform: collapsed
-            ? "translateX(-110%)"
-            : animateOut
-            ? "translateX(-110%)"
-            : "translateX(0)",
-          transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: collapsed ? "translateX(-110%)" : "translateX(0)",
+          transition: "transform .35s cubic-bezier(0.4,0,0.2,1)",
           zIndex: 100,
           display: "flex",
           flexDirection: "column",
+          padding: "18px 16px",
+          color: "#fff",
           fontFamily:
             "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-          color: "var(--text)",
-          animation:
-            !collapsed && !animateOut && isMobile
-              ? "slideIn 0.45s ease-out"
-              : animateOut
-              ? "slideOut 0.35s ease-in"
-              : "none",
-          boxShadow:
-            !collapsed && !animateOut
-              ? "4px 0 15px rgba(0, 0, 0, 0.15)"
-              : "none",
         }}
       >
-        {/* 🔹 SLUITKNOP — X bij mobiel / Chevron bij desktop */}
-        {isMobile ? (
-          <button
-            onClick={handleClose}
-            title="Sluiten"
-            style={{
-              position: "absolute",
-              top: 18,
-              right: 12,
-              color: "var(--text)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px",
-              zIndex: 150,
-              transition: "color 0.25s ease-in-out",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF7900")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text)")}
-          >
-            <X size={22} strokeWidth={2.2} />
-          </button>
-        ) : (
-          <button
-            onClick={() => setCollapsed(true)}
-            title="Sidebar verbergen"
-            style={{
-              position: "absolute",
-              top: 18,
-              right: 8,
-              color: "var(--text)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px",
-              zIndex: 150,
-              transition: "color 0.25s ease-in-out, transform 0.25s ease-in-out",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF7900")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text)")}
-          >
-            <ChevronLeft size={22} strokeWidth={2.2} />
-          </button>
-        )}
+        {/* CLOSE BUTTON */}
+        <button
+          onClick={() => setCollapsed(true)}
+          style={{
+            position: "absolute",
+            top: 18,
+            right: 12,
+            background: "none",
+            border: "none",
+            color: "#ccc",
+            cursor: "pointer",
+          }}
+        >
+          {isMobile ? <X size={22} /> : <ChevronLeft size={22} />}
+        </button>
 
-        {/* === HEADER === */}
+        {/* HEADER */}
         <div
-          onClick={() => onNavigate("Home")}
+          onClick={() => handleNavigate("Home")}
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "flex-end",
-            height: "clamp(90px, 15vh, 130px)",
-            marginBottom: 4,
+            marginTop: 10,
+            marginBottom: 25,
             cursor: "pointer",
+            userSelect: "none",
           }}
         >
           <img
             src={logo}
-            alt="AI.THLETE Logo"
+            alt="AI.THLETE"
             style={{
-              width: "80%",
-              height: "auto",
-              filter: "drop-shadow(0 0 10px rgba(255,121,0,0.35))",
-              transition: "transform 0.3s ease, filter 0.3s ease",
+              width: "75%",
+              filter: "drop-shadow(0 0 12px rgba(255,121,0,0.35))",
+              transition: "all 0.25s ease",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.05)";
@@ -177,64 +141,57 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
 
           <p
             style={{
-              marginTop: 0,
+              margin: 0,
+              marginTop: 6,
               fontSize: 12,
-              color: "#FF7900",
               fontWeight: 700,
               letterSpacing: 1,
+              color: "#FF7900",
               textTransform: "uppercase",
             }}
           >
-            WELKOM, {userName ? userName.toUpperCase() : "GEBRUIKER"}
+            WELKOM, {userName?.toUpperCase() || "GEBRUIKER"}
           </p>
         </div>
 
-        {/* === MENU === */}
-        <nav style={{ flex: 1, overflowY: "auto", marginTop: 10 }}>
-          {sections.map((section) => (
-            <div key={section.title} style={{ marginBottom: 12 }}>
+        {/* MENU */}
+        <nav style={{ flex: 1, overflowY: "auto" }}>
+          {sections.map((sec) => (
+            <div key={sec.title} style={{ marginBottom: 16 }}>
               <div
                 style={{
-                  fontSize: 14,
+                  color: "#FF7900",
+                  fontSize: 13,
                   fontWeight: 700,
-                  letterSpacing: ".08em",
-                  color: "var(--accent)",
+                  letterSpacing: ".06em",
+                  marginBottom: 6,
+                  marginLeft: 2,
                   textTransform: "uppercase",
-                  margin: "14px 2px 8px",
                 }}
               >
-                {section.title}
+                {sec.title}
               </div>
 
-              <div style={{ display: "grid", gap: 8 }}>
-                {section.items.map((item) => {
-                  const isActive = currentPage === item;
+              <div style={{ display: "grid", gap: 6 }}>
+                {sec.items.map((item) => {
+                  const mapped = sec.map?.[item] || item;
+                  const isActive = currentPage === mapped;
+
                   return (
                     <button
                       key={item}
-                      onClick={() => onNavigate(item)}
-                      onMouseEnter={(e) => {
-                        if (!isActive)
-                          e.currentTarget.style.color = "var(--accent)";
-                      }}
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = isActive
-                          ? "#727170"
-                          : "var(--text)")
-                      }
+                      onClick={() => handleNavigate(item, sec.map)}
                       style={{
-                        appearance: "none",
-                        border: 0,
-                        background: "transparent",
-                        color: isActive ? "#727170" : "var(--text)",
-                        textAlign: "left",
-                        padding: "10px 14px",
-                        borderRadius: 10,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        transition: "color .25s ease",
-                      }}
+                      textAlign: "left",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      background: "transparent",       // ← geen highlight
+                      border: "1px solid transparent",
+                      color: isActive ? "#FF7900" : "#ddd",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                    }}
                     >
                       {item}
                     </button>
@@ -245,91 +202,49 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
           ))}
         </nav>
 
-        {/* === LOGOUT BUTTON === */}
-      <div
-        style={{
-          marginTop: "auto",
-          textAlign: "center",
-          paddingTop: 20,
-        }}
-      >
-        <button onClick={onLogout} title="Uitloggen" className="logout-button">
-          <LogOut size={14} strokeWidth={2} />
-          <span>Uitloggen</span>
+        {/* LOGOUT */}
+        <button
+          onClick={onLogout}
+          style={{
+            marginTop: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "transparent",
+            border: "1px solid #FF7900",
+            color: "#FF7900",
+            padding: "8px 14px",
+            borderRadius: 10,
+            cursor: "pointer",
+            fontSize: 13,
+            fontWeight: 500,
+            transition: "all .25s ease",
+            alignSelf: "center",
+          }}
+        >
+          <LogOut size={16} />
+          Uitloggen
         </button>
-      </div>
       </aside>
 
-      {/* 🍔 HAMBURGER-KNOP (openen) */}
+      {/* MOBILE HAMBURGER */}
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          title="Menu openen"
           style={{
             position: "fixed",
             top: 18,
             left: 16,
-            color: "var(--text)",
-            background: "none",
+            background: "transparent",
             border: "none",
-            cursor: "pointer",
-            padding: "4px",
+            color: "#ddd",
             zIndex: 200,
-            transition: "color 0.25s ease-in-out, transform 0.25s ease-in-out",
+            cursor: "pointer",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#FF7900")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text)")}
         >
-          <Menu size={24} strokeWidth={2.2} />
+          <Menu size={26} />
         </button>
       )}
-
-      {/* ✨ Animaties & Logout-button styling */}
-      <style>{`
-        @keyframes slideIn {
-          0% { transform: translateX(-110%); opacity: 0.6; }
-          100% { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-          0% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(-110%); opacity: 0; }
-        }
-        @keyframes fadeInOverlay {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-    .logout-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      border-radius: 10px;
-      padding: 6px 14px; /* ⬅ meer ruimte links/rechts */
-      width: fit-content;
-      margin: 12px auto 12px auto; /* ⬅ geen lijn, meer ademruimte */
-      font-size: 12.5px;
-      font-weight: 500; /* ⬅ iets minder vet */
-      transition: all 0.25s ease;
-      cursor: pointer;
-    }
-
-    .logout-button:hover {
-      border-color: #fff;
-      color: #fff;
-      transform: translateY(-1px);
-      box-shadow: 0 0 8px rgba(255,121,0,0.25);
-    }
-
-    .logout-button:active {
-      transform: translateY(0);
-      opacity: 0.85;
-    }
-
-      `}</style>
     </>
   );
 }

@@ -1,160 +1,139 @@
+# =====================================================
+# FILE: onedrive_service.py
+# Centrale OneDrive service voor RevoSport Oefenschema's
+# Ownerless mode — schrijft altijd naar de OneDrive
+# van de Azure Graph App Owner (zoals vroeger)
+# =====================================================
+
 import os
 import requests
-from datetime import datetime
-from msal import ConfidentialClientApplication
+from fastapi import UploadFile
 from dotenv import load_dotenv
-from pathlib import Path
+
+from onedrive_auth import get_access_token
+
+load_dotenv()
 
 # =====================================================
-#   .ENV LADEN MET ABSOLUUT PAD
+# OneDrive padconfiguratie
 # =====================================================
-env_path = Path(__file__).resolve().parent / ".env"
-load_dotenv(dotenv_path=env_path)
 
-# =====================================================
-#   VARIABELEN INLADEN
-# =====================================================
-CLIENT_ID = os.getenv("CLIENT_ID")
-TENANT_ID = os.getenv("TENANT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-
-# Debug (mag later weg)
-print("DEBUG CLIENT_ID:", CLIENT_ID)
-print("DEBUG TENANT_ID:", TENANT_ID)
-print("DEBUG CLIENT_SECRET:", CLIENT_SECRET[:5], "...")
-
-# =====================================================
-#   MICROSOFT GRAPH CONFIG
-# =====================================================
-AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
-SCOPES = ["https://graph.microsoft.com/.default"]
-OWNER_UPN = "fredericvereecken@revosportgent.onmicrosoft.com"  # <-- jouw zakelijke M365-account
+BASE_FOLDER = "RevoSport/Oefenschema"
+TEMPLATE_FOLDER = f"{BASE_FOLDER}/Templates"
+SCHEMA_FOLDER = f"{BASE_FOLDER}/Schemas"
 
 
 # =====================================================
-#   TOKEN OPHALEN
+# Upload RAW bytes → OneDrive
 # =====================================================
-def get_access_token():
-    app = ConfidentialClientApplication(
-        CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
+def upload_bytes(path: str, content: bytes, content_type: str = "application/octet-stream") -> str:
+    """
+    Upload bytes naar OneDrive (app-owner drive).
+    """
+    token = get_access_token()
+    clean = path.lstrip("/")
+
+    url = f"https://graph.microsoft.com/v1.0/drive/root:/{clean}:/content"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": content_type,
+    }
+
+    r = requests.put(url, headers=headers, data=content)
+
+    if r.status_code not in (200, 201):
+        raise Exception(f"OneDrive upload mislukt ({r.status_code}): {r.text}")
+
+    return clean   # opslaan in je database
+
+
+# =====================================================
+# Upload UploadFile → OneDrive
+# =====================================================
+async def upload_file(path: str, file: UploadFile) -> str:
+    data = await file.read()
+    ctype = file.content_type or "application/octet-stream"
+    return upload_bytes(path, data, ctype)
+
+
+# =====================================================
+# Folder verwijderen
+# =====================================================
+def delete_folder(folder_path: str):
+    """
+    Verwijdert een volledige map op de OneDrive van de app-owner.
+    """
+    token = get_access_token()
+    clean = folder_path.strip("/")
+
+    url = f"https://graph.microsoft.com/v1.0/drive/root:/{clean}"
+
+    r = requests.delete(url, headers={"Authorization": f"Bearer {token}"})
+
+    if r.status_code not in (204, 404):
+        raise Exception(f"Folder verwijderen mislukt ({r.status_code}): {r.text}")
+
+
+# =====================================================
+# Hulpfuncties voor paden
+# =====================================================
+
+def schema_file_path(schema_id: int, filename: str) -> str:
+    return f"{SCHEMA_FOLDER}/{schema_id}/{filename}"
+
+
+def template_file_path(template_id: int, filename: str) -> str:
+    return f"{TEMPLATE_FOLDER}/{template_id}/{filename}"
+
+
+# =====================================================
+# FOTO-UPLOAD VOOR OEFENSCHEMA (Patients/<Patiënt>/<Datum>)
+# =====================================================
+
+def upload_oefening_foto(patient: str, datum_iso: str, volgorde: str, slot: int, file_bytes: bytes):
+    """
+    Upload oefenfoto:
+    RevoSport/Oefenschema/Patients/<PATIËNT>/<YYYY-MM-DD>/Oefening_<volgorde>/foto<slot>.jpg
+    """
+
+    token = get_access_token()
+
+    safe_patient = patient.replace(" ", "_").replace("/", "_")
+    safe_datum = datum_iso.replace("/", "-")
+    safe_volgorde = str(volgorde)
+
+    folder_path = (
+        f"{BASE_FOLDER}/Patients/"
+        f"{safe_patient}/"
+        f"{safe_datum}/"
+        f"Oefening_{safe_volgorde}"
     )
-    result = app.acquire_token_for_client(scopes=SCOPES)
-    if "access_token" not in result:
-        raise Exception(result.get("error_description"))
-    return result["access_token"]
 
+    # map aanmaken indien nodig
+    create_url = f"https://graph.microsoft.com/v1.0/drive/root:/{folder_path}"
+    check = requests.get(create_url, headers={"Authorization": f"Bearer {token}"})
 
-# =====================================================
-#   HULPFUNCTIE - MAPPEN CONTROLEREN/MAKEN
-# =====================================================
-def ensure_folder_structure(folder_path: str, token: str):
-    """
-    Controleert of de opgegeven mapstructuur bestaat in OneDrive,
-    en maakt de mappen aan indien nodig.
-    """
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    parts = folder_path.strip("/").split("/")
-    current_path = ""
-    base_url = f"https://graph.microsoft.com/v1.0/users/{OWNER_UPN}/drive/root"
+    if check.status_code == 404:
+        requests.put(create_url, headers={"Authorization": f"Bearer {token}"})
 
-    for part in parts:
-        current_path = f"{current_path}/{part}" if current_path else part
-        url = f"{base_url}:/{current_path}"
-        resp = requests.get(url, headers=headers)
-        if resp.status_code == 404:  # map bestaat niet -> aanmaken
-            create_url = f"{base_url}:/{current_path}:/children"
-            payload = {"name": part, "folder": {}, "@microsoft.graph.conflictBehavior": "fail"}
-            r = requests.post(create_url, headers=headers, json=payload)
-            if r.status_code not in (200, 201):
-                raise Exception(f"Kon map niet aanmaken: {current_path} - {r.text}")
+    filename = f"foto{slot}.jpg"
 
+    upload_url = (
+        f"https://graph.microsoft.com/v1.0/drive/root:/{folder_path}/{filename}:/content"
+    )
 
-# =====================================================
-#   UPLOAD NAAR ONEDRIVE MET DYNAMISCHE STRUCTUUR
-# =====================================================
-def upload_to_onedrive(
-    local_path: str,
-    remote_name: str,
-    patient_naam: str,
-    datum: str = None,
-    base_folder="RevoSport/DataLab",
-):
-    """
-    Uploadt een bestand naar OneDrive in de structuur:
-    /RevoSport/DataLab/{PatiëntNaam}/{Datum}/
-    """
+    res = requests.put(
+        upload_url,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "image/jpeg"},
+        data=file_bytes
+    )
 
-    token = get_access_token()
-    headers = {"Authorization": f"Bearer {token}"}
+    if res.status_code not in (200, 201):
+        raise Exception(f"OneDrive upload fout: {res.text}")
 
-    # Datum automatisch invullen indien leeg
-    if not datum:
-        datum = datetime.today().strftime("%Y-%m-%d")
+    data = res.json()
+    web_url = data.get("webUrl")
+    graph_path = f"{folder_path}/{filename}"
 
-    # Volledige mapstructuur
-    folder_path = f"{base_folder}/{patient_naam}/{datum}"
-
-    # Controleer of mappen bestaan, anders aanmaken
-    ensure_folder_structure(folder_path, token)
-
-    # Uploaden
-    url = f"https://graph.microsoft.com/v1.0/users/{OWNER_UPN}/drive/root:/{folder_path}/{remote_name}:/content"
-    with open(local_path, "rb") as file:
-        response = requests.put(url, headers=headers, data=file)
-
-    if response.status_code in (200, 201):
-        data = response.json()
-        return {
-            "status": "success",
-            "patient": patient_naam,
-            "datum": datum,
-            "name": data["name"],
-            "url": data["webUrl"],
-            "size_kb": round(data["size"] / 1024, 2),
-            "folder_path": folder_path,
-        }
-    else:
-        raise Exception(f"Upload failed: {response.status_code} - {response.text}")
-    
-    # =====================================================
-#   UPLOAD VANUIT GEHEUGEN (BYTES)
-# =====================================================
-def upload_to_onedrive_bytes(
-    file_bytes: bytes,
-    remote_name: str,
-    patient_naam: str,
-    datum: str = None,
-    base_folder="RevoSport/DataLab",
-):
-    """
-    Uploadt een bestand dat al in het geheugen zit (bijv. PDF-bytes)
-    naar OneDrive in de structuur:
-    /RevoSport/DataLab/{PatiëntNaam}/{Datum}/
-    """
-    token = get_access_token()
-    headers = {"Authorization": f"Bearer {token}"}
-
-    if not datum:
-        datum = datetime.today().strftime("%Y-%m-%d")
-
-    folder_path = f"{base_folder}/{patient_naam}/{datum}"
-    ensure_folder_structure(folder_path, token)
-
-    # Upload rechtstreeks uit geheugen
-    url = f"https://graph.microsoft.com/v1.0/users/{OWNER_UPN}/drive/root:/{folder_path}/{remote_name}:/content"
-    response = requests.put(url, headers=headers, data=file_bytes)
-
-    if response.status_code in (200, 201):
-        data = response.json()
-        return {
-            "status": "success",
-            "patient": patient_naam,
-            "datum": datum,
-            "name": data["name"],
-            "url": data["webUrl"],
-            "size_kb": round(data["size"] / 1024, 2),
-            "folder_path": folder_path,
-        }
-    else:
-        raise Exception(f"Upload (bytes) failed: {response.status_code} - {response.text}")
-
+    return web_url, graph_path
