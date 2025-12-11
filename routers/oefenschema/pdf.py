@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: routers/oefenschema/pdf.py
-# PDF-generatie voor Schema's — oude layout (met grijze kaders)
+# PDF-generatie voor Schema's — FINAL STABLE VERSION
 # =====================================================
 
 import io
@@ -12,12 +12,14 @@ from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from PIL import Image as PILImage
+from PIL import Image as PILImage, UnidentifiedImageError
 
 from db import SessionLocal
-from models.oefenschema import Oefenschema, Oefening
+from models.oefenschema import Oefenschema
 from routers.oefenschema.paths import schema_pdf_path
 from onedrive_service import upload_bytes
+
+from media_cache import cache_path_for
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
@@ -48,44 +50,75 @@ def get_db():
 
 
 # =====================================================
-# MEDIA LOADER
+# PATH CLEANER
 # =====================================================
 
-MEDIA_PROXY_BASE = os.getenv("API_INTERNAL_BASE_URL", "http://localhost:8000")
-
-def load_image_bytes(internal_path: str) -> bytes | None:
-    if not internal_path:
+def extract_raw_path(url: str | None) -> str | None:
+    if not url or url == "null" or url == "None":
         return None
 
+    if "/media/file?path=" in url:
+        try:
+            return url.split("path=")[1].split("&")[0]
+        except:
+            return None
+
+    return url
+
+
+# =====================================================
+# UNIFIED SAFE IMAGE LOADER
+# =====================================================
+
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+
+def load_image_bytes(raw_path: str) -> bytes | None:
+
+    if not raw_path or not isinstance(raw_path, str):
+        return None
+
+    cache_p = cache_path_for(raw_path)
+
+    # 1) Cache
+    if cache_p.exists():
+        try:
+            b = cache_p.read_bytes()
+            if b and b[:4] != b"<htm":  # voorkom HTML
+                return b
+        except:
+            pass
+
+    # 2) OneDrive-proxy
     try:
-        r = requests.get(
-            f"{MEDIA_PROXY_BASE}/media/file",
-            params={"path": internal_path},
-            timeout=20
-        )
+        url = f"{API_BASE_URL}/media/file?path={raw_path}"
+        r = requests.get(url, timeout=8)
 
-        if r.status_code != 200:
-            return None
-
-        data = r.content
-        if not data or data.startswith(b"<html"):
-            return None
-
-        return data
-
+        if r.ok and r.content and not r.content.startswith(b"<html"):
+            cache_p.write_bytes(r.content)
+            return r.content
     except:
-        return None
+        pass
+
+    # 3) Direct HTTP fallback
+    if raw_path.startswith("http://") or raw_path.startswith("https://"):
+        try:
+            r = requests.get(raw_path, timeout=8)
+            if r.ok and r.content and not r.content.startswith(b"<html"):
+                cache_p.write_bytes(r.content)
+                return r.content
+        except:
+            pass
+
+    return None
 
 
 # =====================================================
-# HOOFD: Oude Layout Generator
+# PDF BUILDER
 # =====================================================
 
 def make_pdf(schema):
-    import re
     buffer = BytesIO()
 
-    # DOCUMENT
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
@@ -96,10 +129,8 @@ def make_pdf(schema):
         title=f"Oefenschema – {schema.patient.naam}",
     )
 
-    # STIJLEN
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="RevoTitle", fontSize=16, textColor="#FF7900", alignment=1, spaceAfter=10))
-    styles.add(ParagraphStyle(name="OefNaam", fontSize=12, textColor="#FF7900", spaceAfter=4, leading=14))
     styles.add(ParagraphStyle(name="OefText", fontSize=10, textColor="#333333", leading=13))
 
     elements = []
@@ -113,7 +144,6 @@ def make_pdf(schema):
     except:
         elements.append(Paragraph("<b>REVO SPORT</b>", styles["RevoTitle"]))
 
-    # TITLE + META
     elements.append(Spacer(1, -18))
     elements.append(Paragraph("OEFENSCHEMA", styles["RevoTitle"]))
     elements.append(
@@ -124,28 +154,24 @@ def make_pdf(schema):
     )
     elements.append(Spacer(1, 6))
 
-    # OEFENINGEN SORTEREN
-    oefeningen_sorted = sorted(schema.oefeningen, key=lambda x: getattr(x, "volgorde", ""))
+    # ALWAYS SORT
+    oefeningen_sorted = sorted(schema.oefeningen, key=lambda x: x.volgorde or 0)
 
-    def hoofdgroep(volgorde_str):
-        m = re.match(r"^(\d+)", volgorde_str or "")
-        return int(m.group(1)) if m else None
+    for oef in oefeningen_sorted:
 
-    # OEFENINGBLOKKEN
-    for i, oef in enumerate(oefeningen_sorted):
-        naam = getattr(oef, "naam", "—")
         sets = oef.sets or "—"
         reps = oef.reps or "—"
         tempo = oef.tempo or "—"
         gewicht = oef.gewicht or "—"
         opm = oef.opmerking or ""
-        foto1 = getattr(oef, "foto1", None)
-        foto2 = getattr(oef, "foto2", None)
-        volgorde = getattr(oef, "volgorde", "—") or "—"
+        volgorde = oef.volgorde or "—"
+
+        foto1 = extract_raw_path(oef.foto1)
+        foto2 = extract_raw_path(oef.foto2)
 
         shared_width = doc.width - 0.5 * cm
 
-        # ORANJE TABEL (maar jij gebruikte grijs!)
+        # HEADER TABLE
         data = [["#", "Sets", "Reps", "Tempo", "Gewicht"], [str(volgorde), sets, reps, tempo, gewicht]]
         t = Table(
             data,
@@ -161,46 +187,50 @@ def make_pdf(schema):
             ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.lightgrey),
         ]))
 
-        # TITEL (boven foto’s)
-        titel_para = Paragraph(f"<b>{naam}</b>", styles["OefNaam"])
-        titel_table = Table([[titel_para]], colWidths=[shared_width - 3 * cm])
-        titel_table.setStyle([
-            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-            ("LEFTPADDING", (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-        ])
-
-        # FOTO’S LADEN
-        foto_cellen = []
+        # FOTO'S
+        foto_cells = []
         max_h = 4 * cm
 
         for f in [foto1, foto2]:
+
             if not f:
-                foto_cellen.append(Spacer(1, 0))
+                foto_cells.append(Spacer(1, 0))
                 continue
 
             img_bytes = load_image_bytes(f)
+
             if not img_bytes:
-                foto_cellen.append(Spacer(1, 0))
+                foto_cells.append(Spacer(1, 0))
                 continue
 
-            pil = PILImage.open(io.BytesIO(img_bytes))
-            pil = pil.convert("RGB")
+            # SAFE PIL OPEN
+            try:
+                pil = PILImage.open(io.BytesIO(img_bytes))
+                pil = pil.convert("RGB")
+            except Exception:
+                foto_cells.append(Spacer(1, 0))
+                continue
+
             pil.thumbnail((1000, max_h))
             out = io.BytesIO()
             pil.save(out, format="JPEG", quality=90)
             out.seek(0)
 
             img = Image(out)
-            foto_cellen.append(img)
+            foto_cells.append(img)
 
-        fotos = Table([foto_cellen], colWidths=[shared_width / 2, shared_width / 2])
+        fotos = Table([foto_cells], colWidths=[shared_width / 2, shared_width / 2])
+        fotos.setStyle([
+            ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+            ("TOPPADDING", (0, 0), (-1, -1), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ])
 
         # OPMERKING
-        opm_table = None
         if opm:
             opm_para = Paragraph(opm, styles["OefText"])
             opm_table = Table([[opm_para]], colWidths=[shared_width - 3 * cm])
@@ -209,16 +239,17 @@ def make_pdf(schema):
                 ("LEFTPADDING", (0, 0), (-1, -1), 10),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
             ])
+        else:
+            opm_table = None
 
-        # KADER (oude stijl)
-        block_content = [t, Spacer(1, 4), titel_table, fotos]
+        block_content = [t, Spacer(1, 4), fotos]
         if opm_table:
             block_content += [Spacer(1, 4), opm_table]
 
         block = Table([[block_content]], colWidths=[shared_width])
         block.setStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.white),
-            ("BOX", (0, 0), (-1, -1), 0.75, colors.lightgrey),
+            ("BOX", (0, 0), (-1, -1), 0.5, colors.lightgrey),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -246,11 +277,14 @@ def make_pdf(schema):
 # ROUTE
 # =====================================================
 
-@router.post("/schema/{schema_id}")
+@router.get("/schema/{schema_id}")
 def generate_schema_pdf(schema_id: int, db: Session = Depends(get_db)):
     schema = (
         db.query(Oefenschema)
-        .options(joinedload(Oefenschema.patient), joinedload(Oefenschema.oefeningen))
+        .options(
+            joinedload(Oefenschema.patient),
+            joinedload(Oefenschema.oefeningen)
+        )
         .filter(Oefenschema.id == schema_id)
         .first()
     )
@@ -258,10 +292,16 @@ def generate_schema_pdf(schema_id: int, db: Session = Depends(get_db)):
     if not schema:
         raise HTTPException(404, "Schema niet gevonden")
 
-    pdf_bytes = make_pdf(schema)
+    try:
+        pdf_bytes = make_pdf(schema)
+    except Exception as e:
+        print("❌ PDF GENERATIE ERROR:", e)
+        raise HTTPException(500, "PDF kon niet worden gegenereerd")
 
-    pdf_path = schema_pdf_path(schema_id)
-    upload_bytes(pdf_path, pdf_bytes, content_type="application/pdf")
+    pdf_path = schema_pdf_path(schema)
+
+    # CORRECT ARG ORDER
+    upload_bytes(pdf_bytes, pdf_path)
 
     schema.pdf_path = pdf_path
     schema.updated_at = datetime.now()

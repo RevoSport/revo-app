@@ -3,7 +3,7 @@
 # Patients voor Oefenschema Module (eigen tabel)
 # =====================================================
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form   # ← FIX HIER
 from sqlalchemy.orm import Session
 from db import SessionLocal
 from models.oefenschema import PatientOefen
@@ -37,3 +37,24 @@ def get_oefen_patiënten(db: Session = Depends(get_db)):
         }
         for p in patients
     ]
+
+
+# =====================================================
+# CREATE PATIENT
+# =====================================================
+@router.post("/create")
+def create_patient(
+    naam: str = Form(...),
+    email: str = Form(None),
+    db: Session = Depends(get_db)
+):
+    p = PatientOefen(naam=naam, email=email)
+    db.add(p)
+    db.commit()
+    db.refresh(p)
+
+    return {
+        "id": p.id,
+        "naam": p.naam,
+        "email": p.email
+    }

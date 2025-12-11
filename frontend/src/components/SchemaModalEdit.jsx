@@ -1,677 +1,610 @@
 // =====================================================
 // FILE: src/components/SchemaModalEdit.jsx
-// Revo Sport — Oefenschema aanpassen (OneDrive v2 + progress)
+// Revo Sport — Schema aanpassen (UI identiek aan TemplateModalEdit)
 // =====================================================
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Mail } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { apiGet, apiFetch } from "../api";
+import { PuffLoader } from "react-spinners";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
-
 const COLOR_ACCENT = "#FF7900";
 const COLOR_BG = "#1a1a1a";
-const COLOR_TEXT = "#ffffff";
 const COLOR_MUTED = "#c9c9c9";
-const COLOR_PLACEHOLDER = "rgba(255,255,255,0.55)";
 
-// =====================================================
-// FOTO NORMALISATIE — OneDrive interne path → proxied preview
-// =====================================================
-function normalizeFotoUrl(url) {
-  if (!url) return null;
 
-  // V2 geeft interne path terug zoals:
-  //   RevoSport/Oefenschema/Schemas/<id>/foto1_0.jpg
-  return `${API_BASE_URL}/media/file?path=${encodeURIComponent(
-    url
-  )}&t=${Date.now()}`;
+function smoothAutoGrow(el) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
 }
 
 // =====================================================
-// AUTOGROW
+// FOTO → URL
 // =====================================================
-function smoothAutoGrow(el) {
-  if (!el) return;
-  const start = el.offsetHeight;
+function fotoToUrl(f) {
+  if (!f) return null;
+  if (f instanceof File) return URL.createObjectURL(f);
 
-  el.style.height = "auto";
-  const end = el.scrollHeight;
+  if (typeof f === "string") {
+    if (f.startsWith("http")) return f;
+    return `${API_BASE_URL}/media/file?path=${encodeURIComponent(f)}&t=${Date.now()}`;
+  }
 
-  el.style.transition = "height 120ms ease";
-  el.style.height = start + "px";
+  return null;
+}
 
-  requestAnimationFrame(() => {
-    el.style.height = end + "px";
+// =====================================================
+// IMAGE COMPRESSIE
+// =====================================================
+async function compressImage(file, maxWidth = 1600, quality = 0.82) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = img.width * scale;
+      const h = img.height * scale;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+
+      canvas.toBlob(
+        (blob) =>
+          resolve(new File([blob], "compressed.jpg", { type: "image/jpeg" })),
+        "image/jpeg",
+        quality
+      );
+    };
+    img.src = URL.createObjectURL(file);
   });
 }
 
-// =====================================================
-// COMPONENT
-// =====================================================
-
-export default function SchemaModalEdit({ isOpen, onClose, schemaId, onSaved }) {
-  const [patients, setPatients] = useState([]);
-  const [patientId, setPatientId] = useState("");
-  const [datum, setDatum] = useState("");
+export default function SchemaModalEdit({
+  isOpen,
+  onClose,
+  schemaId,
+  onSaved,
+  newMode,
+  patientId,
+}) {
+  const [naam, setNaam] = useState("");
   const [exercises, setExercises] = useState([]);
-
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isMailing, setIsMailing] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
+  const [saveStage, setSaveStage] = useState("idle");
+  const [schemaInfo, setSchemaInfo] = useState(null);
 
   // =====================================================
-  // LOAD PATIENTEN BIJ OPENEN
+  // SCHEMA LADEN
+  // =====================================================
+  const loadSchema = useCallback(async () => {
+    if (!schemaId) return;
+
+    try {
+      const data = await apiGet(`/oefenschema/schemas/${schemaId}`);
+
+      setNaam(data.naam || "");
+      setSchemaInfo({
+        patient_naam: data.patient_naam,
+        datum: data.datum,
+      });
+      setExercises(
+        (data.oefeningen || []).map((o, i) => ({
+          sets: o.sets || "",
+          reps: o.reps || "",
+          tempo: o.tempo || "",
+          gewicht: o.gewicht || "",
+          opmerking: o.opmerking || "",
+          volgorde: i + 1,
+          foto1: o.foto1 || null,
+          foto2: o.foto2 || null,
+        }))
+      );
+
+      setIsDirty(false);
+    } catch (err) {
+      console.error("Schema laden mislukt:", err);
+    }
+  }, [schemaId]);
+
+  // =====================================================
+  // EFFECT: OPEN MODAL
   // =====================================================
   useEffect(() => {
     if (!isOpen) return;
-    loadPatients();
-  }, [isOpen]);
-
-  async function loadPatients() {
-    try {
-      const data = await apiGet("/oefenschema/patient");
-      setPatients(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("❌ Patienten laden mislukt:", err);
+    
+    if (newMode) {
+      setNaam("");
+      setExercises([
+        {
+          sets: "",
+          reps: "",
+          tempo: "",
+          gewicht: "",
+          opmerking: "",
+          volgorde: 1,
+          foto1: null,
+          foto2: null,
+        },
+      ]);
+      setIsDirty(true);
+      return;
     }
-  }
 
-  // =====================================================
-  // LOAD SCHEMA
-  // =====================================================
-  useEffect(() => {
-    if (!isOpen || !schemaId) return;
     loadSchema();
-  }, [isOpen, schemaId]);
+  }, [isOpen, newMode, loadSchema]);
 
-  async function loadSchema() {
-    try {
-      const data = await apiGet(`/oefenschema/${schemaId}`);
-
-      const iso = data?.datum?.slice(0, 10) ?? "";
-      setDatum(iso);
-
-      const pid = data.patient_id || (data.patient && data.patient.id) || "";
-      setPatientId(pid);
-
-      const oef = (data.oefeningen || []).map((o) => ({
-        sets: o.sets || "",
-        reps: o.reps || "",
-        tempo: o.tempo || "",
-        gewicht: o.gewicht || "",
-        opmerking: o.opmerking || "",
-        volgorde: o.volgorde,
-        foto1: o.foto1 ? o.foto1 : null, // interne OneDrive path
-        foto2: o.foto2 ? o.foto2 : null,
-      }));
-
-      setExercises(oef);
-      setIsDirty(false);
-
-      setTimeout(() => {
-        document
-          .querySelectorAll("textarea[data-autogrow='schema-oef']")
-          .forEach((ta) => smoothAutoGrow(ta));
-      }, 80);
-    } catch (err) {
-      console.error("❌ Schema laden mislukt:", err);
-    }
+  // =====================================================
+  // CRUD
+  // =====================================================
+  function updateField(i, key, val) {
+    setExercises((prev) =>
+      prev.map((ex, idx) => (idx === i ? { ...ex, [key]: val } : ex))
+    );
+    setIsDirty(true);
   }
 
-  if (!isOpen) return null;
+  function updateFoto(i, slot, file) {
+    if (!(file instanceof File)) return;
 
-  // =====================================================
-  // CRUD OEFENINGEN
-  // =====================================================
+    setExercises((prev) =>
+      prev.map((ex, idx) => (idx === i ? { ...ex, [slot]: file } : ex))
+    );
+    setIsDirty(true);
+  }
 
   function addExercise() {
-    setExercises((prev) => [
-      ...prev,
+    setExercises((p) => [
+      ...p,
       {
         sets: "",
         reps: "",
         tempo: "",
         gewicht: "",
         opmerking: "",
+        volgorde: p.length + 1,
         foto1: null,
         foto2: null,
-        volgorde: String(prev.length + 1),
       },
     ]);
     setIsDirty(true);
   }
 
-  function removeExercise(idx) {
+  function removeExercise(i) {
     setExercises((prev) =>
       prev
-        .filter((_, i) => i !== idx)
-        .map((ex, i) => ({ ...ex, volgorde: String(i + 1) }))
+        .filter((_, idx) => idx !== i)
+        .map((ex, j) => ({ ...ex, volgorde: j + 1 }))
     );
     setIsDirty(true);
   }
 
-  function updateField(i, field, value) {
-    setExercises((prev) => {
-      const out = [...prev];
-      out[i][field] = value;
-      return out;
-    });
-    setIsDirty(true);
-  }
+  // =====================================================
+  // FOTO UPLOAD
+  // =====================================================
+  async function uploadOne(schemaId, oefIndexOneBased, slot, file) {
+    const fd = new FormData();
+    const safeName = `foto${slot}_${oefIndexOneBased}.jpg`;
 
-  function updateFoto(i, slot, fileOrValue) {
-    setExercises((prev) => {
-      const out = [...prev];
-      out[i][slot] = fileOrValue;
-      return out;
-    });
-    setIsDirty(true);
+    fd.append("file", file, safeName);
+
+    const res = await apiFetch(
+      `/oefenschema/schemas/upload/${schemaId}/${oefIndexOneBased}/${slot}`,
+      {
+        method: "POST",
+        body: fd,
+      }
+    );
+
+    return res.path;
   }
 
   // =====================================================
-  // OPSLAAN — OneDrive v2
+  // SAVE
   // =====================================================
-
   async function handleSave() {
-    if (!schemaId) return;
-
     try {
       setIsSaving(true);
+      setSaveStage("upload");
 
-      const fotoCount = exercises.reduce(
-        (acc, ex) =>
-          acc +
-          (ex.foto1 instanceof File ? 1 : 0) +
-          (ex.foto2 instanceof File ? 1 : 0),
-        0
-      );
+      let finalId = schemaId;
 
-      const total = fotoCount + 2; // JSON + final response
-      setUploadProgress({ done: 0, total });
+      if (newMode) {
+        const fdCreate = new FormData();
+        fdCreate.append("naam", naam);
+        fdCreate.append("patient_id", patientId);
+        fdCreate.append("oefeningen_json", JSON.stringify([]));
 
-      const step = () =>
-        setUploadProgress((p) => ({
-          ...p,
-          done: Math.min(p.done + 1, p.total),
-        }));
+        const res = await apiFetch(`/oefenschema/schemas/create`, {
+          method: "POST",
+          body: fdCreate,
+        });
 
-      // --- JSON ---
-      const jsonExercises = exercises.map((ex, i) => ({
+        finalId = res.id;
+      }
+
+      const updated = JSON.parse(JSON.stringify(exercises));
+
+      // Upload foto’s
+      for (let i = 0; i < updated.length; i++) {
+        for (const slot of ["foto1", "foto2"]) {
+          const f = exercises[i][slot];
+
+          if (f instanceof File) {
+            const comp = await compressImage(f);
+            const slotNum = slot === "foto1" ? 1 : 2;
+            const oefIndexOneBased = i + 1;
+
+            const path = await uploadOne(finalId, oefIndexOneBased, slotNum, comp);
+            updated[i][slot] = path;
+          }
+        }
+      }
+
+      setSaveStage("save");
+
+      // Clean objects → null safeguard
+      for (let i = 0; i < updated.length; i++) {
+        for (const slot of ["foto1", "foto2"]) {
+          if (typeof updated[i][slot] === "object") updated[i][slot] = null;
+        }
+      }
+
+      const payload = updated.map((ex, i) => ({
         sets: ex.sets,
         reps: ex.reps,
         tempo: ex.tempo,
         gewicht: ex.gewicht,
         opmerking: ex.opmerking,
-        volgorde: String(i + 1),
-        foto1: typeof ex.foto1 === "string" ? ex.foto1 : null,
-        foto2: typeof ex.foto2 === "string" ? ex.foto2 : null,
+        volgorde: i + 1,
+        foto1: ex.foto1,
+        foto2: ex.foto2,
       }));
 
-      step();
+      const fd = new FormData();
+      fd.append("naam", naam);
+      fd.append("patient_id", patientId);
+      fd.append("oefeningen_json", JSON.stringify(payload));
 
-      const form = new FormData();
-      form.append("datum", datum);
-      form.append("patient_id", String(patientId));
-      form.append("data_json", JSON.stringify(jsonExercises));
-
-      exercises.forEach((ex, i) => {
-        if (ex.foto1 instanceof File) {
-          form.append("files", ex.foto1, `foto1_${i}.jpg`);
-          step();
-        }
-        if (ex.foto2 instanceof File) {
-          form.append("files", ex.foto2, `foto2_${i}.jpg`);
-          step();
-        }
-      });
-
-      const res = await apiFetch(`/oefenschema/schema/${schemaId}/formdata`, {
+      await apiFetch(`/oefenschema/schemas/update/${finalId}`, {
         method: "PUT",
-        body: form,
+        body: fd,
       });
-      step();
 
-      if (res?.ok) {
-        setIsDirty(false);
-        if (onSaved) onSaved();
-      } else {
-        console.error("❌ Opslaan mislukt:", res);
-      }
-    } catch (err) {
-      console.error("❌ Opslaan exception:", err);
+      setSaveStage("done");
+      setIsDirty(false);
+      onSaved?.();
+      onClose?.();
     } finally {
       setIsSaving(false);
     }
   }
 
-  // =====================================================
-  // MAIL
-  // =====================================================
+  if (!isOpen) return null;
 
-  async function handleMail() {
-    if (!schemaId) return;
-
-    try {
-      setIsMailing(true);
-      const res = await apiFetch(`/oefenschema/mail/${schemaId}`, {
-        method: "POST",
-      });
-
-      if (!res.ok) console.error("❌ Mail mislukt:", res);
-    } catch (err) {
-      console.error("❌ Mail exception:", err);
-    } finally {
-      setIsMailing(false);
-    }
-  }
-
-  // =====================================================
-  // STYLES
-  // =====================================================
-
-  const smallInputStyle = {
+  const smallInput = {
     background: "#222",
     color: "#fff",
     border: "1px solid #2a2a2a",
     borderRadius: 8,
     padding: "8px 10px",
     fontSize: 14,
+    width: "100%",
   };
-
-  const labelStyle = {
-    color: COLOR_MUTED,
-    fontSize: 13,
-    marginBottom: 6,
-    display: "block",
-  };
-
-  // =====================================================
-  // UI
-  // =====================================================
 
   return (
-    <>
-      {/* MODAL OVERLAY */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.6)",
-              zIndex: 2500,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 20,
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              style={{
-                background: COLOR_BG,
-                borderRadius: 14,
-                padding: "40px 60px",
-                width: "100%",
-                maxWidth: 900,
-                maxHeight: "90vh",
-                overflowY: "auto",
-                border: "1px solid rgba(255,255,255,0.08)",
-                position: "relative",
-                color: "#fff",
-              }}
-            >
-              {/* SLUITKNOP */}
-              <button
-                onClick={onClose}
-                style={{
-                  position: "absolute",
-                  top: 12,
-                  right: 18,
-                  background: "transparent",
-                  border: "none",
-                  fontSize: 26,
-                  color: "#aaa",
-                  cursor: "pointer",
-                }}
-              >
-                ×
-              </button>
-
-              <h2
-                style={{
-                  textAlign: "center",
-                  fontSize: 18,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  marginBottom: 25,
-                }}
-              >
-                Oefenschema aanpassen
-              </h2>
-
-              {/* PATIËNT */}
-              <div style={{ marginBottom: 18 }}>
-                <label style={labelStyle}>Patiënt</label>
-                <select
-                  value={patientId || ""}
-                  onChange={(e) => {
-                    setPatientId(e.target.value);
-                    setIsDirty(true);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    background: "#222",
-                    color: "#fff",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <option value="">Selecteer patiënt</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.naam}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* DATUM */}
-              <div style={{ marginBottom: 20 }}>
-                <label style={labelStyle}>Datum</label>
-                <input
-                  type="date"
-                  value={datum}
-                  onChange={(e) => {
-                    setDatum(e.target.value);
-                    setIsDirty(true);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    background: "#222",
-                    color: "#fff",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                />
-              </div>
-
-              {/* OEFENINGEN */}
-              <div style={{ marginBottom: 18 }}>
-                <label style={labelStyle}>Oefeningen</label>
-
-                {exercises.map((ex, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      background: "#1a1a1a",
-                      border: "1px solid #2a2a2a",
-                      borderRadius: 12,
-                      padding: 16,
-                      marginBottom: 12,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(4, 1fr)",
-                        gap: 12,
-                      }}
-                    >
-                      <input
-                        type="text"
-                        placeholder="Sets"
-                        value={ex.sets}
-                        onChange={(e) =>
-                          updateField(index, "sets", e.target.value)
-                        }
-                        style={smallInputStyle}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Reps"
-                        value={ex.reps}
-                        onChange={(e) =>
-                          updateField(index, "reps", e.target.value)
-                        }
-                        style={smallInputStyle}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Tempo"
-                        value={ex.tempo}
-                        onChange={(e) =>
-                          updateField(index, "tempo", e.target.value)
-                        }
-                        style={smallInputStyle}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Gewicht"
-                        value={ex.gewicht}
-                        onChange={(e) =>
-                          updateField(index, "gewicht", e.target.value)
-                        }
-                        style={smallInputStyle}
-                      />
-                    </div>
-
-                    <textarea
-                      placeholder="Opmerking (optioneel)"
-                      data-autogrow="schema-oef"
-                      value={ex.opmerking}
-                      onInput={(e) => smoothAutoGrow(e.target)}
-                      onChange={(e) =>
-                        updateField(index, "opmerking", e.target.value)
-                      }
-                      style={{
-                        width: "100%",
-                        marginTop: 10,
-                        minHeight: 40,
-                        background: "#222",
-                        border: "1px solid #2a2a2a",
-                        borderRadius: 8,
-                        padding: "8px 10px",
-                        color: "#fff",
-                        resize: "none",
-                        overflow: "hidden",
-                      }}
-                    />
-
-                    {/* FOTO'S */}
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 10,
-                        marginTop: 10,
-                      }}
-                    >
-                      {[1, 2].map((slot) => {
-                        const key = `foto${slot}`;
-                        const val = ex[key];
-
-                        return (
-                          <label
-                            key={slot}
-                            style={{
-                              flex: 1,
-                              background: "#222",
-                              border: "1px solid #2a2a2a",
-                              borderRadius: 8,
-                              padding: "16px 10px",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {!val && (
-                              <span style={{ opacity: 0.7 }}>
-                                Foto {slot} toevoegen
-                              </span>
-                            )}
-
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png"
-                              style={{ display: "none" }}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) updateFoto(index, key, file);
-                              }}
-                            />
-
-                            {val && (
-                              <img
-                                src={
-                                  val instanceof File
-                                    ? URL.createObjectURL(val)
-                                    : normalizeFotoUrl(val)
-                                }
-                                alt="preview"
-                                style={{
-                                  marginTop: 8,
-                                  maxHeight: 100,
-                                  objectFit: "contain",
-                                  borderRadius: 8,
-                                }}
-                              />
-                            )}
-                          </label>
-                        );
-                      })}
-                    </div>
-
-                    {/* DELETE BUTTON */}
-                    <button
-                      type="button"
-                      onClick={() => removeExercise(index)}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        marginTop: 8,
-                        color: "rgba(255,255,255,0.6)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Trash2 size={14} style={{ marginRight: 4 }} />
-                      Verwijderen
-                    </button>
-                  </div>
-                ))}
-
-                {/* TOEVOEGEN */}
-                <div style={{ textAlign: "center", marginTop: 20 }}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={addExercise}
-                    style={{
-                      background: "transparent",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      color: "#ccc",
-                      borderRadius: 10,
-                      padding: "10px 16px",
-                    }}
-                  >
-                    + Oefening toevoegen
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* KNOPPEN */}
-              <div style={{ display: "flex", gap: 12, marginTop: 30 }}>
-                <motion.button
-                  whileHover={isDirty && !isSaving ? { scale: 1.02 } : {}}
-                  whileTap={isDirty && !isSaving ? { scale: 0.98 } : {}}
-                  type="button"
-                  disabled={!isDirty || isSaving}
-                  onClick={handleSave}
-                  style={{
-                    flex: 1,
-                    border: `1px solid ${COLOR_ACCENT}`,
-                    background: "transparent",
-                    color: isDirty ? COLOR_ACCENT : "rgba(255,255,255,0.3)",
-                    borderRadius: 10,
-                    padding: "10px 16px",
-                    cursor: isDirty ? "pointer" : "not-allowed",
-                  }}
-                >
-                  {isSaving ? "Opslaan..." : isDirty ? "Opslaan" : "Opgeslagen"}
-                </motion.button>
-
-                <motion.button
-                  whileHover={!isDirty ? { scale: 1.02 } : {}}
-                  whileTap={!isDirty ? { scale: 0.98 } : {}}
-                  type="button"
-                  disabled={isDirty || isSaving || isMailing}
-                  onClick={handleMail}
-                  style={{
-                    flex: 1,
-                    background: COLOR_ACCENT,
-                    color: "#000",
-                    border: "none",
-                    borderRadius: 10,
-                    padding: "10px 16px",
-                    fontWeight: 600,
-                    cursor:
-                      !isDirty && !isSaving && !isMailing
-                        ? "pointer"
-                        : "not-allowed",
-                  }}
-                >
-                  <Mail size={16} />
-                  {isMailing ? "Versturen..." : "Mail"}
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* FULLSCREEN LOADER */}
-      {isSaving && (
-        <div
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.85)",
-            zIndex: 3000,
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 2500,
             display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
             alignItems: "center",
-            color: COLOR_ACCENT,
-            fontSize: 16,
-            fontWeight: 600,
+            justifyContent: "center",
+            padding: 20,
           }}
         >
-          <div
+          <motion.div
+            initial={{ scale: 0.92, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.92, opacity: 0 }}
             style={{
-              width: 50,
-              height: 50,
-              borderRadius: "50%",
-              border: "3px solid rgba(255,255,255,0.25)",
-              borderTopColor: COLOR_ACCENT,
-              animation: "spin 1s linear infinite",
-              marginBottom: 20,
+              background: COLOR_BG,
+              borderRadius: 12,
+              padding: "40px 60px",
+              width: "100%",
+              maxWidth: 900,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              border: "1px solid rgba(255,255,255,0.08)",
+              position: "relative",
+              color: "#fff",
             }}
-          />
-          Uploading... {uploadProgress.done}/{uploadProgress.total}
-        </div>
+          >
+            <button
+              onClick={onClose}
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 16,
+                background: "none",
+                border: "none",
+                fontSize: 26,
+                color: "#999",
+                cursor: "pointer",
+              }}
+            >
+              ×
+            </button>
+
+            <h2
+              style={{
+                textAlign: "center",
+                fontSize: 18,
+                fontWeight: 700,
+                marginBottom: 25,
+                textTransform: "uppercase",
+              }}
+            >
+              {newMode ? "Nieuw Schema" : "Schema Aanpassen"}
+            </h2>
+
+            {/* PATIËNT + DATUM */}
+            <div style={{ marginBottom: 25, textAlign: "center" }}>
+              <div style={{ fontSize: 15, color: "#fff", fontWeight: 600 }}>
+                {schemaInfo?.patient_naam || "Onbekende patiënt"}
+              </div>
+
+              <div style={{
+                marginTop: 4,
+                fontSize: 13,
+                color: "rgba(255,255,255,0.6)"
+              }}>
+                {schemaInfo?.datum
+                  ? new Date(schemaInfo.datum).toLocaleDateString("nl-BE")
+                  : ""}
+              </div>
+            </div>
+
+
+            {/* OEFENINGEN */}
+            <div style={{ marginBottom: 18 }}>
+              <label
+                style={{
+                  color: COLOR_MUTED,
+                  fontSize: 13,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
+                Oefeningen
+              </label>
+
+              {exercises.map((ex, index) => (
+                <div
+                  key={index}
+                  style={{
+                    background: "#1a1a1a",
+                    border: "1px solid #2a2a2a",
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                      gap: 12,
+                    }}
+                  >
+                    <input
+                      value={ex.sets}
+                      placeholder="Sets"
+                      style={smallInput}
+                      onChange={(e) => updateField(index, "sets", e.target.value)}
+                    />
+                    <input
+                      value={ex.reps}
+                      placeholder="Reps"
+                      style={smallInput}
+                      onChange={(e) => updateField(index, "reps", e.target.value)}
+                    />
+                    <input
+                      value={ex.tempo}
+                      placeholder="Tempo"
+                      style={smallInput}
+                      onChange={(e) => updateField(index, "tempo", e.target.value)}
+                    />
+                    <input
+                      value={ex.gewicht}
+                      placeholder="Gewicht"
+                      style={smallInput}
+                      onChange={(e) => updateField(index, "gewicht", e.target.value)}
+                    />
+                  </div>
+
+                  <textarea
+                    placeholder="Opmerking"
+                    value={ex.opmerking}
+                    onInput={(e) => smoothAutoGrow(e.target)}
+                    onChange={(e) => updateField(index, "opmerking", e.target.value)}
+                    style={{
+                      width: "100%",
+                      marginTop: 10,
+                      minHeight: 40,
+                      background: "#222",
+                      border: "1px solid #2a2a2a",
+                      borderRadius: 8,
+                      padding: "8px 10px",
+                      color: "#fff",
+                      resize: "none",
+                      overflow: "hidden",
+                      fontFamily: "'Open Sans', sans-serif",
+                    }}
+                  />
+
+                  {/* FOTO’S */}
+                  <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+                    {[1, 2].map((slot) => {
+                      const key = `foto${slot}`;
+                      const foto = ex[key];
+                      const url = fotoToUrl(foto);
+
+                      return (
+                        <label
+                          key={slot}
+                          style={{
+                            flex: 1,
+                            background: "#222",
+                            border: "1px solid #2a2a2a",
+                            borderRadius: 8,
+                            padding: "8px 8px",
+                            textAlign: "center",
+                            cursor: "pointer",
+                            position: "relative",
+                            overflow: "hidden",
+                            minHeight: url ? 110 : 40,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 14,
+                            color: "rgba(255,255,255,0.7)",
+                          }}
+                        >
+                          {!url && <span style={{ opacity: 0.7 }}>Foto {slot}</span>}
+
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              opacity: 0,
+                              cursor: "pointer",
+                              zIndex: 20,
+                            }}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) updateFoto(index, key, f);
+                            }}
+                          />
+
+                          {url && (
+                            <img
+                              src={url}
+                              alt=""
+                              style={{
+                                marginTop: 8,
+                                maxHeight: 150,
+                                objectFit: "contain",
+                                borderRadius: 8,
+                                zIndex: 1,
+                              }}
+                            />
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeExercise(index)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      marginTop: 15,
+                      color: "rgba(255,255,255,0.7)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Trash2 size={13} /> Verwijder oefening
+                  </button>
+                </div>
+              ))}
+
+              <motion.button
+                onClick={addExercise}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: COLOR_MUTED,
+                  padding: "8px 4px",
+                  cursor: "pointer",
+                }}
+              >
+                + Oefening toevoegen
+              </motion.button>
+            </div>
+
+            {/* OPSLAAN */}
+            <motion.button
+              onClick={handleSave}
+              disabled={!isDirty || isSaving}
+              style={{
+                width: "25%",
+                padding: "12px 16px",
+                borderRadius: 10,
+                background: "transparent",
+                border: `1px solid ${
+                  isDirty ? COLOR_ACCENT : "rgba(255,255,255,0.25)"
+                }`,
+                color: isDirty ? COLOR_ACCENT : "rgba(255,255,255,0.35)",
+                cursor: isDirty ? "pointer" : "not-allowed",
+              }}
+            >
+              {isSaving ? "Opslaan..." : "Opslaan"}
+            </motion.button>
+          </motion.div>
+
+          {/* LOADER OVERLAY */}
+          {isSaving && (
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                backgroundColor: "rgba(0,0,0,0.85)",
+                backdropFilter: "blur(3px)",
+                zIndex: 4000,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                color: COLOR_ACCENT,
+              }}
+            >
+              <PuffLoader color={COLOR_ACCENT} size={90} />
+
+              <p
+                style={{
+                  marginTop: 25,
+                  fontSize: 15,
+                  letterSpacing: 0.5,
+                }}
+              >
+                {saveStage === "upload" && "Foto’s uploaden..."}
+                {saveStage === "save" && "Schema bewaren..."}
+                {saveStage === "done" && "Klaar..."}
+              </p>
+            </div>
+          )}
+        </motion.div>
       )}
-    </>
+    </AnimatePresence>
   );
 }

@@ -39,19 +39,29 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
       title: "Oefenschema",
       items: ["Overzicht","Templates" ,"Schema maken"],
       map: {
-        "Schema maken": "Oefenschema",
-        Templates: "TemplatesOverzicht",
-        Overzicht: "SchemaOverzicht",
+        "Overzicht": "/oefenschema?tab=schema",
+        "Templates": "/oefenschema?tab=templates",
+        "Schema maken": "/oefenschema?tab=nieuw",
       },
     },
   ];
 
   // Navigate helper
   const handleNavigate = (item, map) => {
-    const internal = map?.[item] || item;
-    onNavigate(internal);
+    const target = map?.[item] || item;
+
+    // Route → stuur door naar App router
+    if (typeof target === "string" && target.startsWith("/")) {
+      onNavigate(target); 
+      if (isMobile) setCollapsed(true);
+      return;
+    }
+
+    // Classic internal component navigation
+    onNavigate(target);
     if (isMobile) setCollapsed(true);
   };
+
 
   return (
     <>
@@ -175,7 +185,20 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
               <div style={{ display: "grid", gap: 6 }}>
                 {sec.items.map((item) => {
                   const mapped = sec.map?.[item] || item;
-                  const isActive = currentPage === mapped;
+                  const params = new URLSearchParams(currentPage.split("?")[1] || "");
+                  const tab = params.get("tab");
+
+                  const mappedTab =
+                    mapped.includes("tab=")
+                      ? new URLSearchParams(mapped.split("?")[1]).get("tab")
+                      : null;
+
+                  const isActive =
+                    mappedTab
+                      ? tab === mappedTab
+                      : currentPage.startsWith(mapped);
+
+
 
                   return (
                     <button

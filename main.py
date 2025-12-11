@@ -9,9 +9,8 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from colorama import Fore, Style, init as colorama_init
 
-
 # =====================================================
-#   ROUTERS
+# ROUTERS
 # =====================================================
 from routers import (
     auth_router,
@@ -34,27 +33,24 @@ from routers import (
 )
 
 from security import get_current_user
-from routers.oefenschema.pdf import router as pdf_router
+
+# 🔥 JUISTE oefenschema-bundel
 from routers.oefenschema import router as oefenschema_router
-from routers.oefenschema.mail import router as mail_router
 
 
 # =====================================================
-#   Kleur initialisatie
+# APP CONFIG
 # =====================================================
 colorama_init(autoreset=True)
 
-# =====================================================
-#   APP CONFIG
-# =====================================================
 app = FastAPI(
     title="Revo Sport Database API",
     version="2.0",
-    description="Modulaire FastAPI-structuur met kleur-logging (productieversie).",
+    description="Modulaire FastAPI-structuur met kleur-logging."
 )
 
 # =====================================================
-#   CORS
+# CORS
 # =====================================================
 origins = [
     "http://localhost:3000",
@@ -75,23 +71,24 @@ app.add_middleware(
 )
 
 # =====================================================
-#   STATIC FILES
+# STATIC FILES
 # =====================================================
 from fastapi.staticfiles import StaticFiles
-import os
 
 if not os.path.exists("static"):
     os.makedirs("static/uploads", exist_ok=True)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
 # =====================================================
-#   ROUTERS — beveiligd behalve auth
+# ROUTERS — beveiligd behalve auth
 # =====================================================
 app.include_router(auth_router.router)  # publiek
 
 protected = [Depends(get_current_user)]
 
+# Backoffice modules
 app.include_router(patient.router, dependencies=protected)
 app.include_router(blessure.router, dependencies=protected)
 app.include_router(baseline.router, dependencies=protected)
@@ -107,15 +104,16 @@ app.include_router(kracht.router, dependencies=protected)
 app.include_router(functioneel.router, dependencies=protected)
 app.include_router(individueel.router, dependencies=protected)
 app.include_router(kinvent.router, dependencies=protected)
-app.include_router(media_proxy.router, dependencies=protected)  
-app.include_router(oefenschema_router, dependencies=protected)
-app.include_router(pdf_router, dependencies=protected)
-app.include_router(mail_router, dependencies=protected)
 
+# Media proxy
+app.include_router(media_proxy.router)
+
+# 🔥 Volledige oefenschema module (templates + schemas + pdf + mail + patient)
+app.include_router(oefenschema_router, dependencies=protected)
 
 
 # =====================================================
-#   ROOT
+# ROOT
 # =====================================================
 @app.get("/")
 def home():
@@ -125,8 +123,9 @@ def home():
         "version": "2.0",
     }
 
+
 # =====================================================
-#   STARTUP MESSAGE
+# STARTUP MESSAGE
 # =====================================================
 @app.on_event("startup")
 def startup_event():

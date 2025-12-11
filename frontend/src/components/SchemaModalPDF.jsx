@@ -1,6 +1,5 @@
 // =====================================================
 // FILE: src/components/SchemaModalPDF.jsx
-// Revo Sport — PDF Viewer Modal (OneDrive v2 + Proxy)
 // =====================================================
 
 import React, { useEffect, useState } from "react";
@@ -12,21 +11,27 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
   const [pdfUrl, setPdfUrl] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // PDF laden via backend → interne path → proxy url
   useEffect(() => {
+    // niet laden als modal niet open is
+    if (!isOpen || !schemaId) return;
+
     async function loadPDF() {
       try {
         setIsLoading(true);
-        const res = await apiGet(`/oefenschema/pdf/${schemaId}`);
-        if (!res?.url) throw new Error("Geen PDF-pad ontvangen.");
+        setPdfUrl(null);
 
-        const proxied = `${API_BASE_URL}/media/file?path=${encodeURIComponent(
-          res.url
+        // Backend route
+        const res = await apiGet(`/oefenschema/pdf/schema/${schemaId}`);
+
+        if (!res?.path) throw new Error("Backend gaf geen 'path' terug.");
+
+        const proxiedUrl = `${API_BASE_URL}/media/file?path=${encodeURIComponent(
+          res.path
         )}&t=${Date.now()}`;
 
-        setPdfUrl(proxied);
+        setPdfUrl(proxiedUrl);
       } catch (err) {
         console.error("❌ PDF laden mislukt:", err);
         setPdfUrl(null);
@@ -34,10 +39,10 @@ export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
     }
 
     loadPDF();
-  }, [schemaId]);
+  }, [isOpen, schemaId]);
 
-    if (!isOpen || !schemaId) return null;
-    
+  if (!isOpen) return null;
+
   return (
     <div
       style={{
@@ -66,7 +71,7 @@ export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
           boxShadow: "0 0 40px rgba(0,0,0,0.5)",
         }}
       >
-        {/* Sluit-knop */}
+        {/* sluitknop */}
         <button
           onClick={onClose}
           style={{
@@ -78,7 +83,6 @@ export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
             color: "#ccc",
             fontSize: 26,
             cursor: "pointer",
-            zIndex: 20,
           }}
         >
           ×
@@ -90,13 +94,13 @@ export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
             letterSpacing: 1,
             fontWeight: 600,
             marginBottom: 25,
-            fontSize: 18,
+            textAlign: "center",
           }}
         >
           Oefenschema PDF
         </h2>
 
-        {/* Loader overlay */}
+        {/* Loader */}
         {isLoading && (
           <div
             style={{
@@ -107,11 +111,9 @@ export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              zIndex: 15,
-              borderRadius: 16,
               color: COLOR_ACCENT,
-              fontSize: 15,
-              fontWeight: 600,
+              borderRadius: 16,
+              zIndex: 20,
             }}
           >
             <div
@@ -135,7 +137,7 @@ export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
           </div>
         )}
 
-        {/* PDF zelf */}
+        {/* PDF viewer */}
         {pdfUrl ? (
           <iframe
             src={pdfUrl}
@@ -148,18 +150,20 @@ export default function SchemaModalPDF({ isOpen, onClose, schemaId }) {
             }}
           />
         ) : (
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ff4e4e",
-              fontSize: 16,
-            }}
-          >
-            ❌ PDF niet beschikbaar
-          </div>
+          !isLoading && (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#ff4e4e",
+                fontSize: 16,
+              }}
+            >
+              ❌ PDF niet beschikbaar
+            </div>
+          )
         )}
       </div>
     </div>

@@ -1,374 +1,234 @@
 // =====================================================
 // FILE: src/pages/Oefenschema/SchemaOverzicht.jsx
-// Revo Sport — Overzicht + Edit + PDF + Delete Modal (OneDrive v2 ready)
+// Revo Sport — Schema Overzicht (matching TemplatesOverzicht)
 // =====================================================
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Eye,
-  Mail,
-  RefreshCw,
-  AlertTriangle,
-  Search,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Pencil, Trash2, Eye, Mail } from "lucide-react";
 
-// 🔧 CORRECTE API IMPORT
 import { apiGet, apiFetch } from "../../api";
 
-// 🔧 CORRECTE COMPONENT IMPORTS
-import SchemaModalPDF from "../../components/SchemaModalPDF";
-import SchemaModalEdit from "../../components/SchemaModalEdit";
 import ConfirmModal from "../../components/ConfirmModal";
+import SchemaModalEdit from "../../components/SchemaModalEdit";
+import SchemaModalPDF from "../../components/SchemaModalPDF";
 
-// 🎨 Kleuren
+// 🎨 UI CONSTANTS
 const COLOR_ACCENT = "#FF7900";
-const COLOR_BG = "#0E0E0E";
-const COLOR_CARD = "#16181D";
-const COLOR_BORDER = "#22252D";
 const COLOR_TEXT = "#FFFFFF";
-const COLOR_MUTED = "#9CA3AF";
+const COLOR_CARD = "#1A1A1A";
 
-function formatDate(iso) {
-  if (!iso) return "–";
-  try {
-    const [y, m, d] = iso.split("-");
-    return `${d}/${m}/${y}`;
-  } catch {
-    return iso;
-  }
+function formatDate(d) {
+  if (!d) return "—";
+
+  const clean = d.replace("T", " ").trim();  
+  const datePart = clean.split(" ")[0];      
+  const [y, m, day] = datePart.split("-");
+
+  if (!y || !m || !day) return d;
+
+  return `${day}/${m}/${y}`;
 }
 
 export default function SchemaOverzicht() {
   const [schemas, setSchemas] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  const [selectedSchema, setSelectedSchema] = useState(null);
-  const [showPDF, setShowPDF] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [pdfId, setPdfId] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
+
   const [showEdit, setShowEdit] = useState(false);
+  const [showPDF, setShowPDF] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
-  const [query, setQuery] = useState("");
+  const [statusMsg, setStatusMsg] = useState(null);
 
   // =====================================================
-  // LOAD DATA
+  // MAILEN
   // =====================================================
-  async function loadData() {
+  async function handleMail(id) {
     try {
-      setLoading(true);
-      const data = await apiGet("/oefenschema/");
+      await apiFetch(`/oefenschema/mail/${id}`, { method: "POST" });
+      setStatusMsg({ type: "success", text: "Schema opnieuw gemaild" });
+    } catch (err) {
+      console.error("❌ Mail schema:", err);
+      setStatusMsg({ type: "error", text: "Mailen mislukt" });
+    } finally {
+      setTimeout(() => setStatusMsg(null), 2500);
+    }
+  }
+
+  // =====================================================
+  // LOAD SCHEMAS
+  // =====================================================
+  async function loadSchemas() {
+    try {
+      const data = await apiGet("/oefenschema/schemas/");
       if (Array.isArray(data)) {
-        const sorted = [...data].sort(
-          (a, b) => new Date(b.datum) - new Date(a.datum)
-        );
+        const sorted = [...data].sort((a, b) => b.id - a.id);
         setSchemas(sorted);
       }
     } catch (err) {
-      console.error("❌ Laden mislukt:", err);
-    } finally {
-      setLoading(false);
+      console.error("❌ Fout bij laden schema's:", err);
+      setStatusMsg({ type: "error", text: "Fout bij ophalen schema’s" });
     }
   }
 
   useEffect(() => {
-    loadData();
+    loadSchemas();
   }, []);
-
-  // =====================================================
-  // FILTER
-  // =====================================================
-  const filtered = useMemo(() => {
-    if (!query.trim()) return schemas;
-    return schemas.filter((s) =>
-      s.patient_naam?.toLowerCase().includes(query.toLowerCase())
-    );
-  }, [query, schemas]);
 
   // =====================================================
   // DELETE
   // =====================================================
   async function deleteSchema(id) {
     try {
-      await apiFetch(`/oefenschema/${id}`, { method: "DELETE" });
-      setSchemas((prev) => prev.filter((s) => s.id !== id));
+      await apiFetch(`/oefenschema/schemas/${id}`, { method: "DELETE" });
+      setSchemas((prev) => prev.filter((x) => x.id !== id));
+
+      setStatusMsg({ type: "success", text: "Schema verwijderd" });
+    } catch (err) {
+      console.error("❌ Delete schema:", err);
+      setStatusMsg({ type: "error", text: "Verwijderen mislukt" });
+    } finally {
       setShowDelete(false);
-    } catch (err) {
-      console.error("❌ Verwijderen mislukt:", err);
+      setTimeout(() => setStatusMsg(null), 2500);
     }
   }
-
-  // =====================================================
-  // MAIL (v2) — geen alerts, maar correcte flow
-  // =====================================================
-  async function sendMail(id) {
-    try {
-      const res = await apiFetch(`/oefenschema/mail/${id}`, {
-        method: "POST",
-      });
-
-      if (!res || res.status !== "ok") {
-        throw new Error("Mail endpoint error");
-      }
-
-      // ⬇️ uniforme Revo feedback
-      setStatus({
-        type: "success",
-        msg: "E-mail verzonden naar patiënt",
-      });
-      setTimeout(() => setStatus(null), 2200);
-    } catch (err) {
-      console.error(err);
-      setStatus({
-        type: "error",
-        msg: "Mailen mislukt",
-      });
-      setTimeout(() => setStatus(null), 2800);
-    }
-  }
-
-  const [status, setStatus] = useState(null);
 
   // =====================================================
   // UI
   // =====================================================
   return (
-    <div
-      style={{
-        background: COLOR_BG,
-        minHeight: "100vh",
-        padding: 40,
-        color: COLOR_TEXT,
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      <div
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
         style={{
           background: COLOR_CARD,
-          border: `1px solid ${COLOR_BORDER}`,
-          borderRadius: 20,
-          padding: 35,
-          width: "100%",
-          maxWidth: 1100,
+          borderRadius: 12,
+          padding: "40px 60px",
+          maxWidth: 1000,
+          margin: "0 auto 80px",
+          boxShadow: "0 0 10px rgba(0,0,0,0.3)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: COLOR_TEXT,
         }}
       >
+        {/* TITLE */}
         <h2
           style={{
             textAlign: "center",
             fontSize: 18,
             fontWeight: 700,
+            textTransform: "uppercase",
             letterSpacing: 1,
             marginBottom: 25,
-            textTransform: "uppercase",
           }}
         >
-          Overzicht Oefenschema's
+          Oefenschema’s
         </h2>
 
-        {/* SEARCH */}
-        <div style={{ marginBottom: 20 }}>
-          <div
-            style={{
-              background: "#111",
-              border: `1px solid ${COLOR_BORDER}`,
-              borderRadius: 12,
-              padding: "8px 14px",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <Search size={16} color={COLOR_MUTED} />
-            <input
-              type="text"
-              placeholder="Zoek op naam..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                width: "100%",
-                color: COLOR_TEXT,
-                fontSize: 14,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* STATUS MESSAGE */}
+        {/* STATUS */}
         <AnimatePresence>
-          {status && (
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
+          {statusMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              exit={{ opacity: 0, y: -6 }}
               style={{
-                textAlign: "center",
-                marginBottom: 15,
+                marginBottom: 20,
+                padding: "10px 14px",
+                borderRadius: 10,
+                fontSize: 14,
+                background:
+                  statusMsg.type === "success" ? "#063E26" : "#4C1D1D",
+                border:
+                  statusMsg.type === "success"
+                    ? "1px solid #1A7F4D"
+                    : "1px solid #7F1D1D",
                 color:
-                  status.type === "success"
-                    ? "#FFFFFF"
-                    : status.type === "error"
-                    ? "#ff4d4d"
-                    : COLOR_ACCENT,
+                  statusMsg.type === "success" ? "#BBF7D0" : "#FCA5A5",
+                textAlign: "center",
               }}
             >
-              {status.msg}
-            </motion.p>
+              {statusMsg.text}
+            </motion.div>
           )}
         </AnimatePresence>
 
-        {/* TABLE */}
-        <div
-          style={{
-            borderRadius: 12,
-            border: `1px solid ${COLOR_BORDER}`,
-            overflow: "hidden",
-          }}
-        >
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              tableLayout: "fixed",
-            }}
-          >
-            <colgroup>
-              <col style={{ width: "35%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "25%" }} />
-            </colgroup>
+        {/* =========================  
+            GEGROEPEERD PER PATIËNT  
+        ========================= */}
 
-            <thead>
-              <tr
-                style={{
-                  background: "#1F1F1F",
-                  borderBottom: `1px solid ${COLOR_BORDER}`,
-                }}
-              >
-                <th style={thStyle}>Patiënt</th>
-                <th style={thStyle}>Datum</th>
-                <th style={thStyle}>Therapeut</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Acties</th>
-              </tr>
-            </thead>
+        {Object.entries(
+          schemas.reduce((acc, item) => {
+            const key = item.patient_naam || "Onbekend";
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(item);
+            return acc;
+          }, {})
+        ).map(([patient, list]) => {
+          const last = [...list].sort(
+            (a, b) => new Date(b.laatst_gewijzigd) - new Date(a.laatst_gewijzigd)
+          )[0];
 
-            <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={4} style={loadingStyle}>
-                    Laden...
-                  </td>
-                </tr>
-              )}
+          return (
+            <GroupBlock
+              key={patient}
+              patient={patient}
+              items={list}
+              last={last}
+              initiallyOpen={false}
+              onEdit={(id) => {
+                setEditId(id);
+                setShowEdit(true);
+              }}
+              onPdf={(id) => {
+                setPdfId(id);
+                setShowPDF(true);
+              }}
+              onDelete={(id) => {
+                setDeleteItem({ id });
+                setShowDelete(true);
+              }}
+              onMail={(id) => handleMail(id)}
+            />
+          );
+        })}
 
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={4} style={loadingStyle}>
-                    Geen schema’s gevonden
-                  </td>
-                </tr>
-              )}
-
-              {filtered.map((s) => (
-                <tr
-                  key={s.id}
-                  style={{
-                    background: "#1A1A1A",
-                    borderBottom: `1px solid ${COLOR_BORDER}`,
-                  }}
-                >
-                  <td style={tdStyle}>{s.patient_naam}</td>
-                  <td style={tdStyle}>{formatDate(s.datum)}</td>
-                  <td style={tdStyle}>{s.created_by}</td>
-
-                  <td
-                    style={{
-                      ...tdStyle,
-                      textAlign: "right",
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      gap: 10,
-                    }}
-                  >
-                    {/* PDF */}
-                    <IconBtn
-                      icon={<Eye size={16} />}
-                      onClick={() => {
-                        setSelectedSchema(s);
-                        setShowPDF(true);
-                      }}
-                      color={COLOR_ACCENT}
-                    />
-
-                    {/* MAIL */}
-                    <IconBtn
-                      icon={<Mail size={16} />}
-                      onClick={() => sendMail(s.id)}
-                      color={COLOR_ACCENT}
-                    />
-
-                    {/* EDIT */}
-                    <IconBtn
-                      icon={<Pencil size={16} />}
-                      onClick={() => {
-                        setSelectedSchema(s);
-                        setShowEdit(true);
-                      }}
-                      color={COLOR_ACCENT}
-                    />
-
-                    {/* DELETE */}
-                    <IconBtn
-                      icon={<Trash2 size={16} />}
-                      onClick={() => {
-                        setSelectedSchema(s);
-                        setShowDelete(true);
-                      }}
-                      color="#ff4e4e"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* DELETE MODAL */}
+        {/* MODALS */}
         <ConfirmModal
-          open={showDelete}
-          title="Oefenschema verwijderen"
-          message="Dit kan niet ongedaan worden gemaakt."
+          open={showDelete && Boolean(deleteItem)}
+          title="Schema verwijderen"
+          message={
+            <>
+              Weet je zeker dat je dit schema wilt verwijderen?
+              <br />
+              Dit kan niet ongedaan worden gemaakt.
+            </>
+          }
           confirmLabel="Verwijderen"
           cancelLabel="Annuleren"
           onCancel={() => setShowDelete(false)}
-          onConfirm={() => deleteSchema(selectedSchema.id)}
+          onConfirm={() => deleteSchema(deleteItem.id)}
         />
 
-        {/* EDIT MODAL */}
         <SchemaModalEdit
           isOpen={showEdit}
+          schemaId={editId}
           onClose={() => setShowEdit(false)}
-          schemaId={selectedSchema?.id}
-          onSaved={() => {
-            setShowEdit(false);
-            loadData();
-          }}
+          onSaved={() => loadSchemas()}
         />
 
-        {/* PDF MODAL */}
         <SchemaModalPDF
           isOpen={showPDF}
+          schemaId={pdfId}
           onClose={() => setShowPDF(false)}
-          schemaId={selectedSchema?.id}
         />
-      </div>
-    </div>
+      </motion.div>
+    </>
   );
 }
 
@@ -376,39 +236,155 @@ export default function SchemaOverzicht() {
 // SMALL UTILS
 // =====================================================
 
-const thStyle = {
-  padding: "12px 16px",
-  fontSize: 13,
-  color: "rgba(255,255,255,0.85)",
-  fontWeight: 600,
-};
-
-const tdStyle = {
-  padding: "10px 16px",
-  fontSize: 13,
-  color: "rgba(255,255,255,0.85)",
-};
-
-const loadingStyle = {
-  padding: 20,
-  textAlign: "center",
-  color: COLOR_MUTED,
-};
-
 function IconBtn({ icon, color, onClick }) {
   return (
     <motion.button
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       style={{
         background: "transparent",
         border: "none",
-        color,
         cursor: "pointer",
+        color,
       }}
     >
       {icon}
     </motion.button>
+  );
+}
+
+// =====================================================
+// COLLAPSIBLE GROUP COMPONENT
+// =====================================================
+
+function GroupBlock({
+  patient,
+  items,
+  last,
+  initiallyOpen,
+  onEdit,
+  onPdf,
+  onDelete,
+  onMail,
+}) {
+  const [open, setOpen] = React.useState(initiallyOpen);
+
+  return (
+    <div
+      style={{
+        marginBottom: 20,
+        borderRadius: 12,
+        border: "1px solid #22252D",
+        overflow: "hidden",
+      }}
+    >
+      {/* HEADER */}
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          background: "#222",
+          padding: "14px 18px",
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div style={{ color: "#fff", fontSize: 13, fontWeight: 500 }}>
+          {patient}
+        </div>
+
+        <div style={{ color: "#fff", fontSize: 13 }}>
+          Laatste schema: {formatDate(last?.datum)} — {last?.aantal_oefeningen} oefeningen
+        </div>
+
+        <div
+          style={{
+            transform: open ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "0.2s ease",
+            color: "#FF7900",
+            fontSize: 20,
+          }}
+        >
+          ›
+        </div>
+      </div>
+
+      {/* BODY */}
+      {open && (
+        <div style={{ background: "#1A1A1A" }}>
+          {/* TABLE HEADER */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "140px 1fr 120px",
+              padding: "10px 18px",
+              borderBottom: "1px solid #22252D",
+              color: "#FFFFFF",
+              fontSize: 12,
+              fontWeight: 500,
+              textTransform: "uppercase",
+            }}
+          >
+            <div>Datum</div>
+            <div>Oefeningen</div>
+            <div style={{ textAlign: "center", paddingRight: 6 }}>Acties</div>
+          </div>
+
+          {/* DATA ROWS */}
+          {items.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "140px 1fr 120px",
+                padding: "12px 18px",
+                borderBottom: "1px solid #22252D",
+                color: "rgba(255,255,255,0.85)",
+                fontSize: 13,
+                alignItems: "center",
+              }}
+            >
+              <div>{formatDate(item.datum)}</div>
+              <div>{item.aantal_oefeningen}</div>
+
+              {/* ICONS */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  justifyContent: "flex-end",
+                }}
+              >
+                <IconBtn
+                  icon={<Eye size={16} />}
+                  color={COLOR_ACCENT}
+                  onClick={() => onPdf(item.id)}
+                />
+
+                <IconBtn
+                  icon={<Pencil size={16} />}
+                  color={COLOR_ACCENT}
+                  onClick={() => onEdit(item.id)}
+                />
+
+                <IconBtn
+                  icon={<Mail size={16} />}
+                  color={COLOR_ACCENT}
+                  onClick={() => onMail(item.id)}
+                />
+
+                <IconBtn
+                  icon={<Trash2 size={16} />}
+                  color="#ff4e4e"
+                  onClick={() => onDelete(item.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

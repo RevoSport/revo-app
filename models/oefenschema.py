@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: models/oefenschema.py
-# Revo Sport — Oefenschema-module (MySQL)
+# Revo Sport — Oefenschema-module (Corrected & Unified)
 # =====================================================
 
 from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey
@@ -30,59 +30,81 @@ class Oefenschema(Base):
     __tablename__ = "oefenschemas"
 
     id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patienten_oefen.id"))
+    patient_id = Column(Integer, ForeignKey("patienten_oefen.id", ondelete="CASCADE"))
     datum = Column(Date, nullable=False)
-    pdf_path = Column(String(255))
+    pdf_path = Column(String(500))
     created_by = Column(String(100))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     patient = relationship("PatientOefen", back_populates="schemas")
-    oefeningen = relationship("Oefening", back_populates="schema", cascade="all, delete")
+    oefeningen = relationship(
+        "Oefening",
+        back_populates="schema",
+        cascade="all, delete-orphan",
+        order_by="Oefening.volgorde"
+    )
 
 
 # =====================================================
-# 🔹 Oefening (alleen gekoppeld aan Oefenschema)
+# 🔹 Oefening (correct, template-compatibel)
 # =====================================================
 class Oefening(Base):
     __tablename__ = "oefeningen"
 
     id = Column(Integer, primary_key=True, index=True)
-    schema_id = Column(Integer, ForeignKey("oefenschemas.id"))
-    volgorde = Column(String(10))
+
+    # Correcte FK naar schema
+    schema_id = Column(Integer, ForeignKey("oefenschemas.id", ondelete="CASCADE"))
+
+    # 🔧 Volgorde harmonie met templates → INT
+    volgorde = Column(Integer, nullable=True)
+
     opmerking = Column(Text)
-    foto1 = Column(String(255))
-    foto2 = Column(String(255))
-    sets = Column(Integer)
-    reps = Column(Integer)
+
+    # 🔧 Foto-paden altijd 500 chars (SharePoint + proxy compatibiliteit)
+    foto1 = Column(String(500))
+    foto2 = Column(String(500))
+
+    # 🔧 Harmonisatie met templates → altijd String
+    sets = Column(String(10))
+    reps = Column(String(10))
     tempo = Column(String(50))
     gewicht = Column(String(50))
+
+    # 🔧 Ontbrekende template-koppeling
+    template_id = Column(Integer, ForeignKey("templates_oefen.id", ondelete="SET NULL"), nullable=True)
+    template = relationship("TemplateOefen")
 
     schema = relationship("Oefenschema", back_populates="oefeningen")
 
 
 # =====================================================
-# 🔹 TemplateOefen (voor herbruikbare sjablonen)
+# 🔹 TemplateOefen
 # =====================================================
 class TemplateOefen(Base):
     __tablename__ = "templates_oefen"
 
     id = Column(Integer, primary_key=True, index=True)
     naam = Column(String(100), nullable=False)
-    data_json = Column(Text, nullable=True)  # 🆕 JSON-back-up van oefeningen
-    created_by = Column(String(100), nullable=True)
+
+    # Bewaart JSON-backup
+    data_json = Column(Text)
+
+    created_by = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # 🔹 toevoegen
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     oefeningen = relationship(
         "TemplateOefening",
-        cascade="all, delete",
-        back_populates="template"
+        back_populates="template",
+        cascade="all, delete-orphan",
+        order_by="TemplateOefening.volgorde"
     )
 
 
 # =====================================================
-# 🔹 TemplateOefening (oefeningen binnen een template)
+# 🔹 TemplateOefening
 # =====================================================
 class TemplateOefening(Base):
     __tablename__ = "template_oefeningen"
@@ -90,13 +112,15 @@ class TemplateOefening(Base):
     id = Column(Integer, primary_key=True, index=True)
     template_id = Column(Integer, ForeignKey("templates_oefen.id", ondelete="CASCADE"))
 
-    sets = Column(String(10), nullable=True)
-    reps = Column(String(10), nullable=True)
-    tempo = Column(String(10), nullable=True)
-    gewicht = Column(String(10), nullable=True)
-    opmerking = Column(Text, nullable=True)
+    # Zelfde structuur als Oefening
+    sets = Column(String(10))
+    reps = Column(String(10))
+    tempo = Column(String(10))
+    gewicht = Column(String(10))
+    opmerking = Column(Text)
     volgorde = Column(Integer, nullable=True)
-    foto1 = Column(String(500), nullable=True)
-    foto2 = Column(String(500), nullable=True)
+
+    foto1 = Column(String(500))
+    foto2 = Column(String(500))
 
     template = relationship("TemplateOefen", back_populates="oefeningen")

@@ -1,24 +1,74 @@
 # =====================================================
 # FILE: schemas/oefenschema.py
-# Revo Sport — Pydantic Schemas voor Oefenschema-module
+# Revo Sport — Pydantic Schemas (Corrected & Unified)
 # =====================================================
 
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date, datetime
 
+
 # -----------------------------------------------------
-# 🔹 Oefening
+# 🔹 TemplateOefening
+# -----------------------------------------------------
+class TemplateOefeningBase(BaseModel):
+    sets: Optional[str] = None
+    reps: Optional[str] = None
+    tempo: Optional[str] = None
+    gewicht: Optional[str] = None
+    opmerking: Optional[str] = None
+    volgorde: Optional[int] = None
+    foto1: Optional[str] = None
+    foto2: Optional[str] = None
+
+
+class TemplateOefeningSchema(TemplateOefeningBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+# -----------------------------------------------------
+# 🔹 Template
+# -----------------------------------------------------
+class TemplateBase(BaseModel):
+    naam: str
+    data_json: Optional[dict] = None
+    created_by: Optional[str] = None
+
+
+class TemplateCreate(TemplateBase):
+    pass
+
+
+class TemplateSchema(TemplateBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    oefeningen: List[TemplateOefeningSchema] = []
+
+    class Config:
+        orm_mode = True
+
+
+# -----------------------------------------------------
+# 🔹 Oefening (schema niveau)
 # -----------------------------------------------------
 class OefeningBase(BaseModel):
-    volgorde: Optional[str] = None
+    volgorde: Optional[int] = None
     opmerking: Optional[str] = None
     foto1: Optional[str] = None
     foto2: Optional[str] = None
-    sets: Optional[int] = None
-    reps: Optional[int] = None
+
+    # 🔧 Harmonisatie types
+    sets: Optional[str] = None
+    reps: Optional[str] = None
     tempo: Optional[str] = None
     gewicht: Optional[str] = None
+
+    # 🔧 Kritiek: template-koppeling
+    template_id: Optional[int] = None
 
 
 class OefeningCreate(OefeningBase):
@@ -42,6 +92,10 @@ class OefenschemaBase(BaseModel):
 
 
 class OefenschemaCreate(OefenschemaBase):
+    oefeningen: List[OefeningCreate]
+
+
+class OefenschemaUpdate(OefenschemaBase):
     oefeningen: List[OefeningCreate]
 
 
@@ -70,24 +124,6 @@ class PatientCreate(PatientBase):
 
 class PatientSchema(PatientBase):
     id: int
-
-    class Config:
-        orm_mode = True
-
-
-# -----------------------------------------------------
-# 🔹 Template
-# -----------------------------------------------------
-class TemplateBase(BaseModel):
-    naam: str
-    beschrijving: Optional[str] = None
-    data_json: Optional[dict] = None
-    created_by: Optional[str] = None
-
-
-class TemplateSchema(TemplateBase):
-    id: int
-    created_at: datetime
 
     class Config:
         orm_mode = True

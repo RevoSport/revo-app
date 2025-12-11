@@ -40,42 +40,67 @@ SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Revo Sport")
 # =====================================================
 #  MAIL VIA MEDIAWAX SMTP
 # =====================================================
-
 def send_mail_mediawax(
     to: str,
     subject: str,
     body: str,
     attachment_name: str = None,
     attachment_bytes: bytes = None,
-    cc: str = None,  # ✅ nieuw: optioneel CC-veld
+    cc: str = None,
+    inline_images: dict = None,   # ✅ NIEUW
 ):
     """
-    Verstuur e-mail via Mediawax SMTP (mail.revosport.be)
-    - Altijd vanuit info@revosport.be
-    - Optioneel CC naar therapeut
-    - Inclusief PDF-bijlage
+    Verstuur e-mail via Mediawax SMTP:
+    - HTML body
+    - Optioneel CC
+    - Optionele PDF-bijlage
+    - Optionele inline CID-images (PNG/JPG)
     """
 
     try:
         # ---------------------------------------------
-        # 📦 Mail opbouwen
+        # 📦 Hoofdcontainer met 'related' → nodig voor inline images
         # ---------------------------------------------
-        msg = MIMEMultipart()
-        msg["From"] = f"{SMTP_FROM_NAME} <{SMTP_USER}>"
-        msg["To"] = to
+        msg_root = MIMEMultipart("related")
+        msg_root["From"] = f"{SMTP_FROM_NAME} <{SMTP_USER}>"
+        msg_root["To"] = to
         if cc:
-            msg["Cc"] = cc
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body, "html", "utf-8"))  # ✅ HTML-mail
+            msg_root["Cc"] = cc
+        msg_root["Subject"] = subject
 
-        # Voeg bijlage toe indien aanwezig
+        # ---------------------------------------------
+        # 📄 Alternatieven (HTML)
+        # ---------------------------------------------
+        msg_alt = MIMEMultipart("alternative")
+        msg_root.attach(msg_alt)
+
+        msg_alt.attach(MIMEText(body, "html", "utf-8"))
+
+        # ---------------------------------------------
+        # 🖼️ INLINE IMAGES (CID)
+        # ---------------------------------------------
+        if inline_images:
+            from email.mime.image import MIMEImage
+
+            for cid, img_bytes in inline_images.items():
+                if not img_bytes:
+                    continue
+
+                img = MIMEImage(img_bytes)
+                img.add_header("Content-ID", f"<{cid}>")  # <cid>
+                img.add_header("Content-Disposition", "inline", filename=f"{cid}.png")
+                msg_root.attach(img)
+
+        # ---------------------------------------------
+        # 📎 PDF ATTACHMENT
+        # ---------------------------------------------
         if attachment_bytes:
             part = MIMEApplication(attachment_bytes, Name=attachment_name)
             part["Content-Disposition"] = f'attachment; filename="{attachment_name}"'
-            msg.attach(part)
+            msg_root.attach(part)
 
         # ---------------------------------------------
-        # 📡 Verbinden met Mediawax SMTP
+        # 📡 SMTP VERBINDING
         # ---------------------------------------------
         recipients = [to]
         if cc:
@@ -84,14 +109,13 @@ def send_mail_mediawax(
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASS)
-            server.sendmail(SMTP_USER, recipients, msg.as_string())
+            server.sendmail(SMTP_USER, recipients, msg_root.as_string())
 
         ok(f"E-mail verzonden naar {to}" + (f" (CC: {cc})" if cc else ""))
 
     except Exception as e:
         err(f"Fout bij verzenden mail: {e}")
         raise
-
 
 
 # =====================================================

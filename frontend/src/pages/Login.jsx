@@ -65,14 +65,17 @@ export default function Login({ onLogin }) {
           onSubmit={handleSubmit}
           style={{
             backgroundColor: "#1b1b1b",
-            padding: "3rem 2.5rem",
+            padding: "2.2rem 1.8rem",
             borderRadius: 18,
-            width: 380,
+            width: "100%",
+            maxWidth: 360,
             textAlign: "center",
             border: "1px solid rgba(255,121,0,0.4)",
             boxShadow: "0 0 25px rgba(0,0,0,0.4)",
+            boxSizing: "border-box",
           }}
         >
+
           {/* Logo + Slogan */}
           <div
             style={{

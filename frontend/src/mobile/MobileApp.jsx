@@ -8,24 +8,26 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  Link,
   Navigate,
   useNavigate,
 } from "react-router-dom";
 import { motion } from "framer-motion";
 import logo from "../assets/logo.png";
+
 import {
   Activity,
   UsersRound,
   ClipboardList,
-  Dumbbell,
   Gauge,
   UserPlus,
   CalendarDays,
   CarFront,
-} from "lucide-react"; // ✅ Staat nu juist bovenaan
+} from "lucide-react";
 
-// 🔹 Formulieren importeren
+// Oefenschema
+import OefenschemaNieuw from "./screens/Oefenschema/OefenschemaNieuw";
+
+// Formulieren
 import FormPatient from "./screens/FormPatient";
 import FormBlessure from "./screens/FormBlessure";
 import FormBaseline from "./screens/FormBaseline";
@@ -40,108 +42,6 @@ const COLOR_ACCENT = "#FF7900";
 const COLOR_BG = "#111";
 const COLOR_TEXT = "#ffffff";
 
-// 🎯 Universele headerstijl
-const HEADER_STYLE = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "20px 28px 0 28px",
-  marginBottom: 20,
-  height: 80,
-};
-
-export default function MobileApp({ userName = "Frederic", onLogout }) {
-  return (
-    <BrowserRouter>
-      <div
-        style={{
-          background: COLOR_BG,
-          color: COLOR_TEXT,
-          minHeight: "100vh",
-          fontFamily:
-            "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-        }}
-      >
-        <Routes>
-          <Route
-            path="/"
-            element={<StartScreen userName={userName} onLogout={onLogout} />}
-          />
-          <Route
-            path="/vkb"
-            element={<VkbMenu userName={userName} onLogout={onLogout} />}
-          />
-          <Route
-            path="/vkb/patient"
-            element={
-              <FormLayout title="Patiënt">
-                <FormPatient />
-              </FormLayout>
-            }
-          />
-          <Route
-            path="/vkb/blessure"
-            element={
-              <FormLayout title="Blessure">
-                <FormBlessure />
-              </FormLayout>
-            }
-          />
-          <Route
-            path="/vkb/baseline"
-            element={
-              <FormLayout title="Baseline">
-                <FormBaseline />
-              </FormLayout>
-            }
-          />
-          <Route
-            path="/vkb/week6"
-            element={
-              <FormLayout title="Week 6">
-                <FormWeek6 />
-              </FormLayout>
-            }
-          />
-          <Route
-            path="/vkb/maand3"
-            element={
-              <FormLayout title="Maand 3">
-                <FormMaand3 />
-              </FormLayout>
-            }
-          />
-          <Route
-            path="/vkb/maand45"
-            element={
-              <FormLayout title="Maand 4.5">
-                <FormMaand45 />
-              </FormLayout>
-            }
-          />
-          <Route
-            path="/vkb/maand6"
-            element={
-              <FormLayout title="Maand 6">
-                <FormMaand6 />
-              </FormLayout>
-            }
-          />
-          <Route
-            path="/vkb/autorijden"
-            element={
-              <FormLayout title="Autorijden / Lopen">
-                <FormAutorijden />
-              </FormLayout>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
-  );
-}
-
 // =====================================================
 // 🏁 STARTPAGINA — Grid Tiles + Icons
 // =====================================================
@@ -152,7 +52,7 @@ function StartScreen({ userName, onLogout }) {
     { label: "Voorste Kruisband", icon: Activity, path: "/vkb" },
     { label: "Performance", icon: Gauge, path: "#" },
     { label: "Team Monitoring", icon: UsersRound, path: "#" },
-    { label: "Oefenschema’s", icon: ClipboardList, path: "#" },
+    { label: "Oefenschema’s", icon: ClipboardList, path: "/oefenschema/nieuw" },
   ];
 
   return (
@@ -166,7 +66,7 @@ function StartScreen({ userName, onLogout }) {
           "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
       }}
     >
-      {/* Header (centrale logo) */}
+      {/* Header */}
       <div
         style={{
           position: "relative",
@@ -190,7 +90,7 @@ function StartScreen({ userName, onLogout }) {
         />
       </div>
 
-      {/* Welkomtekst */}
+      {/* Welkom */}
       <h2
         style={{
           textAlign: "center",
@@ -205,7 +105,7 @@ function StartScreen({ userName, onLogout }) {
         Welkom, {userName}
       </h2>
 
-      {/* Grid tegels */}
+      {/* Grid tiles */}
       <div
         style={{
           display: "grid",
@@ -217,84 +117,78 @@ function StartScreen({ userName, onLogout }) {
         }}
       >
         {startTiles.map(({ label, icon: Icon, path }) => (
-<motion.div
-  key={label}
-  whileTap={{ scale: 0.97 }}
-  onClick={() => path !== "#" && navigate(path)}
-  style={{
-    background: "#1a1a1a",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 18,
-    height: 110,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    fontWeight: 500,
-    fontSize: 13,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    color: "#C9C9C9",
-    cursor: "pointer",
-    transition: "all 0.25s ease",
-  }}
-  onMouseEnter={(e) => {
-    if (path !== "#") {
-      e.currentTarget.style.color = "#FF7900"; 
-      const svg = e.currentTarget.querySelector("svg");
-      if (svg) svg.style.stroke = "#FF7900"; // icoon wit (Lucide gebruikt stroke)
-    }
-  }}
-  onMouseLeave={(e) => {
-    if (path !== "#") {
-      e.currentTarget.style.color = "#C9C9C9"; // tekst terug wit
-      const svg = e.currentTarget.querySelector("svg");
-      if (svg) svg.style.stroke = "#FF7900"; // icoon terug oranje
-    }
-  }}
->
-  <Icon
-    size={26}
-    stroke={path === "#" ? "#C9C9C9" : "#FF7900"}
-    style={{
-      marginBottom: 8,
-      transition: "stroke 0.25s ease",
-    }}
-  />
-  {label}
-</motion.div>
-
-
+          <motion.div
+            key={label}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => path !== "#" && navigate(path)}
+            style={{
+              background: "#1a1a1a",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 18,
+              height: 110,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              fontWeight: 500,
+              fontSize: 13,
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              color: "#C9C9C9",
+              cursor: "pointer",
+              transition: "all 0.25s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (path !== "#") {
+                e.currentTarget.style.color = "#FF7900";
+                const svg = e.currentTarget.querySelector("svg");
+                if (svg) svg.style.stroke = "#FF7900";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (path !== "#") {
+                e.currentTarget.style.color = "#C9C9C9";
+                const svg = e.currentTarget.querySelector("svg");
+                if (svg) svg.style.stroke = "#FF7900";
+              }
+            }}
+          >
+            <Icon
+              size={26}
+              stroke={path === "#" ? "#C9C9C9" : "#FF7900"}
+              style={{
+                marginBottom: 8,
+                transition: "stroke 0.25s ease",
+              }}
+            />
+            {label}
+          </motion.div>
         ))}
       </div>
 
-      {/* Logout onderaan */}
-      <div style={{ textAlign: "center", marginTop: 50 }}>
-{/* Logout onderaan (vast aan schermonderzijde) */}
-<button
-  onClick={onLogout}
-  style={{
-    position: "fixed",
-    bottom: 30,
-    left: "50%",
-    transform: "translateX(-50%)",
-    background: "transparent",
-    border: `1px solid #FF7900`,
-    borderRadius: 8,
-    padding: "10px 20px",
-    color: "#FF7900",
-    fontWeight: 500,
-    fontSize: 13,
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    zIndex: 50, // blijft boven de content
-  }}
->
-  ↩ Uitloggen
-</button>
-
-      </div>
+      {/* Logout fixed button */}
+      <button
+        onClick={onLogout}
+        style={{
+          position: "fixed",
+          bottom: 30,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "transparent",
+          border: `1px solid #FF7900`,
+          borderRadius: 8,
+          padding: "10px 20px",
+          color: "#FF7900",
+          fontWeight: 500,
+          fontSize: 13,
+          cursor: "pointer",
+          transition: "all 0.3s ease",
+          zIndex: 50,
+        }}
+      >
+        ↩ Uitloggen
+      </button>
     </div>
   );
 }
@@ -328,7 +222,7 @@ function VkbMenu({ userName, onLogout }) {
         paddingBottom: 60,
       }}
     >
-      {/* Header met overlay terugknop */}
+      {/* Header */}
       <div
         style={{
           position: "relative",
@@ -386,7 +280,6 @@ function VkbMenu({ userName, onLogout }) {
       >
         Voorste Kruisband
       </h2>
-
       {/* Grid met tegels */}
       <div
         style={{
@@ -422,14 +315,14 @@ function VkbMenu({ userName, onLogout }) {
               transition: "all 0.25s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#FF7900"; // tekst wit
+              e.currentTarget.style.color = "#FF7900";
               const svg = e.currentTarget.querySelector("svg");
-              if (svg) svg.style.stroke = "#FF7900"; // icoon wit
+              if (svg) svg.style.stroke = "#FF7900";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#C9C9C9"; // tekst oranje
+              e.currentTarget.style.color = "#C9C9C9";
               const svg = e.currentTarget.querySelector("svg");
-              if (svg) svg.style.stroke = "#FF7900"; // icoon terug oranje
+              if (svg) svg.style.stroke = "#FF7900";
             }}
           >
             <Icon
@@ -444,15 +337,12 @@ function VkbMenu({ userName, onLogout }) {
           </motion.div>
         ))}
       </div>
-
- 
     </motion.div>
   );
 }
 
-
 // =====================================================
-// 🔹 Form layout (met overlay header zoals VKB)
+// 🔹 FormLayout — overlay header + terugknop
 // =====================================================
 function FormLayout({ title, children }) {
   const navigate = useNavigate();
@@ -468,7 +358,7 @@ function FormLayout({ title, children }) {
         position: "relative",
       }}
     >
-      {/* Overlay Header */}
+      {/* Header */}
       <div
         style={{
           position: "relative",
@@ -479,9 +369,9 @@ function FormLayout({ title, children }) {
           height: 80,
         }}
       >
-        {/* Terugknop (overlay linksboven) */}
+        {/* Terugknop */}
         <button
-          onClick={() => navigate("/vkb")}
+          onClick={() => navigate(-1)}
           style={{
             position: "absolute",
             top: 18,
@@ -500,7 +390,7 @@ function FormLayout({ title, children }) {
           ← Terug
         </button>
 
-        {/* Logo in het midden */}
+        {/* Logo */}
         <img
           src={logo}
           alt="AI.THLETE Logo"
@@ -533,8 +423,7 @@ function FormLayout({ title, children }) {
         <span style={{ fontSize: 18, color: "#c9c9c9" }}>{title}</span>
       </h2>
 
-
-      {/* Formulierinhoud */}
+      {/* Content */}
       <div
         style={{
           padding: "0 28px 60px 28px",
@@ -545,10 +434,123 @@ function FormLayout({ title, children }) {
     </div>
   );
 }
+// =====================================================
+// 📱 MobileApp — Router + Layout Wrapper
+// =====================================================
+export default function MobileApp({ userName = "Frederic", onLogout }) {
+  return (
+    <BrowserRouter>
+      <div
+        style={{
+          background: COLOR_BG,
+          color: COLOR_TEXT,
+          minHeight: "100vh",
+          fontFamily:
+            "'Open Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        }}
+      >
+        <Routes>
+          <Route
+            path="/"
+            element={<StartScreen userName={userName} onLogout={onLogout} />}
+          />
 
+          <Route
+            path="/vkb"
+            element={<VkbMenu userName={userName} onLogout={onLogout} />}
+          />
+
+          <Route
+            path="/vkb/patient"
+            element={
+              <FormLayout title="Patiënt">
+                <FormPatient />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/vkb/blessure"
+            element={
+              <FormLayout title="Blessure">
+                <FormBlessure />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/vkb/baseline"
+            element={
+              <FormLayout title="Baseline">
+                <FormBaseline />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/vkb/week6"
+            element={
+              <FormLayout title="Week 6">
+                <FormWeek6 />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/vkb/maand3"
+            element={
+              <FormLayout title="Maand 3">
+                <FormMaand3 />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/vkb/maand45"
+            element={
+              <FormLayout title="Maand 4.5">
+                <FormMaand45 />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/vkb/maand6"
+            element={
+              <FormLayout title="Maand 6">
+                <FormMaand6 />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/vkb/autorijden"
+            element={
+              <FormLayout title="Autorijden / Lopen">
+                <FormAutorijden />
+              </FormLayout>
+            }
+          />
+
+          <Route
+            path="/oefenschema/nieuw"
+            element={
+              <FormLayout title="Nieuw Oefenschema">
+                <OefenschemaNieuw />
+              </FormLayout>
+            }
+          />
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+}
 
 // =====================================================
-// 🔹 Styling helpers
+// Styling presets (optioneel, niet in gebruik in render)
 // =====================================================
 const logoutButton = {
   display: "inline-block",

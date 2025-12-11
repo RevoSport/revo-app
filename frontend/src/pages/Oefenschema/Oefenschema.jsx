@@ -3,19 +3,17 @@
 // Revo Sport — Oefenschema-module (Overzicht + Templates + Nieuw)
 // =====================================================
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ClipboardList,
   Layers,
   FilePlus,
 } from "lucide-react";
 
-// 🔧 Correcte imports na verhuis
 import FormOefenschema from "./FormOefenschema";
 import TemplatesOverzicht from "./TemplatesOverzicht";
 import SchemaOverzicht from "./SchemaOverzicht";
 
-// PDF / Edit modals
 import SchemaModalPDF from "../../components/SchemaModalPDF";
 import SchemaModalEdit from "../../components/SchemaModalEdit";
 
@@ -24,45 +22,60 @@ const COLOR_ACCENT = "#FF7900";
 const COLOR_BG = "#111111";
 const COLOR_TEXT = "#ffffff";
 const COLOR_MUTED = "#c9c9c9";
-const COLOR_CARD = "#1a1a1a";
 
-export default function Oefenschema() {
-  const [activeSection, setActiveSection] = useState("schema");
+// ⛔ LET OP
+// Deze component MOET currentPage ontvangen vanuit App.jsx:
+// <Oefenschema currentPage={currentPage} />
 
-  // Edit modal
+export default function Oefenschema({ currentPage, onNavigate }) {
+
+
+  // ------------------------------------------------------
+  // Extract tab uit currentPage (NIET uit window.location)
+  // ------------------------------------------------------
+  const getTab = (page) => {
+    if (!page || typeof page !== "string") return "schema";
+    const qs = page.split("?")[1];
+    if (!qs) return "schema";
+    const tab = new URLSearchParams(qs).get("tab");
+    return tab || "schema";
+  };
+
+  // Init state uit currentPage
+  const [activeSection, setActiveSection] = useState(getTab(currentPage));
+
+  // Update wanneer currentPage verandert (via sidebar)
+  useEffect(() => {
+    setActiveSection(getTab(currentPage));
+  }, [currentPage]);
+
+  // UI → Router synchronisatie (blijft nodig)
+  const switchTab = (tab) => {
+    const newPage = `/oefenschema?tab=${tab}`;
+    setActiveSection(tab);
+    onNavigate(newPage);     // ← BELANGRIJK: update App state
+    window.history.replaceState({}, "", newPage);
+  };
+
+
+  // --------------------------
+  // Modals
+  // --------------------------
   const [schemaEditData, setSchemaEditData] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // PDF modal
   const [pdfSchemaId, setPdfSchemaId] = useState(null);
   const [showPdfModal, setShowPdfModal] = useState(false);
 
-const tabStyle = (active) => ({
-  flex: 1,
-  padding: "12px 0",
-  textAlign: "center",
-  cursor: "pointer",
-  fontSize: 14,
-  fontWeight: 600,
-  textTransform: "uppercase",
-  letterSpacing: "0.6px",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  gap: "6px",
-  borderBottom: active ? `3px solid ${COLOR_ACCENT}` : "3px solid transparent",
-  color: active ? COLOR_ACCENT : COLOR_MUTED,
-  transition: "all .2s ease",
-});
-
-
+  // --------------------------
+  // UI
+  // --------------------------
   return (
     <div
       style={{
         background: COLOR_BG,
         minHeight: "100vh",
         padding: "30px 20px",
-        alignItems: "center",
         textAlign: "center",
         color: COLOR_TEXT,
       }}
@@ -76,103 +89,117 @@ const tabStyle = (active) => ({
           padding: "25px 30px",
         }}
       >
-      <h1 style={{ fontSize: "22px", textTransform: "uppercase", color: "#fff", letterSpacing: "1.5px", fontWeight: 700, marginBottom: "6px" }}>
-        OEFENSCHEMA
-      </h1>
-      <p style={{ color: "var(--muted)", fontSize: "14px", marginBottom: "35px", letterSpacing: "0.4px" }}>
-        DATA-DRIVEN REHABILITATION INSIGHTS
-      </p>
-      
-{/* ORANJE LIJN BOVEN (exactzelfde breedte als tabs) */}
-<div
-  style={{
-    width: "100%",
-    maxWidth: "1000px", // exact breedte van 3 × 200px kaarten + gaps
-    margin: "0 auto 30px auto",
-    height: "1px",
-    backgroundColor: "#FF7900",
-  }}
-/>
+        <h1
+          style={{
+            fontSize: "22px",
+            textTransform: "uppercase",
+            color: "#fff",
+            letterSpacing: "1.5px",
+            fontWeight: 700,
+            marginBottom: "6px",
+          }}
+        >
+          OEFENSCHEMA
+        </h1>
 
-{/* TABBAR */}
-<div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    gap: "24px",
-    marginBottom: "20px",
-    width: "100%",
-  }}
->
-  {[
-    { key: "schema", title: "OVERZICHT", icon: <ClipboardList size={20} color="#FF7900" /> },
-    { key: "templates", title: "TEMPLATES", icon: <Layers size={20} color="#FF7900" /> },
-    { key: "nieuw", title: "NIEUW SCHEMA", icon: <FilePlus size={20} color="#FF7900" /> },
-  ].map((tab) => {
-    const isActive = activeSection === tab.key;
+        <p
+          style={{
+            color: "var(--muted)",
+            fontSize: "14px",
+            marginBottom: "35px",
+            letterSpacing: "0.4px",
+          }}
+        >
+          DATA-DRIVEN REHABILITATION INSIGHTS
+        </p>
 
-    return (
-      <div
-        key={tab.key}
-        onClick={() => setActiveSection(tab.key)}
-        style={{
-          width: "200px",
-          backgroundColor: "#1a1a1a",
-          borderRadius: "14px",
-          border: isActive ? "2px solid #FF7900" : "2px solid transparent",
-          cursor: "pointer",
-          transition: "all 0.25s ease",
-          boxShadow: "0 0 10px rgba(0,0,0,0.35)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "20px 0",
-          transform: isActive ? "translateY(-2px)" : "translateY(0)",
-        }}
-      >
-        {/* Icon */}
+        {/* ORANJE LIJN BOVEN */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "1000px",
+            margin: "0 auto 30px",
+            height: "1px",
+            backgroundColor: COLOR_ACCENT,
+          }}
+        />
+
+        {/* TABS */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
             justifyContent: "center",
-            height: "28px",
-            marginBottom: "8px",
+            gap: "24px",
+            marginBottom: "20px",
+            width: "100%",
           }}
         >
-          {tab.icon}
+          {[
+            { key: "schema", title: "OVERZICHT", icon: <ClipboardList size={20} color={COLOR_ACCENT} /> },
+            { key: "templates", title: "TEMPLATES", icon: <Layers size={20} color={COLOR_ACCENT} /> },
+            { key: "nieuw", title: "NIEUW SCHEMA", icon: <FilePlus size={20} color={COLOR_ACCENT} /> },
+          ].map((tab) => {
+            const isActive = activeSection === tab.key;
+
+            return (
+              <div
+                key={tab.key}
+                onClick={() => switchTab(tab.key)}
+                style={{
+                  width: "200px",
+                  backgroundColor: "#1a1a1a",
+                  borderRadius: "14px",
+                  border: isActive ? `2px solid ${COLOR_ACCENT}` : "2px solid transparent",
+                  cursor: "pointer",
+                  transition: "all 0.25s ease",
+                  boxShadow: "0 0 10px rgba(0,0,0,0.35)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "20px 0",
+                  transform: isActive ? "translateY(-2px)" : "translateY(0)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "28px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {tab.icon}
+                </div>
+
+                <h3
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: isActive ? COLOR_ACCENT : "white",
+                    letterSpacing: "0.7px",
+                    textTransform: "uppercase",
+                    margin: 0,
+                  }}
+                >
+                  {tab.title}
+                </h3>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Titel */}
-        <h3
+        {/* ORANJE LIJN */}
+        <div
           style={{
-            fontSize: "12px",
-            fontWeight: 500,          // << EXACTE AANPASSING
-            color: isActive ? "#FF7900" : "white",
-            letterSpacing: "0.7px",
-            textTransform: "uppercase",
-            margin: 0,
+            width: "100%",
+            maxWidth: "1000px",
+            margin: "0 auto 30px",
+            height: "1px",
+            backgroundColor: COLOR_ACCENT,
           }}
-        >
-          {tab.title}
-        </h3>
-      </div>
-    );
-  })}
-</div>
-
-{/* ORANJE LIJN ONDER (zelfde breedte als tabs) */}
-<div
-  style={{
-    width: "100%",
-    maxWidth: "1000px",
-    margin: "0 auto 30px auto",
-    height: "1px",
-    backgroundColor: "#FF7900",
-  }}
-/>
-
+        />
 
         {/* CONTENT */}
         <div>

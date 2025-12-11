@@ -20,6 +20,21 @@ const COLOR_BORDER = "#22252D";
 const COLOR_TEXT = "#FFFFFF";
 const COLOR_MUTED = "#9CA3AF";
 const COLOR_CARD = "#1A1A1A";
+function formatDate(d) {
+  if (!d) return "—";
+
+  // ISO-normalisatie
+  const clean = d.replace("T", " ").trim();  // "2025-12-06 13:00:00"
+
+  // Datumdeel nemen
+  const datePart = clean.split(" ")[0];      // "2025-12-06"
+  const [y, m, day] = datePart.split("-");
+
+  if (!y || !m || !day) return d;
+
+  return `${day}/${m}/${y}`;
+}
+
 
 export default function TemplatesOverzicht() {
   const [templates, setTemplates] = useState([]);
@@ -32,6 +47,7 @@ export default function TemplatesOverzicht() {
   const [showDelete, setShowDelete] = useState(false);
 
   const [statusMsg, setStatusMsg] = useState(null);
+  const [createNew, setCreateNew] = useState(false);
 
   // =====================================================
   // LOAD TEMPLATES
@@ -145,6 +161,29 @@ export default function TemplatesOverzicht() {
           )}
         </AnimatePresence>
 
+<div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+  <motion.button
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={() => {
+      setSelectedId(null);
+      setCreateNew(true);
+      setShowEdit(true);
+    }}
+    style={{
+      background: "transparent",
+      border: `1px solid ${COLOR_ACCENT}`,
+      color: COLOR_ACCENT,
+      padding: "8px 14px",
+      borderRadius: 8,
+      fontSize: 14,
+      cursor: "pointer",
+    }}
+  >
+    + Nieuw template
+  </motion.button>
+</div>
+
         {/* TABLE */}
         <div
           style={{
@@ -207,7 +246,7 @@ export default function TemplatesOverzicht() {
                 >
                   <td style={tdStyle}>{t.naam}</td>
                   <td style={tdStyle}>{t.aantal_oefeningen ?? 0}</td>
-                  <td style={tdStyle}>{t.laatst_gewijzigd || "—"}</td>
+                  <td style={tdStyle}>{formatDate(t.laatst_gewijzigd)}</td>
 
                   <td
                     style={{
@@ -258,12 +297,18 @@ export default function TemplatesOverzicht() {
         {/* MODAL: EDIT */}
         <TemplateModalEdit
           isOpen={showEdit}
-          onClose={() => setShowEdit(false)}
-          templateId={selectedId}
+          onClose={() => {
+            setShowEdit(false);
+            setCreateNew(false);
+          }}
+          templateId={createNew ? null : selectedId}
+          newMode={createNew}    // ← belangrijk
           onSaved={() => {
-            loadTemplates();   // alleen refreshen
+            loadTemplates();
+            setCreateNew(false);
           }}
         />
+
       </motion.div>
     </>
   );

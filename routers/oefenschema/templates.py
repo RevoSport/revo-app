@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: routers/oefenschema/templates.py
-# CRUD + foto-upload voor oefenschema templates
+# CRUD voor Templates (FINAL FIX VERSION)
 # =====================================================
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
@@ -11,10 +11,13 @@ import json
 
 from db import SessionLocal
 from models.oefenschema import TemplateOefen, TemplateOefening
-from schemas.oefenschema import TemplateBase
-from routers.oefenschema.uploads import upload_template_image
 
-# BELANGRIJK: PREFIX zodat frontend werkt
+from onedrive_service import delete_folder_recursive
+from routers.oefenschema.uploads import upload_template_image
+from routers.oefenschema.path_normalizer import normalize_path
+from routers.oefenschema.paths import template_folder_path
+from media_cache import delete_cache_for
+
 router = APIRouter(prefix="/templates", tags=["Templates"])
 
 
@@ -35,13 +38,12 @@ def get_db():
 # =====================================================
 
 @router.get("/")
+@router.get("")
 def list_templates(db: Session = Depends(get_db)):
     items = (
         db.query(TemplateOefen)
         .options(joinedload(TemplateOefen.oefeningen))
-        .order_by(
-            func.coalesce(TemplateOefen.updated_at, TemplateOefen.created_at).desc()
-        )
+        .order_by(func.coalesce(TemplateOefen.updated_at, TemplateOefen.created_at).desc())
         .all()
     )
 
@@ -60,7 +62,7 @@ def list_templates(db: Session = Depends(get_db)):
 
 
 # =====================================================
-# GET 1 TEMPLATE
+# GET TEMPLATE
 # =====================================================
 
 @router.get("/{template_id}")
@@ -75,12 +77,9 @@ def get_template(template_id: int, db: Session = Depends(get_db)):
     if not t:
         raise HTTPException(404, "Template niet gevonden")
 
-    # Geen response_model → voorkomt validatieproblemen
     return {
         "id": t.id,
         "naam": t.naam,
-        "beschrijving": None,
-        "data_json": None,
         "created_by": t.created_by,
         "oefeningen": [
             {
@@ -93,20 +92,30 @@ def get_template(template_id: int, db: Session = Depends(get_db)):
                 "foto1": o.foto1,
                 "foto2": o.foto2,
             }
-            for o in sorted(t.oefeningen, key=lambda x: int(x.volgorde or 0))
+            for o in sorted(t.oefeningen, key=lambda x: (x.volgorde or 0))
         ]
     }
 
 
 # =====================================================
-# DELETE
+# DELETE TEMPLATE
 # =====================================================
 
 @router.delete("/{template_id}")
 def delete_template(template_id: int, db: Session = Depends(get_db)):
+
     t = db.query(TemplateOefen).filter(TemplateOefen.id == template_id).first()
     if not t:
         raise HTTPException(404, "Template niet gevonden")
+
+    oefeningen = db.query(TemplateOefening).filter(
+        TemplateOefening.template_id == template_id
+    ).all()
+
+    alle_paden = []
+    for o in oefeningen:
+        if o.foto1: alle_paden.append(o.foto1)
+        if o.foto2: alle_paden.append(o.foto2)
 
     db.query(TemplateOefening).filter(
         TemplateOefening.template_id == template_id
@@ -115,11 +124,17 @@ def delete_template(template_id: int, db: Session = Depends(get_db)):
     db.delete(t)
     db.commit()
 
-    return {"status": "ok", "message": "Template verwijderd"}
+    folder = template_folder_path(template_id)
+    delete_folder_recursive(folder)
+
+    for pad in alle_paden:
+        delete_cache_for(pad)
+
+    return {"status": "ok", "message": "Template + foto's verwijderd"}
 
 
 # =====================================================
-# CREATE
+# CREATE TEMPLATE
 # =====================================================
 
 @router.post("/create")
@@ -136,6 +151,7 @@ async def create_template(
         created_at=datetime.now(),
         updated_at=datetime.now(),
     )
+
     db.add(template)
     db.commit()
     db.refresh(template)
@@ -145,36 +161,38 @@ async def create_template(
 
     foto_map = {}
 
-    # Foto's koppelen op basis van zero-index
+    # FOTOVERWERKING
     for file in files or []:
         fname = file.filename
 
-        if "foto1_" in fname:
+        if fname.startswith("foto1_"):
             slot = 1
-            idx = int(fname.split("foto1_")[1].split(".")[0])
-        elif "foto2_" in fname:
+            idx = int(fname.split("foto1_")[1].split(".")[0]) - 1
+        elif fname.startswith("foto2_"):
             slot = 2
-            idx = int(fname.split("foto2_")[1].split(".")[0])
+            idx = int(fname.split("foto2_")[1].split(".")[0]) - 1
         else:
             continue
 
         graph_path = await upload_template_image(
             template_id=template_id,
-            oef_index=idx,
+            oef_index=idx,   # correcte index die jij uit filename haalt
             slot=slot,
-            file=file
+            file=file,
+            old_path=None
         )
 
-        foto_map[(idx, slot)] = graph_path
 
-    # Oefeningen opslaan (zero-index → volgorde = idx+1)
+        foto_map[(idx, slot)] = normalize_path(graph_path)
+
+    # OEFENINGEN OPSLAAN
     for idx, oef in enumerate(oefeningen):
         obj = TemplateOefening(
             template_id=template_id,
-            sets=oef.get("sets"),
-            reps=oef.get("reps"),
-            tempo=oef.get("tempo"),
-            gewicht=oef.get("gewicht"),
+            sets=str(oef.get("sets") or ""),
+            reps=str(oef.get("reps") or ""),
+            tempo=str(oef.get("tempo") or ""),
+            gewicht=str(oef.get("gewicht") or ""),
             opmerking=oef.get("opmerking"),
             volgorde=idx + 1,
             foto1=foto_map.get((idx, 1)),
@@ -183,12 +201,11 @@ async def create_template(
         db.add(obj)
 
     db.commit()
-
     return {"status": "ok", "id": template_id, "naam": naam}
 
 
 # =====================================================
-# UPDATE
+# UPDATE TEMPLATE — FINAL FIX
 # =====================================================
 
 @router.put("/update/{template_id}")
@@ -206,60 +223,60 @@ async def update_template(
 
     oefeningen_new = json.loads(oefeningen_json)
 
-    # Oud volgens volgorde (1-based)
     oud = {
-        o.volgorde: o
+        o.volgorde - 1: o
         for o in db.query(TemplateOefening)
         .filter(TemplateOefening.template_id == template_id)
         .all()
     }
 
+    existing_paths = {(idx, 1): oud[idx].foto1 for idx in oud}
+    existing_paths.update({(idx, 2): oud[idx].foto2 for idx in oud})
+
     foto_map = {}
 
-    # Foto-uploads (zero-index)
+    # Nieuwe uploads
     for file in files or []:
         fname = file.filename
 
-        if "foto1_" in fname:
+        if fname.startswith("foto1_"):
             slot = 1
-            idx = int(fname.split("foto1_")[1].split(".")[0])
-        elif "foto2_" in fname:
+            idx = int(fname.split("foto1_")[1].split(".")[0]) - 1
+        elif fname.startswith("foto2_"):
             slot = 2
-            idx = int(fname.split("foto2_")[1].split(".")[0])
+            idx = int(fname.split("foto2_")[1].split(".")[0]) - 1
         else:
             continue
+
+        old_path = existing_paths.get((idx, slot))
 
         graph_path = await upload_template_image(
             template_id=template_id,
             oef_index=idx,
             slot=slot,
-            file=file
+            file=file,
+            old_path=old_path,
         )
-        foto_map[(idx, slot)] = graph_path
 
-    # Reset alle oefeningen
+        foto_map[(idx, slot)] = normalize_path(graph_path)
+
+    # Oude records verwijderen
     db.query(TemplateOefening).filter(
         TemplateOefening.template_id == template_id
     ).delete()
 
-    # Heropbouwen: zero-index → volgorde = idx + 1
+    # Nieuwe records maken
     for idx, oef in enumerate(oefeningen_new):
-        volgorde = idx + 1
-        oud_obj = oud.get(volgorde)
-
-        f1 = foto_map.get((idx, 1)) or oef.get("foto1") or (oud_obj.foto1 if oud_obj else None)
-        f2 = foto_map.get((idx, 2)) or oef.get("foto2") or (oud_obj.foto2 if oud_obj else None)
-
         obj = TemplateOefening(
             template_id=template_id,
-            sets=oef.get("sets"),
-            reps=oef.get("reps"),
-            tempo=oef.get("tempo"),
-            gewicht=oef.get("gewicht"),
+            sets=str(oef.get("sets") or ""),
+            reps=str(oef.get("reps") or ""),
+            tempo=str(oef.get("tempo") or ""),
+            gewicht=str(oef.get("gewicht") or ""),
             opmerking=oef.get("opmerking"),
-            volgorde=volgorde,
-            foto1=f1,
-            foto2=f2,
+            volgorde=idx + 1,
+            foto1=foto_map.get((idx, 1)) or oef.get("foto1"),
+            foto2=foto_map.get((idx, 2)) or oef.get("foto2"),
         )
         db.add(obj)
 
@@ -268,5 +285,42 @@ async def update_template(
     template.updated_at = datetime.now()
 
     db.commit()
-
     return {"status": "ok", "id": template_id}
+
+
+# =====================================================
+# DIRECT FOTO-UPLOAD
+# =====================================================
+
+@router.post("/upload/{template_id}/{oef_index}/{slot}")
+async def upload_template_photo(
+    template_id: int,
+    oef_index: int,
+    slot: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    # oude foto ophalen
+    oef = (
+        db.query(TemplateOefening)
+        .filter(
+            TemplateOefening.template_id == template_id,
+            TemplateOefening.volgorde == oef_index
+        )
+        .first()
+    )
+
+    old_path = None
+    if oef:
+        old_path = oef.foto1 if slot == 1 else oef.foto2
+
+    # upload nieuwe foto + verwijder oude
+    graph_path = await upload_template_image(
+        template_id=template_id,
+        oef_index=oef_index - 1,
+        slot=slot,
+        file=file,
+        old_path=old_path
+    )
+
+    return {"status": "ok", "path": normalize_path(graph_path)}

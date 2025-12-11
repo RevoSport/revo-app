@@ -74,7 +74,9 @@ export default function ConfirmModal({
           {/* BUTTONS */}
           <div style={{ display: "flex", gap: 12 }}>
             {/* CANCEL */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.99 }}
               onClick={onCancel}
               style={{
                 flex: 1,
@@ -87,10 +89,11 @@ export default function ConfirmModal({
               }}
             >
               {cancelLabel}
-            </button>
+            </motion.button>
 
-            {/* CONFIRM */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.99 }}
               onClick={onConfirm}
               style={{
                 flex: 1,
@@ -103,7 +106,8 @@ export default function ConfirmModal({
               }}
             >
               {confirmLabel}
-            </button>
+            </motion.button>
+
           </div>
         </motion.div>
       </motion.div>

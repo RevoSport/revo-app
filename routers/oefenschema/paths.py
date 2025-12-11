@@ -28,7 +28,7 @@ def normalize_path(path: str | None) -> str | None:
     if m:
         return f"RevoSport/Oefenschema/Templates/{m.group(1)}/{m.group(2)}"
 
-    # 3) Oude Budibase: Templates/{id}/bestanden
+    # 3) Oude Budibase
     m = re.search(r"Templates/(\d+)/(.+)", path)
     if m:
         return f"RevoSport/Oefenschema/Templates/{m.group(1)}/{m.group(2)}"
@@ -37,12 +37,12 @@ def normalize_path(path: str | None) -> str | None:
     # SCHEMAS
     # =====================================================
 
-    # 1) Nieuwe stijl (correct)
+    # 1) Nieuwe stijl
     m = re.search(r"Oefenschema/Schemas/(\d+)/(.+)", path)
     if m:
         return f"RevoSport/Oefenschema/Schemas/{m.group(1)}/{m.group(2)}"
 
-    # 2) RevoSport/Schemas/{id}/…
+    # 2) Oude varianten
     m = re.search(r"RevoSport/Schemas/(\d+)/(.+)", path)
     if m:
         return f"RevoSport/Oefenschema/Schemas/{m.group(1)}/{m.group(2)}"
@@ -54,3 +54,36 @@ def normalize_path(path: str | None) -> str | None:
         return f"RevoSport/{path}"
 
     return path
+
+
+# =====================================================
+# PATH BUILDERS
+# =====================================================
+
+def template_image_path(template_id: int, filename: str) -> str:
+    return f"RevoSport/Oefenschema/Templates/{template_id}/{filename}"
+
+def template_folder_path(template_id: int) -> str:
+    return f"RevoSport/Oefenschema/Templates/{template_id}"
+
+def schema_image_path(schema_id: int, filename: str) -> str:
+    return f"RevoSport/Oefenschema/Schemas/{schema_id}/{filename}"
+
+def schema_folder_path(schema_id: int) -> str:
+    return f"RevoSport/Oefenschema/Schemas/{schema_id}"
+
+
+# =====================================================
+# DYNAMISCHE PDF BESTANDSNAAM
+# =====================================================
+
+def schema_pdf_path(schema) -> str:
+    """
+    Genereert:
+    {Voornaam_Achternaam}_Oefenschema_{YYYY-MM-DD}.pdf
+    """
+    safe_name = schema.patient.naam.replace(" ", "_")
+    date_str = schema.datum.strftime("%Y-%m-%d")
+
+    filename = f"{safe_name}_Oefenschema_{date_str}.pdf"
+    return f"RevoSport/Oefenschema/Schemas/{schema.id}/{filename}"
