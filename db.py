@@ -1,54 +1,45 @@
-# db.py
+# =====================================================
+# FILE: db.py
+# Revo Sport — PostgreSQL (Supabase)
+# =====================================================
 # -*- coding: utf-8 -*-
+
 import os
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # --------------------------------------------------
-#   .ENV-INSTELLINGEN LADEN
+#   DATABASE CONFIG (ENV VAR)
 # --------------------------------------------------
-load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Debug: toon actief MySQL-host
-print("✅ Verbinden met MySQL host:", os.getenv("MYSQL_HOST"))
-
-# Databasevariabelen uit .env
-MYSQL_USER = os.getenv("MYSQL_USER")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
-MYSQL_HOST = os.getenv("MYSQL_HOST")
-MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
-MYSQL_DB = os.getenv("MYSQL_DATABASE") or os.getenv("MYSQL_DB")  # ✅ ondersteunt beide namen
-
-
-# Controle op ontbrekende waarden
-if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_DB]):
-    raise ValueError("❌ Onvolledige databaseconfiguratie in .env-bestand.")
+if not DATABASE_URL:
+    raise ValueError("❌ DATABASE_URL ontbreekt in environment variables.")
 
 # --------------------------------------------------
-#   CONNECTIESTRING & ENGINE
+#   ENGINE (PostgreSQL)
 # --------------------------------------------------
-DATABASE_URL = (
-    f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
-    "?charset=utf8mb4"
-)
-
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,   # herstelt automatisch verbroken connecties
-    pool_recycle=3600,    # voorkomt MySQL timeouts
-    echo=False,           # zet op True voor SQL-debug
+    pool_pre_ping=True,   # herstelt verbroken connecties
+    pool_recycle=300,     # veilig voor pooler
+    echo=False,
     future=True,
 )
 
 # --------------------------------------------------
 #   SESSION EN BASE
 # --------------------------------------------------
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
+
 Base = declarative_base()
 
 # --------------------------------------------------
-#   FASTAPI-DEPENDENCY VOOR DATABASE-SESSION
+#   FASTAPI DEPENDENCY
 # --------------------------------------------------
 def get_db():
     """
@@ -60,5 +51,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-print(f"✅ Verbonden met database: {MYSQL_DB} op host {MYSQL_HOST}")
