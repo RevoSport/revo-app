@@ -5,8 +5,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+
+# --------------------------------------------------
+#   LOAD ENV (.env support lokaal)
+# --------------------------------------------------
+load_dotenv()
 
 # --------------------------------------------------
 #   DATABASE CONFIG (ENV VAR)
