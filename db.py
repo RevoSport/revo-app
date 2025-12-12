@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: db.py
-# Revo Sport — PostgreSQL (Supabase)
+# Revo Sport — MySQL (single source of truth)
 # =====================================================
 # -*- coding: utf-8 -*-
 
@@ -15,22 +15,37 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 load_dotenv()
 
 # --------------------------------------------------
-#   DATABASE CONFIG (ENV VAR)
+#   DATABASE CONFIG (MySQL via losse vars)
 # --------------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT", "3306")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
 
-if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL ontbreekt in environment variables.")
+missing = [k for k, v in {
+    "DB_HOST": DB_HOST,
+    "DB_USER": DB_USER,
+    "DB_PASSWORD": DB_PASSWORD,
+    "DB_NAME": DB_NAME,
+}.items() if not v]
+
+if missing:
+    raise ValueError(f"❌ Missing DB env vars: {', '.join(missing)}")
+
+DATABASE_URL = (
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}"
+    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
 # --------------------------------------------------
-#   ENGINE (PostgreSQL)
+#   ENGINE (MySQL)
 # --------------------------------------------------
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,   # herstelt verbroken connecties
-    pool_recycle=300,     # veilig voor pooler
+    pool_pre_ping=True,
+    pool_recycle=3600,
     echo=False,
-    future=True,
 )
 
 # --------------------------------------------------
@@ -48,10 +63,6 @@ Base = declarative_base()
 #   FASTAPI DEPENDENCY
 # --------------------------------------------------
 def get_db():
-    """
-    Zorgt ervoor dat elke API-request een eigen database-sessie krijgt.
-    De sessie wordt automatisch gesloten na afloop van de request.
-    """
     db = SessionLocal()
     try:
         yield db

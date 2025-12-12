@@ -29,6 +29,7 @@ from routers.functioneel import router as functioneel_router
 from routers.individueel import router as individueel_router
 from routers.kinvent import router as kinvent_router
 from routers.media_proxy import router as media_proxy_router
+from routers.health import router as health_router
 
 # Oefenschema-bundel
 from routers.oefenschema import router as oefenschema_router
@@ -100,6 +101,8 @@ app.include_router(kracht_router, dependencies=protected)
 app.include_router(functioneel_router, dependencies=protected)
 app.include_router(individueel_router, dependencies=protected)
 app.include_router(kinvent_router, dependencies=protected)
+app.include_router(health_router)
+
 
 # Media proxy
 app.include_router(media_proxy_router)
