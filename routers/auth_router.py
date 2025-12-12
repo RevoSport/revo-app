@@ -17,7 +17,13 @@ from security import (
     require_role,
 )
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+# -----------------------------------------------------
+# ROUTER CONFIG
+# -----------------------------------------------------
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"]
+)
 
 # -----------------------------------------------------
 # LOGIN ROUTE
@@ -50,14 +56,15 @@ def login(
     token = create_access_token(subject=user.email, role=user.role)
     return {"access_token": token, "token_type": "bearer"}
 
-
 # -----------------------------------------------------
 # PROFIEL OPVRAGEN
 # -----------------------------------------------------
 @router.get("/me")
-def me(current_user: User = Depends(get_current_user)):
+def me(
+    current_user: User = Depends(get_current_user)
+):
     """
-    Geeft info over de huidige ingelogde gebruiker.
+    Info over de ingelogde gebruiker.
     """
     return {
         "id": current_user.id,
@@ -68,9 +75,8 @@ def me(current_user: User = Depends(get_current_user)):
         "created_at": str(current_user.created_at)
     }
 
-
 # -----------------------------------------------------
-# NIEUWE THERAPEUT REGISTREREN (ALLEEN OWNER)
+# NIEUWE THERAPEUT TOEVOEGEN (ALLEEN OWNER)
 # -----------------------------------------------------
 @router.post("/register_therapist")
 def register_therapist(
@@ -86,7 +92,7 @@ def register_therapist(
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="Email bestaat al.")
 
-    # truncate wachtwoord preventief (bcrypt-limiet)
+    # bcrypt limiet beveiliging
     password = password[:72]
 
     new_user = User(
@@ -96,8 +102,13 @@ def register_therapist(
         password_hash=hash_password(password),
         is_active=True,
     )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    return {"status": "✅ Gebruiker toegevoegd", "id": new_user.id, "email": new_user.email}
+    return {
+        "status": "✅ Gebruiker toegevoegd",
+        "id": new_user.id,
+        "email": new_user.email
+    }
