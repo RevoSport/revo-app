@@ -1,6 +1,6 @@
 # =====================================================
 # FILE: routers/baseline.py
-# Revo Sport API — Baseline testing (Upsert versie)
+# Revo Sport API — Baseline testing (Upsert, veilig)
 # =====================================================
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -41,16 +41,21 @@ def list_baseline(db: Session = Depends(get_db)):
 # =====================================================
 @router.get("/{blessure_id}", response_model=BaselineSchema)
 def get_baseline(blessure_id: int, db: Session = Depends(get_db)):
-    obj = db.query(Baseline).filter(Baseline.blessure_id == blessure_id).first()
+    obj = (
+        db.query(Baseline)
+        .filter(Baseline.blessure_id == blessure_id)
+        .first()
+    )
     if not obj:
         warn(f"[BASELINE] Niet gevonden (blessure_id={blessure_id})")
         raise HTTPException(status_code=404, detail="Baseline niet gevonden")
+
     ok(f"[BASELINE] Record opgehaald (blessure_id={blessure_id})")
     return obj
 
 
 # =====================================================
-# 🔹 POST — Upsert logica
+# 🔹 POST — Upsert logica (exclude_none!)
 # =====================================================
 @router.post("/", response_model=BaselineSchema)
 def upsert_baseline(data: BaselineSchema, db: Session = Depends(get_db)):
@@ -58,36 +63,54 @@ def upsert_baseline(data: BaselineSchema, db: Session = Depends(get_db)):
     Maakt een nieuw baseline-record aan als het nog niet bestaat.
     Bestaat er al een record voor deze blessure? → dan wordt het geüpdatet.
     """
-    # ✅ Controleer gekoppelde blessure
-    blessure = db.query(Blessure).filter(Blessure.blessure_id == data.blessure_id).first()
+
+    # 🔒 Blessure moet bestaan
+    blessure = (
+        db.query(Blessure)
+        .filter(Blessure.blessure_id == data.blessure_id)
+        .first()
+    )
     if not blessure:
         warn(f"[BASELINE] Geen gekoppelde blessure gevonden (id={data.blessure_id})")
         raise HTTPException(status_code=404, detail="Gekoppelde blessure niet gevonden")
 
-    # ✅ Zoek bestaand record
-    obj = db.query(Baseline).filter(Baseline.blessure_id == data.blessure_id).first()
+    # Payload: geen None, geen onbedoelde overschrijvingen
+    payload = data.dict(exclude_unset=True, exclude_none=True)
+
+    # Zoek bestaand baseline-record
+    obj = (
+        db.query(Baseline)
+        .filter(Baseline.blessure_id == data.blessure_id)
+        .first()
+    )
 
     try:
         if obj:
             # 🟠 UPDATE
-            for k, v in data.dict(exclude_unset=True).items():
+            for k, v in payload.items():
                 setattr(obj, k, v)
-            db.commit(); db.refresh(obj)
+
+            db.commit()
+            db.refresh(obj)
             ok(f"[BASELINE] Record geüpdatet (blessure_id={obj.blessure_id})")
             return obj
 
         else:
             # 🟢 INSERT
-            obj = Baseline(**data.dict(exclude_unset=True))
+            obj = Baseline(**payload)
             db.add(obj)
-            db.commit(); db.refresh(obj)
+            db.commit()
+            db.refresh(obj)
             ok(f"[BASELINE] Nieuw record aangemaakt (blessure_id={obj.blessure_id})")
             return obj
 
     except Exception as e:
         db.rollback()
         warn(f"[BASELINE] Fout bij upsert: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Interne fout bij opslaan baseline"
+        )
 
 
 # =====================================================
@@ -95,10 +118,16 @@ def upsert_baseline(data: BaselineSchema, db: Session = Depends(get_db)):
 # =====================================================
 @router.delete("/{blessure_id}")
 def delete_baseline(blessure_id: int, db: Session = Depends(get_db)):
-    obj = db.query(Baseline).filter(Baseline.blessure_id == blessure_id).first()
+    obj = (
+        db.query(Baseline)
+        .filter(Baseline.blessure_id == blessure_id)
+        .first()
+    )
     if not obj:
         warn(f"[BASELINE] Niet gevonden voor delete (blessure_id={blessure_id})")
         raise HTTPException(status_code=404, detail="Baseline niet gevonden")
-    db.delete(obj); db.commit()
+
+    db.delete(obj)
+    db.commit()
     ok(f"[BASELINE] Record verwijderd (blessure_id={blessure_id})")
     return {"status": "✅ Baseline verwijderd"}

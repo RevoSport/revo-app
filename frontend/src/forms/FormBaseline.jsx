@@ -13,6 +13,27 @@ const COLOR_TEXT = "#ffffff";
 const COLOR_MUTED = "#c9c9c9";
 const COLOR_PLACEHOLDER = "rgba(255,255,255,0.55)";
 
+// ============================
+// Normalisatie helpers
+// ============================
+
+// ⛔ Graden: enkel integers, geen komma/punt
+const normalizeDegreesInput = (value) =>
+  value.replace(/[^0-9]/g, "");
+
+// ✅ Omtrek: , of . toegestaan → float
+const normalizeCm = (value) => {
+  if (value === "" || value == null) return null;
+  return parseFloat(value.replace(",", "."));
+};
+
+const DEGREE_FIELDS = [
+  "knie_flexie_l",
+  "knie_flexie_r",
+  "knie_extensie_l",
+  "knie_extensie_r",
+];
+
 export default function FormBaseline() {
   const [formData, setFormData] = useState({
     blessure_id: "",
@@ -86,34 +107,62 @@ export default function FormBaseline() {
     fetchBaseline();
   }, [formData.blessure_id]);
 
-  // 🔹 Handle input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+// 🔹 Handle input changes
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  // ⛔ Graden: enkel integers
+  if (DEGREE_FIELDS.includes(name)) {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: normalizeDegreesInput(value),
+    }));
+    return;
+  }
+
+  // Default
+  setFormData((prev) => ({ ...prev, [name]: value }));
+};
+
 
   // 🔹 Submit — Upsert automatisch
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await apiPost("/baseline", formData);
-      setStatusMsg({
-        type: "success",
-        msg: loadedData
-          ? "✅ Bestaande resultaten bijgewerkt"
-          : "✅ Baseline succesvol opgeslagen",
-      });
-      setLoadedData(true);
-      setTimeout(() => setStatusMsg(null), 3000);
-    } catch (err) {
-      console.error("❌ API-fout:", err);
-      setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
-      setTimeout(() => setStatusMsg(null), 4000);
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    ...formData,
+
+    omtrek_5cm_boven_patella_l: normalizeCm(formData.omtrek_5cm_boven_patella_l),
+    omtrek_5cm_boven_patella_r: normalizeCm(formData.omtrek_5cm_boven_patella_r),
+
+    omtrek_10cm_boven_patella_l: normalizeCm(formData.omtrek_10cm_boven_patella_l),
+    omtrek_10cm_boven_patella_r: normalizeCm(formData.omtrek_10cm_boven_patella_r),
+
+    omtrek_20cm_boven_patella_l: normalizeCm(formData.omtrek_20cm_boven_patella_l),
+    omtrek_20cm_boven_patella_r: normalizeCm(formData.omtrek_20cm_boven_patella_r),
   };
+
+  try {
+    await apiPost("/baseline", payload);
+    setStatusMsg({
+      type: "success",
+      msg: loadedData
+        ? "✅ Bestaande resultaten bijgewerkt"
+        : "✅ Baseline succesvol opgeslagen",
+    });
+    setLoadedData(true);
+    setTimeout(() => setStatusMsg(null), 3000);
+  } catch (err) {
+    console.error("❌ API-fout:", err);
+    setStatusMsg({ type: "error", msg: "❌ Fout bij opslaan" });
+    setTimeout(() => setStatusMsg(null), 4000);
+  }
+};
+
 
   return (
     <motion.div
+    className="form-baseline-wrapper"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
@@ -121,7 +170,7 @@ export default function FormBaseline() {
         background: COLOR_BG,
         borderRadius: 12,
         padding: "40px 60px",
-        maxWidth: "600px",
+        maxWidth: "650px",
         margin: "0 auto 80px",
         boxShadow: "0 0 10px rgba(0,0,0,0.3)",
         border: `1px solid rgba(255,255,255,0.08)`,
@@ -329,6 +378,30 @@ export default function FormBaseline() {
         }
         input[type="date"]:focus::-webkit-datetime-edit {
           color: #fff;
+        }
+      `}</style>
+      <style>{`
+        /* ===========================
+          MOBILE OVERRIDES
+          =========================== */
+        @media (max-width: 768px) {
+
+          .form-baseline-wrapper {
+            padding: 20px 28px 80px !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+
+            /* 🔥 kader volledig weg */
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+
+          /* 🔥 titel weg op mobiel */
+          .form-baseline-wrapper h2 {
+            display: none !important;
+          }
         }
       `}</style>
     </motion.div>

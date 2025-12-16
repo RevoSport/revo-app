@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import Column, BigInteger, Date, Enum, ForeignKey
+from sqlalchemy import Column, BigInteger, Date, Enum, ForeignKey, String
 from sqlalchemy.orm import relationship
 from db import Base
 
@@ -20,11 +20,8 @@ class Blessure(Base):
     datum_ongeval = Column(Date, nullable=True)
     datum_operatie = Column(Date, nullable=True)
     datum_intake = Column(Date, nullable=True)
+    arts = Column(String(100), nullable=True)
 
-    arts = Column(Enum(
-        "Dr. Byn", "Dr. Dobbelaere", "Dr. De Neve", "Dr. Moens",
-        "Dr. Schepens", "Dr. Van Onsem", "Dr. Vansintjan"
-    ), nullable=True)
 
     therapeut = Column(Enum(
         "Annelien", "Frederic", "Jasper", "Maité",

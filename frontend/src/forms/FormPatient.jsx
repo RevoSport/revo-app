@@ -14,6 +14,18 @@ const COLOR_TEXT = "#ffffff";
 const COLOR_MUTED = "#c9c9c9";
 const COLOR_PLACEHOLDER = "rgba(255,255,255,0.55)";
 
+// =====================================================
+// 🔹 Helpers
+// =====================================================
+function normalizeNaam(naam) {
+  if (!naam) return "";
+  return naam
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default function FormPatient() {
   const [formData, setFormData] = useState({
     naam: "",
@@ -29,8 +41,14 @@ export default function FormPatient() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const payload = {
+      ...formData,
+      naam: normalizeNaam(formData.naam),
+    };
+
     try {
-      await apiPost("/patients", formData);
+      await apiPost("/patients", payload);
       setStatus({ type: "success", msg: "✅ Patiënt succesvol toegevoegd!" });
       setFormData({ naam: "", geslacht: "", geboortedatum: "" });
     } catch (err) {
@@ -40,7 +58,8 @@ export default function FormPatient() {
   };
 
   return (
-    <motion.div
+  <motion.div
+    className="form-patient-wrapper"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
@@ -48,7 +67,7 @@ export default function FormPatient() {
         background: COLOR_BG,
         borderRadius: 12,
         padding: "40px 60px",
-        maxWidth: "450px",
+        maxWidth: "650px",
         margin: "0 auto 80px",
         boxShadow: "0 0 10px rgba(0,0,0,0.3)",
         border: `1px solid rgba(255,255,255,0.08)`,
@@ -79,7 +98,13 @@ export default function FormPatient() {
           name="naam"
           value={formData.naam}
           onChange={handleChange}
-          placeholder="Bijv. Frederic Vereecken"
+          onBlur={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              naam: normalizeNaam(e.target.value),
+            }))
+          }
+          placeholder="Voornaam Achternaam"
           required
         />
 
@@ -135,7 +160,7 @@ export default function FormPatient() {
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = "#fff";
             e.currentTarget.style.color = "#fff";
-            e.currentTarget.style.boxShadow = "0 0 8px rgba(255,121,0,0.25)";
+            e.currentTarget.style.boxShadow = "none";
             e.currentTarget.style.transform = "translateY(-1px)";
           }}
           onMouseLeave={(e) => {
@@ -163,17 +188,12 @@ export default function FormPatient() {
         </p>
       )}
 
-      {/* 🎨 Inline styles (geen globale CSS nodig) */}
       <style>{`
-        /* 🔹 Algemene placeholders */
-        input::placeholder,
-        select:invalid {
-          color: ${COLOR_PLACEHOLDER};
-          opacity: 1;
-          text-transform: none;
+        input::placeholder {
+        color: ${COLOR_PLACEHOLDER};
         }
 
-        /* 🔹 Date veld uniform font + uppercase */
+
         input[type="date"] {
           color-scheme: dark;
           text-transform: uppercase;
@@ -202,6 +222,31 @@ export default function FormPatient() {
           color: ${COLOR_PLACEHOLDER};
         }
       `}</style>
+      <style>{`
+        /* ===========================
+          MOBILE OVERRIDES
+          =========================== */
+        @media (max-width: 768px) {
+
+          .form-patient-wrapper {
+            padding: 20px 28px 80px !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+
+            /* 🔥 kader volledig weg */
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+
+          /* 🔥 titel weg op mobiel */
+          .form-patient-wrapper h2 {
+            display: none !important;
+          }
+        }
+      `}</style>
+
     </motion.div>
   );
 }
@@ -209,7 +254,16 @@ export default function FormPatient() {
 // =====================================================
 // 🔹 Subcomponenten (Input & Select)
 // =====================================================
-function FormField({ label, name, value, onChange, type = "text", placeholder, required }) {
+function FormField({
+  label,
+  name,
+  value,
+  onChange,
+  onBlur,
+  type = "text",
+  placeholder,
+  required,
+}) {
   return (
     <div style={{ marginBottom: "18px" }}>
       <label
@@ -227,6 +281,7 @@ function FormField({ label, name, value, onChange, type = "text", placeholder, r
         name={name}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         placeholder={placeholder || ""}
         required={required}
         style={{

@@ -6,12 +6,34 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from typing import List
+from datetime import datetime
 from db import SessionLocal
 from models.patient import Patient
 from schemas.patient import PatientSchema
 from routers.utils import ok, warn
 
 router = APIRouter(prefix="/patients", tags=["Patiënten"])
+
+# =====================================================
+# 🔹 Helpers
+# =====================================================
+def normalize_date(value):
+    if not value:
+        return None
+
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        pass
+
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+
+    raise ValueError("Ongeldig datumformaat (verwacht YYYY-MM-DD of DD/MM/YYYY)")
+
 
 # =====================================================
 # 🔹 DB dependency
@@ -35,7 +57,7 @@ def list_patients(db: Session = Depends(get_db)):
     """
     patients = (
         db.query(Patient)
-        .options(joinedload(Patient.blessures))  # ✅ Laadt blessure-info mee
+        .options(joinedload(Patient.blessures))
         .all()
     )
 
@@ -105,7 +127,7 @@ def create_patient(payload: dict, db: Session = Depends(get_db)):
         obj = Patient(
             naam=naam,
             geslacht=payload.get("geslacht"),
-            geboortedatum=payload.get("geboortedatum"),
+            geboortedatum=normalize_date(payload.get("geboortedatum")),
         )
 
         db.add(obj)
@@ -137,6 +159,8 @@ def update_patient(patient_id: int, data: PatientSchema, db: Session = Depends(g
     allowed = {"naam", "geslacht", "geboortedatum"}
     for k, v in data.dict(exclude_unset=True).items():
         if k in allowed:
+            if k == "geboortedatum":
+                v = normalize_date(v)
             setattr(obj, k, v)
 
     db.commit()

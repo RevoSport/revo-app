@@ -10,6 +10,7 @@ from models.blessure import Blessure
 from models.patient import Patient
 from schemas.blessure import BlessureSchema, BlessureUpdateSchema
 from routers.utils import ok, warn
+from sqlalchemy import text
 
 router = APIRouter(prefix="/blessure", tags=["Blessures"])
 
@@ -23,6 +24,33 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# =====================================================
+# 🔹 Helpers
+# =====================================================
+def normalize_text(value):
+    if value is None:
+        return None
+    value = value.strip()
+    return value if value != "" else None
+
+def value_exists(db: Session, field: str, value: str, exclude_id: int | None = None):
+    if value is None:
+        return False
+
+    sql = f"""
+        SELECT 1
+        FROM blessures
+        WHERE LOWER(TRIM({field})) = LOWER(:value)
+    """
+    params = {"value": value}
+
+    if exclude_id is not None:
+        sql += " AND blessure_id <> :exclude_id"
+        params["exclude_id"] = exclude_id
+
+    result = db.execute(text(sql), params).first()
+    return result is not None
 
 
 # =====================================================
@@ -44,38 +72,6 @@ def get_blessure_options():
             "Patellapees",
             "Niet gekend",
         ],
-        "therapeut": [
-            "Annelien",
-            "Frederic",
-            "Jasper",
-            "Maité",
-            "Pepijn",
-            "Robbe",
-            "Ruben",
-            "Sander",
-        ],
-        "arts": [
-            "Dr. Byn",
-            "Dr. Dobbelaere",
-            "Dr. De Neve",
-            "Dr. Moens",
-            "Dr. Schepens",
-            "Dr. Van Onsem",
-            "Dr. Vansintjan",
-        ],
-        "sport": [
-            "Basketbal",
-            "Handbal",
-            "Hockey",
-            "Korfbal",
-            "Rugby",
-            "Skiën",
-            "Turnen",
-            "Voetbal",
-            "Volleybal",
-            "Ander",
-            "Niet Van Toepassing",
-        ],
         "sportniveau": [
             "Sedentair",
             "Recreatief",
@@ -83,10 +79,74 @@ def get_blessure_options():
             "Topsport",
             "Niet Van Toepassing",
         ],
+        "bijkomende_letsels": [
+            "Meniscushechting",
+            "Meniscus dissectie",
+            "Mediale band",
+            "Kraakbeen revise",
+            "Nvt",
+        ],
     }
 
     ok("[BLESSURE] Enum-opties opgevraagd voor formulier")
     return options
+
+# =====================================================
+# 🔹 GET /blessure/therapeuten — Dynamische therapeutenlijst
+# =====================================================
+
+
+@router.get("/therapeuten")
+def list_therapeuten(db: Session = Depends(get_db)):
+    rows = db.execute(
+        text("""
+        SELECT DISTINCT TRIM(therapeut) AS therapeut
+        FROM blessures
+        WHERE therapeut IS NOT NULL AND TRIM(therapeut) <> ''
+        ORDER BY therapeut
+        """)
+    ).fetchall()
+
+    result = [r[0] for r in rows]
+    ok(f"[BLESSURE] {len(result)} therapeuten opgehaald")
+    return result
+
+# =====================================================
+# 🔹 GET /blessure/sporten — Dynamische sportenlijst
+# =====================================================
+@router.get("/sporten")
+def list_sporten(db: Session = Depends(get_db)):
+    rows = db.execute(
+        text("""
+        SELECT DISTINCT TRIM(sport) AS sport
+        FROM blessures
+        WHERE sport IS NOT NULL AND TRIM(sport) <> ''
+        ORDER BY sport
+        """)
+    ).fetchall()
+
+    result = [r[0] for r in rows]
+    ok(f"[BLESSURE] {len(result)} sporten opgehaald")
+    return result
+
+# =====================================================
+# 🔹 GET /blessure/artsen — Dynamische artsenlijst
+# =====================================================
+
+@router.get("/artsen")
+def list_artsen(db: Session = Depends(get_db)):
+    rows = db.execute(
+        text("""
+        SELECT DISTINCT TRIM(arts) AS arts
+        FROM blessures
+        WHERE arts IS NOT NULL AND TRIM(arts) <> ''
+        ORDER BY arts
+        """)
+    ).fetchall()
+
+    result = [r[0] for r in rows]
+    ok(f"[BLESSURE] {len(result)} artsen opgehaald")
+    return result
 
 
 # =====================================================
@@ -159,7 +219,23 @@ def create_blessure(data: BlessureSchema, db: Session = Depends(get_db)):
         if not patient:
             raise HTTPException(status_code=404, detail="Patiënt niet gevonden")
 
-        obj = Blessure(**data.dict(exclude_unset=True))
+        data_dict = data.dict(exclude_unset=True)
+
+        for field in ("arts", "therapeut", "sport"):
+            if field in data_dict:
+                data_dict[field] = normalize_text(data_dict[field])
+
+        for field in ("arts", "therapeut", "sport"):
+            val = data_dict.get(field)
+            if val and value_exists(db, field, val):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"{field.capitalize()} bestaat al"
+                )
+
+
+        obj = Blessure(**data_dict)
+
         db.add(obj)
         db.commit()
         db.refresh(obj)
@@ -184,6 +260,13 @@ def update_blessure(blessure_id: int, data: BlessureUpdateSchema, db: Session = 
         raise HTTPException(status_code=404, detail="Blessure niet gevonden")
 
     for k, v in data.dict(exclude_unset=True).items():
+        if k in ("arts", "therapeut", "sport"):
+            v = normalize_text(v)
+            if v and value_exists(db, k, v, exclude_id=blessure_id):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"{k.capitalize()} bestaat al"
+                )
         setattr(obj, k, v)
 
     db.commit()

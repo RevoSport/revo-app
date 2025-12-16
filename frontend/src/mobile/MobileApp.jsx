@@ -28,9 +28,9 @@ import {
 import OefenschemaNieuw from "./screens/Oefenschema/OefenschemaNieuw";
 
 // Formulieren
-import FormPatient from "./screens/FormPatient";
-import FormBlessure from "./screens/FormBlessure";
-import FormBaseline from "./screens/FormBaseline";
+import FormPatient from "../forms/FormPatient";
+import FormBlessure from "../forms/FormBlessure";
+import FormBaseline from "../forms/FormBaseline";
 import FormWeek6 from "./screens/FormWeek6";
 import FormMaand3 from "./screens/FormMaand3";
 import FormMaand45 from "./screens/FormMaand45";

@@ -29,39 +29,49 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
     document.body.classList.toggle("sidebar-collapsed", collapsed);
   }, [collapsed]);
 
-  // Menu-structuur — identiek aan je project
+  // Menu-structuur
   const sections = [
     { title: "Revalidatie", items: ["Voorste Kruisband"] },
-    { title: "Performance", items: ["Performance"] },
-    { title: "Monitoring", items: ["KFV Hedes", "KC Floriant"] },
-    { title: "Blessurepreventie", items: ["Screening", "Loopanalyse"] },
     {
       title: "Oefenschema",
-      items: ["Overzicht","Templates" ,"Schema maken"],
+      items: ["Overzicht", "Templates", "Schema maken"],
       map: {
-        "Overzicht": "/oefenschema?tab=schema",
-        "Templates": "/oefenschema?tab=templates",
+        Overzicht: "/oefenschema?tab=schema",
+        Templates: "/oefenschema?tab=templates",
         "Schema maken": "/oefenschema?tab=nieuw",
       },
     },
+
+    { title: "Performance", items: ["Performance"], disabled: true },
+
+    {
+      title: "Monitoring",
+      items: ["KFV Hedes", "KC Floriant"],
+      disabled: true,
+    },
+
+    {
+      title: "Blessurepreventie",
+      items: ["Screening", "Loopanalyse"],
+      disabled: true,
+    },
+
+
   ];
 
   // Navigate helper
   const handleNavigate = (item, map) => {
     const target = map?.[item] || item;
 
-    // Route → stuur door naar App router
     if (typeof target === "string" && target.startsWith("/")) {
-      onNavigate(target); 
+      onNavigate(target);
       if (isMobile) setCollapsed(true);
       return;
     }
 
-    // Classic internal component navigation
     onNavigate(target);
     if (isMobile) setCollapsed(true);
   };
-
 
   return (
     <>
@@ -137,16 +147,6 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
               filter: "drop-shadow(0 0 12px rgba(255,121,0,0.35))",
               transition: "all 0.25s ease",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.05)";
-              e.currentTarget.style.filter =
-                "drop-shadow(0 0 14px rgba(255,121,0,0.6))";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.filter =
-                "drop-shadow(0 0 10px rgba(255,121,0,0.35))";
-            }}
           />
 
           <p
@@ -170,7 +170,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
             <div key={sec.title} style={{ marginBottom: 16 }}>
               <div
                 style={{
-                  color: "#FF7900",
+                  color: sec.disabled ? "#666" : "#FF7900",
                   fontSize: 13,
                   fontWeight: 700,
                   letterSpacing: ".06em",
@@ -185,7 +185,9 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
               <div style={{ display: "grid", gap: 6 }}>
                 {sec.items.map((item) => {
                   const mapped = sec.map?.[item] || item;
-                  const params = new URLSearchParams(currentPage.split("?")[1] || "");
+                  const params = new URLSearchParams(
+                    currentPage.split("?")[1] || ""
+                  );
                   const tab = params.get("tab");
 
                   const mappedTab =
@@ -198,23 +200,32 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, userName })
                       ? tab === mappedTab
                       : currentPage.startsWith(mapped);
 
-
-
                   return (
                     <button
                       key={item}
-                      onClick={() => handleNavigate(item, sec.map)}
+                      disabled={sec.disabled}
+                      onClick={
+                        sec.disabled
+                          ? undefined
+                          : () => handleNavigate(item, sec.map)
+                      }
                       style={{
-                      textAlign: "left",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      background: "transparent",       // ← geen highlight
-                      border: "1px solid transparent",
-                      color: isActive ? "#FF7900" : "#ddd",
-                      fontSize: 13,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    }}
+                        textAlign: "left",
+                        padding: "10px 12px",
+                        borderRadius: 8,
+                        background: "transparent",
+                        border: "1px solid transparent",
+                        color: sec.disabled
+                          ? "#777"
+                          : isActive
+                          ? "#FF7900"
+                          : "#ddd",
+                        fontSize: 13,
+                        cursor: sec.disabled ? "not-allowed" : "pointer",
+                        opacity: sec.disabled ? 0.4 : 1,
+                        pointerEvents: sec.disabled ? "none" : "auto",
+                        transition: "all 0.2s ease",
+                      }}
                     >
                       {item}
                     </button>
